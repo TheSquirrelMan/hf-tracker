@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a18">
+<title>HF Tracker</title>
+<style>
+:root {
+  --bg: #1a1a18;
+  --surface: #252523;
+  --surface2: #2c2c2a;
+  --surface3: #343432;
+  --border: rgba(255,255,255,0.08);
+  --text: #f0efe9;
+  --text2: #b4b2a9;
+  --text3: #666660;
+  --red: #F09595;
+  --red-bg: #3d1515;
+  --red-dark: #A32D2D;
+  --amber: #EF9F27;
+  --amber-bg: #3d2800;
+  --amber-dark: #854F0B;
+  --green: #97C459;
+  --green-bg: #1a2e08;
+  --green-dark: #3B6D11;
+  --blue: #85B7EB;
+  --blue-bg: #0c2240;
+  --blue-dark: #185FA5;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; overflow-x: hidden; }
+
+/* NAV */
+.nav { display: flex; overflow-x: auto; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; scrollbar-width: none; }
+.nav::-webkit-scrollbar { display: none; }
+.nav-btn { flex-shrink: 0; padding: 14px 16px; font-size: 12px; font-weight: 600; color: var(--text3); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; letter-spacing: .03em; text-transform: uppercase; }
+.nav-btn.on { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* PANELS */
+.panel { display: none; padding: 16px 14px 100px; max-width: 600px; margin: 0 auto; }
+.panel.on { display: block; }
+
+/* HEADER */
+.page-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.page-sub { font-size: 12px; color: var(--text3); margin-bottom: 16px; }
+
+/* CARDS */
+.card { background: var(--surface); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 16px; margin-bottom: 12px; }
+.card-title { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: .07em; text-transform: uppercase; margin-bottom: 12px; }
+
+/* BIG NUMBER */
+.big-num { font-size: 48px; font-weight: 700; line-height: 1; }
+.big-label { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+/* PROGRESS BAR */
+.prog-track { height: 8px; border-radius: 4px; background: var(--surface2); margin: 12px 0; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 4px; transition: width .4s ease; }
+
+/* BUTTONS */
+.btn { display: block; width: 100%; padding: 16px; border-radius: var(--radius-sm); border: none; font-size: 16px; font-weight: 700; cursor: pointer; text-align: center; margin-bottom: 10px; transition: opacity .15s, transform .1s; }
+.btn:active { opacity: .8; transform: scale(.98); }
+.btn-green { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-dark); }
+.btn-red { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-dark); }
+.btn-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-dark); }
+.btn-blue { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-dark); }
+.btn-ghost { background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border); }
+.btn-sm { padding: 10px 16px; font-size: 13px; margin-bottom: 8px; }
+
+/* ROW */
+.row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--border); gap: 10px; }
+.row:last-child { border-bottom: none; }
+.row-label { font-size: 14px; color: var(--text); flex: 1; }
+.row-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.row-val { font-size: 14px; font-weight: 700; flex-shrink: 0; }
+
+/* CHECKOFF */
+.check-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid var(--border); cursor: pointer; }
+.check-item:last-child { border-bottom: none; }
+.check-box { width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.check-box.done { background: var(--green-bg); border-color: var(--green-dark); }
+.check-mark { font-size: 14px; opacity: 0; transition: opacity .2s; }
+.check-box.done .check-mark { opacity: 1; }
+.check-label { flex: 1; }
+.check-title { font-size: 14px; color: var(--text); transition: color .2s; }
+.check-item.done .check-title { color: var(--text3); text-decoration: line-through; }
+.check-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.check-amount { font-size: 13px; font-weight: 700; color: var(--text2); flex-shrink: 0; }
+
+/* WEEK PILLS */
+.week-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
+.week-pill { border-radius: var(--radius-sm); padding: 12px 8px; text-align: center; cursor: pointer; border: 1px solid var(--border); background: var(--surface2); transition: all .2s; }
+.week-pill.used { background: var(--red-bg); border-color: var(--red-dark); }
+.week-pill.skipped { background: var(--green-bg); border-color: var(--green-dark); }
+.week-pill.current { border-color: var(--amber); }
+.week-pill-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
+.week-pill-val { font-size: 16px; font-weight: 700; margin-top: 2px; }
+.week-pill.used .week-pill-label { color: var(--red); }
+.week-pill.used .week-pill-val { color: var(--red); }
+.week-pill.skipped .week-pill-label { color: var(--green); }
+.week-pill.skipped .week-pill-val { color: var(--green); }
+.week-pill.current .week-pill-label { color: var(--amber); }
+.week-pill.current .week-pill-val { color: var(--amber); }
+
+/* TAGS */
+.tag { display: inline-block; font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 700; margin-left: 6px; }
+.tag-red { background: var(--red-bg); color: var(--red); }
+.tag-green { background: var(--green-bg); color: var(--green); }
+.tag-amber { background: var(--amber-bg); color: var(--amber); }
+.tag-blue { background: var(--blue-bg); color: var(--blue); }
+
+/* DIVIDER */
+.divider { height: 0.5px; background: var(--border); margin: 14px 0; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--surface3); color: var(--text); padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 999; white-space: nowrap; border: 0.5px solid var(--border); }
+.toast.show { opacity: 1; }
+
+/* SNOWBALL */
+.target-card { background: var(--surface2); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; border: 1px solid var(--border); }
+.target-card.active { border-color: var(--amber-dark); background: var(--amber-bg); }
+.target-name { font-size: 16px; font-weight: 700; }
+.target-details { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.target-progress { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 13px; }
+
+/* MODAL */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
+.modal-bg.show { display: flex; }
+.modal { background: var(--surface); border-radius: var(--radius) var(--radius) 0 0; padding: 20px; width: 100%; max-width: 600px; }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+.modal input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 16px; color: var(--text); margin-bottom: 10px; }
+.modal input::placeholder { color: var(--text3); }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="modal-bg" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modal-title">Log payment</div>
+    <input type="number" id="modal-input" placeholder="Amount" inputmode="decimal">
+    <button class="btn btn-green" onclick="submitModal()">Confirm</button>
+    <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn on" onclick="sw('paycheck',this)">Paycheck</button>
+  <button class="nav-btn" onclick="sw('discretionary',this)">Spending</button>
+  <button class="nav-btn" onclick="sw('snowball',this)">Snowball</button>
+  <button class="nav-btn" onclick="sw('randy',this)">Randy</button>
+  <button class="nav-btn" onclick="sw('bills',this)">Bills</button>
+  <button class="nav-btn" onclick="sw('summary',this)">Summary</button>
+</nav>
+
+<!-- ==================== PAYCHECK ==================== -->
+<div class="panel on" id="p-paycheck">
+  <div class="page-title">Paycheck actions</div>
+  <div class="page-sub" id="paycheck-sub">Complete these when a paycheck lands</div>
+
+  <div class="card">
+    <div class="card-title">Jon paycheck — 7th + 22nd</div>
+    <div id="jon-checks">
+      <div class="check-item" onclick="toggleCheck('jon-savings')" id="ci-jon-savings">
+        <div class="check-box" id="cb-jon-savings"><span class="check-mark">✓</span></div>
+        <div class="check-label">
+          <div class="check-title">Transfer $200 to savings #0725</div>
+          <div class="check-sub">Do this FIRST before any spending</div>
+        </div>
+        <div class="check-amount">$200</div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('jon-snowball')" id="ci-jon-snowball">
+        <div class="check-box" id="cb-jon-snowball"><span class="check-mark">✓</span></div>
+        <div class="check-label">
+          <div class="check-title">Make snowball payment to current target</div>
+          <div class="check-sub">All leftover after bills — same day</div>
+        </div>
+        <div class="check-amount" id="snowball-amount">$900+</div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('jon-balance')" id="ci-jon-balance">
+        <div class="check-box" id="cb-jon-balance"><span class="check-mark">✓</span></div>
+        <div class="check-label">
+          <div class="check-title">Verify #4496 balance after autopays clear</div>
+          <div class="check-sub">Confirm no surprise pulls or OD risk</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="resetChecks('jon')">Reset Jon checklist</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Karen paycheck — every Thursday</div>
+    <div id="karen-checks">
+      <div class="check-item" onclick="toggleCheck('karen-bills')" id="ci-karen-bills">
+        <div class="check-box" id="cb-karen-bills"><span class="check-mark">✓</span></div>
+        <div class="check-label">
+          <div class="check-title">Check #6764 upcoming bills</div>
+          <div class="check-sub">Mazda $638 · AT&T $166 · State Farm $191 · TN $183</div>
+        </div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('karen-transfer')" id="ci-karen-transfer">
+        <div class="check-box" id="cb-karen-transfer"><span class="check-mark">✓</span></div>
+        <div class="check-label">
+          <div class="check-title">Transfer remainder to #4496</div>
+          <div class="check-sub">Keep only what #6764 needs for upcoming bills</div>
+        </div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('karen-paypal')" id="ci-karen-paypal">
+        <div class="check-box" id="cb-karen-paypal"><span class="check-mark">✓</span></div>
+        <div class="check-label">
+          <div class="check-title">Confirm Karen PayPal Credit $100 posted</div>
+          <div class="check-sub">29.64% APR — do not miss this payment</div>
+        </div>
+        <div class="check-amount">$100</div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="resetChecks('karen')">Reset Karen checklist</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Fresh Market — every Sunday</div>
+    <div class="check-item" onclick="toggleCheck('fresh-market')" id="ci-fresh-market">
+      <div class="check-box" id="cb-fresh-market"><span class="check-mark">✓</span></div>
+      <div class="check-label">
+        <div class="check-title">Fresh Market curbside — $150 HARD LIMIT</div>
+        <div class="check-sub">Check cart total before submitting order</div>
+      </div>
+      <div class="check-amount" style="color:var(--amber);">$150</div>
+    </div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="resetChecks('fresh')">Reset</button>
+  </div>
+</div>
+
+<!-- ==================== DISCRETIONARY ==================== -->
+<div class="panel" id="p-discretionary">
+  <div class="page-title">Monthly spending</div>
+  <div class="page-sub" id="disc-month-label">Loading...</div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div class="big-num" id="disc-remaining" style="color:var(--green);">$200</div>
+        <div class="big-label">remaining this month</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:20px;font-weight:700;color:var(--red);" id="disc-spent">$0</div>
+        <div style="font-size:11px;color:var(--text3);">spent</div>
+      </div>
+    </div>
+    <div class="prog-track">
+      <div class="prog-fill" id="disc-bar" style="width:0%;background:var(--green);"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);">$200/mo cap · resets 1st of each month</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Weekly $50 allowance</div>
+    <div class="week-grid" id="week-grid"></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;">Tap a week to mark used or skipped</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Log a purchase</div>
+    <button class="btn btn-red" onclick="openModal('spend','Log spending','How much did you spend?')">➕ Log spending</button>
+    <button class="btn btn-ghost" onclick="openModal('refund','Log refund/return','Refund amount?')">↩ Log refund/return</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">This month's log</div>
+    <div id="disc-log" style="font-size:13px;color:var(--text3);">No entries yet</div>
+  </div>
+
+  <button class="btn btn-ghost btn-sm" onclick="resetMonth()">Reset month (use on 1st)</button>
+</div>
+
+<!-- ==================== SNOWBALL ==================== -->
+<div class="panel" id="p-snowball">
+  <div class="page-title">Debt snowball</div>
+  <div class="page-sub">$1,901/mo available after expenses cleared</div>
+
+  <div class="card">
+    <div class="card-title">Current phase</div>
+    <div id="phase-display"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Snowball targets — in order</div>
+    <div id="targets-list"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Log a snowball payment</div>
+    <button class="btn btn-amber" onclick="openModal('snowball-payment','Log snowball payment','Extra payment amount (above minimum)?')">💸 Log extra payment</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Payment log</div>
+    <div id="snowball-log" style="font-size:13px;color:var(--text3);">No payments logged yet</div>
+  </div>
+</div>
+
+<!-- ==================== RANDY ==================== -->
+<div class="panel" id="p-randy">
+  <div class="page-title">Personal training</div>
+  <div class="page-sub">Randy Pandy — $140 biweekly</div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div class="big-num" id="randy-paid" style="color:var(--green);">$0</div>
+        <div class="big-label">paid this month</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:20px;font-weight:700;color:var(--text2);" id="randy-sessions">0</div>
+        <div style="font-size:11px;color:var(--text3);">sessions</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Session log</div>
+    <div id="randy-checks-list"></div>
+    <button class="btn btn-green" style="margin-top:12px;" onclick="logRandy()">✓ Mark session paid — $140</button>
+    <button class="btn btn-ghost btn-sm" onclick="resetRandy()">Reset month</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">History</div>
+    <div id="randy-log" style="font-size:13px;color:var(--text3);">No entries yet</div>
+  </div>
+</div>
+
+<!-- ==================== BILLS ==================== -->
+<div class="panel" id="p-bills">
+  <div class="page-title">Bill schedule</div>
+  <div class="page-sub">All autopays — verify monthly they processed</div>
+
+  <div class="card">
+    <div class="card-title">Monthly verify checklist</div>
+    <div id="bills-list">
+      <div class="check-item" onclick="toggleCheck('bill-mazda')" id="ci-bill-mazda">
+        <div class="check-box" id="cb-bill-mazda"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">Mazda — $638.06</div><div class="check-sub">#6764 · ~9th</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-att')" id="ci-bill-att">
+        <div class="check-box" id="cb-bill-att"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">AT&T Fiber — $165.85</div><div class="check-sub">#6764 · ~16th</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-tmobile')" id="ci-bill-tmobile">
+        <div class="check-box" id="cb-bill-tmobile"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">T-Mobile — $151.85</div><div class="check-sub">#4496 · ~15th</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-statefarm')" id="ci-bill-statefarm">
+        <div class="check-box" id="cb-bill-statefarm"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">State Farm — $190.54</div><div class="check-sub">#6764 · ~23rd</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-tn')" id="ci-bill-tn">
+        <div class="check-box" id="cb-bill-tn"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">TN Unemployment — $183</div><div class="check-sub">#6764 · ~22nd-24th · $3,653 remaining</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-irs')" id="ci-bill-irs">
+        <div class="check-box" id="cb-bill-irs"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">IRS installments — ~$100</div><div class="check-sub">2 plans · $4,767 balance</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-merrick')" id="ci-bill-merrick">
+        <div class="check-box" id="cb-bill-merrick"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">Merrick Bank — $35</div><div class="check-sub">#4496 · ~11th · 31.95% APR</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-affirm')" id="ci-bill-affirm">
+        <div class="check-box" id="cb-bill-affirm"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">Affirm plans — ~$131</div><div class="check-sub">#4496 · ~13th · 0% APR — verify in Affirm app</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-newegg')" id="ci-bill-newegg">
+        <div class="check-box" id="cb-bill-newegg"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">PayPal Newegg — $60.68</div><div class="check-sub">#4496 · ~13th · 35.99% APR · done Jan 2027</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-ebay')" id="ci-bill-ebay">
+        <div class="check-box" id="cb-bill-ebay"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">PayPal eBay — $42.69</div><div class="check-sub">#4496 · ~4th · 35.99% APR · done Aug 2027</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-chinese')" id="ci-bill-chinese">
+        <div class="check-box" id="cb-bill-chinese"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">PayPal Chinese vendor — $94.94</div><div class="check-sub">#4496 · 30th · 24.99% APR · done Mar 2027</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-jonpaypal')" id="ci-bill-jonpaypal">
+        <div class="check-box" id="cb-bill-jonpaypal"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">Jon PayPal Credit — $22</div><div class="check-sub">#4496 · 0% Customer Assistance Plan · do NOT overpay</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-karenpaypal')" id="ci-bill-karenpaypal">
+        <div class="check-box" id="cb-bill-karenpaypal"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">Karen PayPal Credit — $100</div><div class="check-sub">Manual payment · 29.64% APR · hardship plan pending</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-usaaamex')" id="ci-bill-usaaamex">
+        <div class="check-box" id="cb-bill-usaaamex"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">USAA Amex Karen — $63 min</div><div class="check-sub">27.40% APR · set autopay if not done</div></div>
+      </div>
+      <div class="check-item" onclick="toggleCheck('bill-chase')" id="ci-bill-chase">
+        <div class="check-box" id="cb-bill-chase"><span class="check-mark">✓</span></div>
+        <div class="check-label"><div class="check-title">Chase/Amazon Prime — $26</div><div class="check-sub">Autopay from #4496 · APR unknown · verify</div></div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="resetBills()">Reset bill checklist</button>
+  </div>
+</div>
+
+<!-- ==================== SUMMARY ==================== -->
+<div class="panel" id="p-summary">
+  <div class="page-title">Monthly summary</div>
+  <div class="page-sub" id="summary-date">Loading...</div>
+
+  <div class="card">
+    <div class="card-title">Income</div>
+    <div class="row"><div class="row-label">Jon — Applied ABC</div><div class="row-val" style="color:var(--green);">$3,181</div></div>
+    <div class="row"><div class="row-label">Karen — Copans Motors</div><div class="row-val" style="color:var(--green);">~$3,200</div></div>
+    <div class="row"><div class="row-label" style="font-weight:700;">Total</div><div class="row-val" style="color:var(--green);font-size:18px;">$6,381</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Fixed obligations — $3,280/mo</div>
+    <div class="row"><div class="row-label">Mazda CX-5</div><div class="row-val">$638</div></div>
+    <div class="row"><div class="row-label">Fresh Market groceries</div><div class="row-val">$600</div></div>
+    <div class="row"><div class="row-label">AT&T fiber</div><div class="row-val">$166</div></div>
+    <div class="row"><div class="row-label">T-Mobile</div><div class="row-val">$152</div></div>
+    <div class="row"><div class="row-label">State Farm</div><div class="row-val">$191</div></div>
+    <div class="row"><div class="row-label">Personal training (Randy)</div><div class="row-val">$280</div></div>
+    <div class="row"><div class="row-label">TN unemployment</div><div class="row-val">$183</div></div>
+    <div class="row"><div class="row-label">IRS installments</div><div class="row-val">$100</div></div>
+    <div class="row"><div class="row-label">CC minimums (10 cards)</div><div class="row-val">$380</div></div>
+    <div class="row"><div class="row-label">Affirm plans</div><div class="row-val">$131</div></div>
+    <div class="row"><div class="row-label">PayPal installments</div><div class="row-val">$199</div></div>
+    <div class="row"><div class="row-label">Subscriptions</div><div class="row-val">$95</div></div>
+    <div class="row"><div class="row-label">Transport (gas + carwash + SunPass)</div><div class="row-val">$162</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Bottom line</div>
+    <div class="row"><div class="row-label">Total income</div><div class="row-val" style="color:var(--green);">$6,381</div></div>
+    <div class="row"><div class="row-label">Fixed obligations</div><div class="row-val" style="color:var(--red);">-$3,280</div></div>
+    <div class="row"><div class="row-label">Discretionary</div><div class="row-val" style="color:var(--amber);">-$200</div></div>
+    <div class="row"><div class="row-label" style="font-weight:700;">Monthly surplus</div><div class="row-val" style="color:var(--green);font-size:20px;font-weight:700;">$1,901</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Upcoming expenses</div>
+    <div class="row"><div class="row-left"><div class="row-label">Jon tires + oil</div><div style="font-size:11px;color:var(--text3);">May 8-9 · Mazda dealer</div></div><div class="row-val" style="color:var(--red);">$1,500</div></div>
+    <div class="row"><div class="row-left"><div class="row-label">Repair buffer</div><div style="font-size:11px;color:var(--text3);">Stays in savings — rolls to snowball if unused</div></div><div class="row-val" style="color:var(--amber);">$1,000</div></div>
+    <div class="row"><div class="row-left"><div class="row-label">Karen tires</div><div style="font-size:11px;color:var(--text3);">June · Mazda dealer</div></div><div class="row-val" style="color:var(--red);">$1,000</div></div>
+    <div class="row"><div class="row-left"><div class="row-label">Dental — Jon + Karen</div><div style="font-size:11px;color:var(--text3);">July · Applied ABC insurance</div></div><div class="row-val" style="color:var(--amber);">$500</div></div>
+    <div class="row"><div class="row-left"><div class="row-label">Glasses — Jon + Karen</div><div style="font-size:11px;color:var(--text3);">July · vision insurance</div></div><div class="row-val" style="color:var(--amber);">$1,000</div></div>
+    <div class="row"><div class="row-label" style="font-weight:700;">Total</div><div class="row-val" style="color:var(--red);font-size:18px;">$5,000</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Debt overview</div>
+    <div class="row"><div class="row-label">Credit card debt</div><div class="row-val" style="color:var(--red);">$9,424</div></div>
+    <div class="row"><div class="row-label">Installment debt</div><div class="row-val" style="color:var(--amber);">$4,296</div></div>
+    <div class="row"><div class="row-label">Gov't debt (TN + IRS)</div><div class="row-val" style="color:var(--amber);">$8,420</div></div>
+    <div class="row"><div class="row-label">Mazda auto loan</div><div class="row-val" style="color:var(--blue);">$20,693</div></div>
+    <div class="row"><div class="row-label" style="font-weight:700;">CC debt free target</div><div class="row-val" style="color:var(--green);">Apr 2027</div></div>
+    <div class="row"><div class="row-label" style="font-weight:700;">Consumer debt free</div><div class="row-val" style="color:var(--green);">Jul 2027</div></div>
+    <div class="row"><div class="row-label" style="font-weight:700;">Totally debt free</div><div class="row-val" style="color:var(--green);">Aug 2029</div></div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+const KEY = 'hftracker_v1';
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; }
+}
+function save(s) { localStorage.setItem(KEY, JSON.stringify(s)); }
+let state = load();
+
+// ── INIT ──
+const now = new Date();
+const monthKey = `${now.getFullYear()}-${now.getMonth()}`;
+if (!state.month || state.month !== monthKey) {
+  state.month = monthKey;
+  state.discSpent = 0;
+  state.discLog = [];
+  state.weeks = [null, null, null, null];
+  state.randySessions = [];
+  state.checks = {};
+  save(state);
+}
+
+// ── ROUTING ──
+function sw(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('p-' + id).classList.add('on');
+  el.classList.add('on');
+  window.scrollTo(0, 0);
+  if (id === 'discretionary') renderDisc();
+  if (id === 'snowball') renderSnowball();
+  if (id === 'randy') renderRandy();
+  if (id === 'summary') renderSummary();
+}
+
+// Handle hash routing from ICS deep links
+function routeHash() {
+  const hash = window.location.hash.replace('#', '');
+  const map = { discretionary: 1, snowball: 2, randy: 3, bills: 4, summary: 5, paycheck: 0 };
+  if (hash && map[hash] !== undefined) {
+    const btns = document.querySelectorAll('.nav-btn');
+    sw(hash, btns[map[hash]]);
+  }
+}
+window.addEventListener('hashchange', routeHash);
+routeHash();
+
+// ── TOAST ──
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── MODAL ──
+let modalMode = '';
+function openModal(mode, title, placeholder) {
+  modalMode = mode;
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-input').placeholder = placeholder;
+  document.getElementById('modal-input').value = '';
+  document.getElementById('modal-bg').classList.add('show');
+  setTimeout(() => document.getElementById('modal-input').focus(), 100);
+}
+function closeModal() { document.getElementById('modal-bg').classList.remove('show'); }
+function submitModal() {
+  const val = parseFloat(document.getElementById('modal-input').value);
+  if (isNaN(val) || val <= 0) { toast('Enter a valid amount'); return; }
+  closeModal();
+  if (modalMode === 'spend') { addDiscSpend(val); }
+  if (modalMode === 'refund') { addDiscRefund(val); }
+  if (modalMode === 'snowball-payment') { logSnowballPayment(val); }
+}
+
+// ── CHECKS ──
+function toggleCheck(id) {
+  if (!state.checks) state.checks = {};
+  state.checks[id] = !state.checks[id];
+  save(state);
+  const cb = document.getElementById('cb-' + id);
+  const ci = document.getElementById('ci-' + id);
+  if (cb) cb.classList.toggle('done', state.checks[id]);
+  if (ci) ci.classList.toggle('done', state.checks[id]);
+}
+function resetChecks(group) {
+  const keys = { jon: ['jon-savings','jon-snowball','jon-balance'], karen: ['karen-bills','karen-transfer','karen-paypal'], fresh: ['fresh-market'] };
+  (keys[group] || []).forEach(k => { state.checks[k] = false; });
+  save(state);
+  (keys[group] || []).forEach(k => {
+    const cb = document.getElementById('cb-' + k);
+    const ci = document.getElementById('ci-' + k);
+    if (cb) cb.classList.remove('done');
+    if (ci) ci.classList.remove('done');
+  });
+  toast('Checklist reset');
+}
+function resetBills() {
+  const billKeys = ['bill-mazda','bill-att','bill-tmobile','bill-statefarm','bill-tn','bill-irs','bill-merrick','bill-affirm','bill-newegg','bill-ebay','bill-chinese','bill-jonpaypal','bill-karenpaypal','bill-usaaamex','bill-chase'];
+  billKeys.forEach(k => { state.checks[k] = false; });
+  save(state);
+  billKeys.forEach(k => {
+    const cb = document.getElementById('cb-' + k);
+    const ci = document.getElementById('ci-' + k);
+    if (cb) cb.classList.remove('done');
+    if (ci) ci.classList.remove('done');
+  });
+  toast('Bills checklist reset');
+}
+
+// Apply all saved check states on load
+function applyChecks() {
+  if (!state.checks) return;
+  Object.entries(state.checks).forEach(([k, v]) => {
+    const cb = document.getElementById('cb-' + k);
+    const ci = document.getElementById('ci-' + k);
+    if (cb) cb.classList.toggle('done', v);
+    if (ci) ci.classList.toggle('done', v);
+  });
+}
+applyChecks();
+
+// ── DISCRETIONARY ──
+const DISC_BUDGET = 200;
+const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function addDiscSpend(amt) {
+  state.discSpent = (state.discSpent || 0) + amt;
+  if (!state.discLog) state.discLog = [];
+  state.discLog.unshift({ type: 'spend', amt, date: new Date().toLocaleDateString() });
+  save(state);
+  renderDisc();
+  toast(`-$${amt.toFixed(2)} logged`);
+}
+function addDiscRefund(amt) {
+  state.discSpent = Math.max(0, (state.discSpent || 0) - amt);
+  state.discLog.unshift({ type: 'refund', amt, date: new Date().toLocaleDateString() });
+  save(state);
+  renderDisc();
+  toast(`+$${amt.toFixed(2)} refund logged`);
+}
+function resetMonth() {
+  if (!confirm('Reset month? This clears all spending data.')) return;
+  state.discSpent = 0;
+  state.discLog = [];
+  state.weeks = [null, null, null, null];
+  state.month = monthKey;
+  save(state);
+  renderDisc();
+  toast('Month reset');
+}
+function toggleWeek(i) {
+  if (!state.weeks) state.weeks = [null, null, null, null];
+  const current = state.weeks[i];
+  state.weeks[i] = current === 'used' ? 'skipped' : current === 'skipped' ? null : 'used';
+  if (state.weeks[i] === 'used') { state.discSpent = (state.discSpent || 0) + 50; state.discLog.unshift({ type: 'spend', amt: 50, date: `Wk ${i+1}`, label: `Week ${i+1} $50 allowance` }); }
+  if (state.weeks[i] === 'skipped') { state.discSpent = Math.max(0, (state.discSpent || 0) - 50); if (state.discLog.length) state.discLog.shift(); }
+  save(state);
+  renderDisc();
+}
+function renderDisc() {
+  const spent = state.discSpent || 0;
+  const rem = Math.max(0, DISC_BUDGET - spent);
+  const pct = Math.min(100, (spent / DISC_BUDGET) * 100);
+  const color = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amber)' : 'var(--green)';
+  document.getElementById('disc-remaining').textContent = `$${rem.toFixed(0)}`;
+  document.getElementById('disc-remaining').style.color = color;
+  document.getElementById('disc-spent').textContent = `$${spent.toFixed(2)}`;
+  document.getElementById('disc-bar').style.width = pct + '%';
+  document.getElementById('disc-bar').style.background = color;
+  document.getElementById('disc-month-label').textContent = `${months[now.getMonth()]} ${now.getFullYear()}`;
+  const weeks = state.weeks || [null, null, null, null];
+  const weekLabels = ['Wk 1', 'Wk 2', 'Wk 3', 'Wk 4'];
+  const grid = document.getElementById('week-grid');
+  grid.innerHTML = weekLabels.map((label, i) => {
+    const s = weeks[i];
+    const cls = s === 'used' ? 'used' : s === 'skipped' ? 'skipped' : i === getCurrentWeek() ? 'current' : '';
+    const val = s === 'used' ? '-$50' : s === 'skipped' ? 'saved' : '$50';
+    return `<div class="week-pill ${cls}" onclick="toggleWeek(${i})"><div class="week-pill-label">${label}</div><div class="week-pill-val">${val}</div></div>`;
+  }).join('');
+  const log = state.discLog || [];
+  const logEl = document.getElementById('disc-log');
+  if (log.length === 0) { logEl.textContent = 'No entries yet'; return; }
+  logEl.innerHTML = log.slice(0, 10).map(e => `
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px;">
+      <span style="color:var(--text2);">${e.label || (e.type === 'spend' ? 'Spending' : 'Refund')} · ${e.date}</span>
+      <span style="color:${e.type === 'spend' ? 'var(--red)' : 'var(--green)'};">${e.type === 'spend' ? '-' : '+'}$${e.amt.toFixed(2)}</span>
+    </div>`).join('');
+}
+function getCurrentWeek() {
+  const day = now.getDate();
+  return Math.min(3, Math.floor((day - 1) / 7));
+}
+
+// ── SNOWBALL ──
+const TARGETS = [
+  { name: 'Amazon Store Card', bal: 206, apr: '~29%', min: 29, who: 'Jon', note: 'MAXED — nearly dead', color: 'var(--red)' },
+  { name: 'Merrick Bank', bal: 926, apr: '31.95%', min: 35, who: 'Jon', note: 'Highest APR', color: 'var(--red)' },
+  { name: 'Cap One #3186', bal: 491, apr: '28.24%', min: 25, who: 'Karen', note: 'Quick win', color: 'var(--red)' },
+  { name: "Karen's PayPal Credit", bal: 1958, apr: '29.64%', min: 100, who: 'Karen', note: 'Hardship plan pending', color: 'var(--amber)' },
+  { name: 'USAA Amex (Karen)', bal: 1847, apr: '27.40%', min: 63, who: 'Karen', note: 'Set autopay', color: 'var(--amber)' },
+  { name: 'Cap One #4565', bal: 726, apr: '~29%', min: 25, who: 'Jon', note: '', color: 'var(--amber)' },
+  { name: 'Cap One #5592', bal: 731, apr: '28.99%', min: 25, who: 'Karen', note: '', color: 'var(--amber)' },
+  { name: 'Cap One #7988', bal: 843, apr: '~29%', min: 30, who: 'Jon', note: 'Near limit', color: 'var(--amber)' },
+  { name: 'Chase/Amazon Prime', bal: 1000, apr: 'TBD', min: 26, who: 'Jon', note: 'Verify APR', color: 'var(--amber)' },
+  { name: 'TN Unemployment', bal: 3653, apr: '0%', min: 183, who: 'Karen', note: 'After CCs dead', color: 'var(--green)' },
+  { name: 'IRS 2024', bal: 4767, apr: '0%', min: 100, who: 'Jon', note: 'After TN cleared', color: 'var(--green)' },
+];
+
+const PHASES = [
+  { label: 'Phase 1 — Expense fund', desc: "Building tire fund. Jon's tires May 8-9.", color: 'var(--amber)' },
+  { label: 'Phase 2 — Repair buffer', desc: '$1,000 in savings. Rolls to snowball if unused.', color: 'var(--amber)' },
+  { label: "Phase 3 — Karen's tires", desc: 'June 2026. $1,000 at Mazda dealer.', color: 'var(--amber)' },
+  { label: 'Phase 4 — Dental + glasses', desc: 'July 2026. ~$1,500 OOP with insurance.', color: 'var(--amber)' },
+  { label: 'Phase 5 — SNOWBALL ACTIVE', desc: 'Full $1,901/mo attacking CC debt.', color: 'var(--green)' },
+];
+
+function renderSnowball() {
+  const phase = state.snowballPhase || 0;
+  const phaseEl = document.getElementById('phase-display');
+  const p = PHASES[phase];
+  phaseEl.innerHTML = `
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;border:1px solid ${p.color}30;">
+      <div style="font-size:15px;font-weight:700;color:${p.color};">${p.label}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:4px;">${p.desc}</div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        ${phase > 0 ? `<button class="btn btn-ghost btn-sm" style="flex:1;margin:0;" onclick="setPhase(${phase-1})">← Back</button>` : ''}
+        ${phase < PHASES.length-1 ? `<button class="btn btn-amber btn-sm" style="flex:1;margin:0;" onclick="setPhase(${phase+1})">Next phase →</button>` : '<div style="font-size:12px;color:var(--green);padding:10px 0;">🎯 Snowball is active!</div>'}
+      </div>
+    </div>`;
+
+  const targetEl = document.getElementById('targets-list');
+  const currentTarget = state.currentTarget || 0;
+  targetEl.innerHTML = TARGETS.map((t, i) => {
+    const active = i === currentTarget;
+    const done = i < currentTarget;
+    return `<div class="target-card ${active ? 'active' : ''}" style="${done ? 'opacity:0.4;' : ''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="target-name" style="color:${done ? 'var(--green)' : active ? 'var(--amber)' : 'var(--text)'};">${done ? '✓ ' : active ? '🎯 ' : `${i+1}. `}${t.name}</div>
+          <div class="target-details">${t.who} · ${t.apr} APR · $${t.min}/mo min${t.note ? ' · ' + t.note : ''}</div>
+        </div>
+        <div style="font-size:18px;font-weight:700;color:${t.color};">$${t.bal.toLocaleString()}</div>
+      </div>
+      ${active ? `<button class="btn btn-green btn-sm" style="margin-top:10px;margin-bottom:0;" onclick="advanceTarget()">Mark as paid off →</button>` : ''}
+    </div>`;
+  }).join('');
+
+  const log = state.snowballLog || [];
+  const logEl = document.getElementById('snowball-log');
+  if (log.length === 0) { logEl.textContent = 'No payments logged yet'; return; }
+  logEl.innerHTML = log.slice(0, 10).map(e => `
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px;">
+      <span style="color:var(--text2);">${e.target} · ${e.date}</span>
+      <span style="color:var(--green);">-$${e.amt.toFixed(2)}</span>
+    </div>`).join('');
+}
+function setPhase(n) {
+  state.snowballPhase = n;
+  save(state);
+  renderSnowball();
+  toast(`Phase updated`);
+}
+function advanceTarget() {
+  state.currentTarget = (state.currentTarget || 0) + 1;
+  save(state);
+  renderSnowball();
+  toast('🎉 Target paid off! Next target loaded.');
+}
+function logSnowballPayment(amt) {
+  if (!state.snowballLog) state.snowballLog = [];
+  const target = TARGETS[state.currentTarget || 0];
+  state.snowballLog.unshift({ amt, target: target ? target.name : 'Unknown', date: new Date().toLocaleDateString() });
+  save(state);
+  renderSnowball();
+  toast(`$${amt.toFixed(2)} snowball payment logged`);
+}
+
+// ── RANDY ──
+function logRandy() {
+  if (!state.randySessions) state.randySessions = [];
+  const entry = { date: new Date().toLocaleDateString(), amt: 140 };
+  state.randySessions.unshift(entry);
+  save(state);
+  renderRandy();
+  toast('Session logged — $140');
+}
+function resetRandy() {
+  state.randySessions = [];
+  save(state);
+  renderRandy();
+  toast('Randy reset for new month');
+}
+function renderRandy() {
+  const sessions = state.randySessions || [];
+  const monthSessions = sessions.filter(s => {
+    const d = new Date(s.date);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const paid = monthSessions.reduce((a, s) => a + s.amt, 0);
+  document.getElementById('randy-paid').textContent = `$${paid}`;
+  document.getElementById('randy-sessions').textContent = monthSessions.length;
+  const listEl = document.getElementById('randy-checks-list');
+  if (monthSessions.length === 0) { listEl.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:8px 0;">No sessions this month</div>'; }
+  else { listEl.innerHTML = monthSessions.map((s, i) => `<div class="row"><span style="color:var(--text2);font-size:13px;">Session ${monthSessions.length - i} · ${s.date}</span><span style="color:var(--green);font-weight:700;">$${s.amt}</span></div>`).join(''); }
+  const logEl = document.getElementById('randy-log');
+  if (sessions.length === 0) { logEl.textContent = 'No entries yet'; return; }
+  logEl.innerHTML = sessions.slice(0, 10).map(s => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px;"><span style="color:var(--text2);">${s.date}</span><span style="color:var(--green);">-$${s.amt}</span></div>`).join('');
+}
+
+// ── SUMMARY ──
+function renderSummary() {
+  document.getElementById('summary-date').textContent = `${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+
+// ── INIT RENDERS ──
+renderDisc();
+renderRandy();
+renderSnowball();
+renderSummary();
+</script>
+</body>
+</html>
