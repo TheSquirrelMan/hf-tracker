@@ -362,7 +362,7 @@ function getEvents(year,month){
   // Fresh Market every Sunday
   for(let d=1;d<=daysInMonth;d++){
     if(new Date(year,month,d).getDay()===0)
-      add(d,'Fresh Market — $150 limit','#4496 PayPal','#85B7EB','HARD CAP — check cart before submitting');
+      add(d,'Fresh Market — $150 limit',-150,'#4496 PayPal','#85B7EB','HARD CAP — check cart before submitting');
   }
   // Fixed bills
   add(1,'Amazon Store Card autopay',-29,'#4496','#F09595','~29% APR');
@@ -498,9 +498,28 @@ function renderMonth(){
   const evts=getEvents(vYear,vMonth);
   const daysInMonth=new Date(vYear,vMonth+1,0).getDate();
   const startDay=(vYear===2026&&vMonth===3)?22:1;
+  const isCurrentMonth=vYear===now.getFullYear()&&vMonth===now.getMonth();
 
-  // Total income and outgoing
-  const totalIn=evts.filter(e=>e.isIncome).reduce((a,e)=>a+e.amt,0);
+  // Running balances -- start from actual if current month, otherwise project from start of month
+  // Account map: #4496, #6764, savings, other
+  function acctKey(acct){
+    if(!acct)return null;
+    if(acct.includes('4496'))return '4496';
+    if(acct.includes('6764'))return '6764';
+    if(acct.includes('savings')||acct.includes('0725'))return '0725';
+    return null;
+  }
+  // For current month start from today's known balance; for future months project from end-of-prior estimates
+  let runBal={
+    '4496': isCurrentMonth ? S.bal4496 : 800,
+    '6764': isCurrentMonth ? S.bal6764 : 400,
+    '0725': isCurrentMonth ? S.bal0725 : 454,
+  };
+  const acctColor={'4496':'var(--blu)','6764':'var(--amb)','0725':'var(--grn)'};
+  const acctLabel={'4496':'#4496','6764':'#6764','0725':'Savings'};
+
+  // Total income and outgoing for overview (all events in month)
+  const totalIn=evts.filter(e=>e.isIncome&&typeof e.amt==='number').reduce((a,e)=>a+e.amt,0);
   const totalOut=evts.filter(e=>!e.isIncome&&typeof e.amt==='number'&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
   const net=totalIn-totalOut;
 
@@ -511,9 +530,17 @@ function renderMonth(){
     <div class="row"><div class="rl"><div class="rlabel" style="font-weight:700;">Net</div></div><div class="rval" style="color:${net>=0?'var(--grn)':'var(--red)'};">${net>=0?'+':'-'}$${Math.abs(net).toLocaleString()}</div></div>
   </div>`;
 
+  // Balance legend
+  html+=`<div style="display:flex;gap:8px;margin-bottom:12px;font-size:11px;color:var(--t3);">
+    <span>Projected balance after each event:</span>
+    <span style="color:var(--blu);">■ #4496</span>
+    <span style="color:var(--amb);">■ #6764</span>
+    <span style="color:var(--grn);">■ Savings</span>
+  </div>`;
+
   // Phase note
   const phases={
-    '2026-3':{l:'Phase 1 — Tire fund',n:"Aggressive budget starts Apr 22. $150/wk groceries. No dining out. No Starbucks. Building $1,500 for Jon's tires + $220 vehicle registration today.",c:'var(--amb)'},
+    '2026-3':{l:'Phase 1 — Tire fund',n:"Aggressive budget starts Apr 22. $150/wk groceries. No dining out. No Starbucks. Building $1,500 for Jon's tires.",c:'var(--amb)'},
     '2026-4':{l:"Phase 1 complete — Jon's tires done",n:"Jon's tires May 8-9 at Mazda dealer. $1,000 repair buffer in savings. Rolls to snowball if nothing found.",c:'var(--amb)'},
     '2026-5':{l:"Phase 3 — Karen's tires",n:"Karen's tires early June at Mazda dealer. $1,000 budget.",c:'var(--amb)'},
     '2026-6':{l:'Phase 4 — Dental + glasses',n:'Jon + Karen dental (~$500 OOP) and glasses (~$1,000) with Applied ABC insurance.',c:'var(--amb)'},
@@ -528,14 +555,18 @@ function renderMonth(){
     </div>`;
   }
 
-  // Build week groups
+  // Build day map starting from startDay
   const byDay={};
-  evts.forEach(e=>{if(e.day>=startDay){if(!byDay[e.day])byDay[e.day]=[];byDay[e.day].push(e);}});
+  evts.forEach(e=>{
+    if(e.day>=startDay){
+      if(!byDay[e.day])byDay[e.day]=[];
+      byDay[e.day].push(e);
+    }
+  });
   const sortedDays=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
 
-  // Group into weeks (Sun-Sat)
-  let weekDays=[];
-  let weeks=[];
+  // Group into weeks (break on Saturday or end of month)
+  let weekDays=[],weeks=[];
   sortedDays.forEach((day,i)=>{
     weekDays.push(day);
     const dow=new Date(vYear,vMonth,day).getDay();
@@ -545,26 +576,44 @@ function renderMonth(){
 
   weeks.forEach(wdays=>{
     const wStart=wdays[0],wEnd=wdays[wdays.length-1];
-    const wIn=wdays.flatMap(d=>byDay[d]).filter(e=>e.isIncome).reduce((a,e)=>a+e.amt,0);
-    const wOut=wdays.flatMap(d=>byDay[d]).filter(e=>!e.isIncome&&typeof e.amt==='number'&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
+    const allWEvts=wdays.flatMap(d=>byDay[d]);
+    const wIn=allWEvts.filter(e=>e.isIncome&&typeof e.amt==='number').reduce((a,e)=>a+e.amt,0);
+    const wOut=allWEvts.filter(e=>!e.isIncome&&typeof e.amt==='number'&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
     const mn=MONTHS[vMonth].substring(0,3);
     html+=`<div class="card"><div class="wheader"><span>${mn} ${wStart}–${wEnd}</span><span>${wIn>0?`<span style="color:var(--grn);">+$${wIn.toLocaleString()}</span> `:''}${wOut>0?`<span style="color:var(--red);">-$${wOut.toLocaleString()}</span>`:''}</span></div>`;
+
     wdays.forEach(day=>{
-      const isToday=vYear===now.getFullYear()&&vMonth===now.getMonth()&&day===now.getDate();
+      const isToday=isCurrentMonth&&day===now.getDate();
+      const isPast=isCurrentMonth&&day<now.getDate();
       const dow=DAYS[new Date(vYear,vMonth,day).getDay()];
-      html+=`<div style="margin-bottom:2px;"><div style="font-size:11px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:600;padding:4px 0 2px;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
+      html+=`<div style="margin-bottom:2px;${isPast?'opacity:0.55;':''}">
+        <div style="font-size:11px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:600;padding:4px 0 2px;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
+
       byDay[day].forEach(e=>{
         const isInc=e.isIncome||e.amt>0;
-        const ac=isInc?'var(--grn)':(Math.abs(e.amt)>500?'var(--red)':'var(--t2)');
-        const as=typeof e.amt==='number'&&e.amt!==0?(e.amt>0?'+$'+e.amt.toLocaleString():'-$'+Math.abs(e.amt).toLocaleString()):'';
+        const amtNum=typeof e.amt==='number'?e.amt:0;
+        const amtColor=isInc?'var(--grn)':(Math.abs(amtNum)>500?'var(--red)':'var(--t2)');
+        const amtStr=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
+
+        // Update running balance
+        const ak=acctKey(e.acct);
+        if(ak&&amtNum!==0) runBal[ak]=(runBal[ak]||0)+amtNum;
+        const balAfter=ak?runBal[ak]:null;
+        const balColor=ak?acctColor[ak]:'var(--t3)';
+        const balLabel=ak?acctLabel[ak]:'';
+        const balWarn=balAfter!==null&&balAfter<200;
+
         html+=`<div class="event" style="padding:6px 0;">
           <div class="edot" style="background:${e.color};margin-top:4px;"></div>
           <div class="econtent">
             <div class="etitle" style="font-size:13px;">${e.title}</div>
             ${e.note?`<div class="esub">${e.note}</div>`:''}
-            <div class="eacct">${e.acct||''}</div>
+            <div style="font-size:10px;margin-top:2px;">
+              <span style="color:var(--t3);">${e.acct||''}</span>
+              ${balAfter!==null?`<span style="color:${balWarn?'var(--red)':balColor};font-weight:${balWarn?'700':'400'};margin-left:6px;">→ ${balLabel} $${Math.round(balAfter).toLocaleString()}${balWarn?' ⚠':''}` :''}
+            </div>
           </div>
-          ${as?`<div class="eamt" style="color:${ac};font-size:13px;">${as}</div>`:''}
+          ${amtStr?`<div class="eamt" style="color:${amtColor};font-size:13px;">${amtStr}</div>`:''}
         </div>`;
       });
       html+='</div>';
