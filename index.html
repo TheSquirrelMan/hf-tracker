@@ -108,9 +108,53 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tcard{background:var(--s2);border-radius:var(--rs);padding:14px;margin-bottom:8px;border:1px solid var(--border);}
 .tcard.active{border-color:var(--amid);background:var(--abg);}
 .tcard.tdone{opacity:0.35;}
+/* PIN SCREEN */
+.pin-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;}
+.pin-screen.hidden{display:none;}
+.pin-logo{font-size:36px;margin-bottom:8px;}
+.pin-title{font-size:22px;font-weight:700;margin-bottom:4px;text-align:center;}
+.pin-sub{font-size:13px;color:var(--t3);margin-bottom:32px;text-align:center;}
+.pin-dots{display:flex;gap:14px;margin-bottom:32px;}
+.pin-dot{width:16px;height:16px;border-radius:50%;background:var(--s3);border:2px solid var(--border);transition:all .15s;}
+.pin-dot.filled{background:var(--blu);border-color:var(--bmid);}
+.pin-dot.error{background:var(--red);border-color:var(--rmid);}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px;}
+.pin-key{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r);padding:18px;font-size:22px;font-weight:600;color:var(--text);cursor:pointer;text-align:center;transition:opacity .1s,transform .1s;user-select:none;}
+.pin-key:active{opacity:.7;transform:scale(.95);}
+.pin-key.del{font-size:18px;color:var(--t2);}
+.pin-key.empty{background:transparent;border-color:transparent;pointer-events:none;}
+.pin-error{font-size:13px;color:var(--red);margin-top:16px;height:18px;text-align:center;}
 </style>
 </head>
 <body>
+
+<!-- PIN SCREEN -->
+<div class="pin-screen" id="pin-screen">
+  <div class="pin-logo">💰</div>
+  <div class="pin-title">HF Tracker</div>
+  <div class="pin-sub">Enter PIN to continue</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-grid">
+    <div class="pin-key" onclick="pinKey('1')">1</div>
+    <div class="pin-key" onclick="pinKey('2')">2</div>
+    <div class="pin-key" onclick="pinKey('3')">3</div>
+    <div class="pin-key" onclick="pinKey('4')">4</div>
+    <div class="pin-key" onclick="pinKey('5')">5</div>
+    <div class="pin-key" onclick="pinKey('6')">6</div>
+    <div class="pin-key" onclick="pinKey('7')">7</div>
+    <div class="pin-key" onclick="pinKey('8')">8</div>
+    <div class="pin-key" onclick="pinKey('9')">9</div>
+    <div class="pin-key empty"></div>
+    <div class="pin-key" onclick="pinKey('0')">0</div>
+    <div class="pin-key del" onclick="pinDel()">⌫</div>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+</div>
 <div class="toast" id="toast"></div>
 <div class="mbg" id="mbg" onclick="closeModal()">
   <div class="modal" onclick="event.stopPropagation()">
@@ -236,6 +280,52 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
+// ── PIN AUTH ──
+const PIN='0628'; // Change this to your preferred PIN
+const PIN_SESSION_KEY='hft_auth';
+let pinEntry='';
+
+function checkAuth(){
+  if(sessionStorage.getItem(PIN_SESSION_KEY)==='ok'){
+    document.getElementById('pin-screen').classList.add('hidden');
+  }
+}
+function pinKey(k){
+  if(pinEntry.length>=4)return;
+  pinEntry+=k;
+  updateDots();
+  if(pinEntry.length===4)setTimeout(checkPin,120);
+}
+function pinDel(){
+  pinEntry=pinEntry.slice(0,-1);
+  document.getElementById('pin-error').textContent='';
+  updateDots(false);
+}
+function updateDots(err=false){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('pd'+i);
+    d.classList.toggle('filled',i<pinEntry.length&&!err);
+    d.classList.toggle('error',err&&i<4);
+  }
+}
+function checkPin(){
+  if(pinEntry===PIN){
+    sessionStorage.setItem(PIN_SESSION_KEY,'ok');
+    document.getElementById('pin-screen').classList.add('hidden');
+  } else {
+    updateDots(true);
+    document.getElementById('pin-error').textContent='Incorrect PIN';
+    setTimeout(()=>{pinEntry='';updateDots(false);document.getElementById('pin-error').textContent='';},900);
+  }
+}
+// Support keyboard entry too
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('pin-screen').classList.contains('hidden'))return;
+  if(e.key>='0'&&e.key<='9')pinKey(e.key);
+  if(e.key==='Backspace')pinDel();
+});
+checkAuth();
+
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const KEY='hft_v4';
