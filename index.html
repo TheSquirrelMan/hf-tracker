@@ -1140,6 +1140,27 @@ window.toggleBill=id=>{if(!S.billChecks)S.billChecks={};S.billChecks[id]=!S.bill
 window.resetBills=()=>{S.billChecks={};save(S);renderBills();toast('Bills reset');};
 
 // ── INIT ──
+// Expose for debugging
+window._debug = () => ({
+  bal: S.bal4496,
+  karenAvg: S.karenAvgPay,
+  walkMay: () => {
+    let bal = S.bal4496;
+    for(let day = now.getDate()+1; day <= 31; day++) {
+      const bills = getDailyBills(2026, 3, day);
+      bills.forEach(b => console.log(`Apr ${day}: ${b.label} ${b.amt}`));
+      bills.forEach(b => bal += b.amt);
+      console.log(`Apr ${day} end: $${Math.round(bal)}`);
+    }
+    for(let day = 1; day <= 31; day++) {
+      const bills = getDailyBills(2026, 4, day);
+      bills.forEach(b => console.log(`May ${day}: ${b.label} ${b.amt}`));
+      bills.forEach(b => bal += b.amt);
+      console.log(`May ${day} end: $${Math.round(bal)}`);
+    }
+    console.log('June 1 start should be:', Math.round(bal));
+  }
+});
 checkAuth();
 </script>
 </body>
