@@ -904,17 +904,21 @@ function renderMonth(){
   const startDay=(vYear===2026&&vMonth===3)?22:1;
   const isCurrentMonth=vYear===now.getFullYear()&&vMonth===now.getMonth();
 
-  // Project starting balance for this month
-  // Bills only in pre-walk -- income gets counted when calendar events render
+  // Project starting balance at the START of vMonth
+  // Walk from tomorrow through the last day of the month BEFORE vMonth
+  // Then calendar events for vMonth update runBal in order
   let runBal = S.bal4496;
   if(!isCurrentMonth){
     let d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    // Walk until we reach the first day of vMonth
     const target = new Date(vYear, vMonth, 1);
     while(d < target){
       const bills = getDailyBills(d.getFullYear(), d.getMonth(), d.getDate());
-      bills.forEach(b => { if(!b.isIncome) runBal += b.amt; });
+      bills.forEach(b => { runBal += b.amt; });
       d.setDate(d.getDate() + 1);
     }
+    // runBal is now the balance at start of vMonth
+    // Calendar events for vMonth will update it from here
   }
 
   const totalIn=evts.filter(e=>e.isIncome&&e.day>=startDay).reduce((a,e)=>a+(e.amt||0),0);
@@ -956,8 +960,10 @@ function renderMonth(){
         const isInc=e.isIncome;
         const ac=isInc?'var(--grn)':Math.abs(amtNum)>500?'var(--red)':'var(--t2)';
         const as=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
-        const isFuture=!isCurrentMonth||day>now.getDate();
-        if(amtNum!==0&&isFuture)runBal+=amtNum;
+        // Current month: only days after today update runBal (today already in real balance)
+        // Future months: all events update runBal (pre-walk stopped at month boundary)
+        const isFuture = !isCurrentMonth || day > now.getDate();
+        if(amtNum !== 0 && isFuture) runBal += amtNum;
         const balWarn=runBal<300;
         const balColor=runBal<300?'var(--red)':runBal<600?'var(--amb)':'var(--blu)';
         html+=`<div class="event" style="padding:5px 0;">
