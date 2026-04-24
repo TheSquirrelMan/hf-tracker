@@ -903,15 +903,15 @@ function renderMonth(){
   const isCurrentMonth=vYear===now.getFullYear()&&vMonth===now.getMonth();
 
   // Project starting balance for this month
-  let runBal=S.bal4496;
+  let runBal = S.bal4496;
   if(!isCurrentMonth){
-    // Walk from today to start of view month
-    let d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
-    const target=new Date(vYear,vMonth,1);
-    while(d<target){
-      const bills=getDailyBills(d.getFullYear(),d.getMonth(),d.getDate());
-      bills.forEach(b=>{runBal+=b.amt;});
-      d.setDate(d.getDate()+1);
+    // Walk day by day from tomorrow to the first day of the view month
+    let d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const target = new Date(vYear, vMonth, 1);
+    while(d < target){
+      const bills = getDailyBills(d.getFullYear(), d.getMonth(), d.getDate());
+      bills.forEach(b => { runBal += b.amt; });
+      d.setDate(d.getDate() + 1);
     }
   }
 
@@ -954,7 +954,7 @@ function renderMonth(){
         const isInc=e.isIncome;
         const ac=isInc?'var(--grn)':Math.abs(amtNum)>500?'var(--red)':'var(--t2)';
         const as=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
-        const isFuture=!isCurrentMonth||day>=now.getDate();
+        const isFuture=!isCurrentMonth||day>now.getDate();
         if(amtNum!==0&&isFuture)runBal+=amtNum;
         const balWarn=runBal<300;
         const balColor=runBal<300?'var(--red)':runBal<600?'var(--amb)':'var(--blu)';
