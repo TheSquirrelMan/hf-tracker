@@ -468,100 +468,100 @@ function getDailyBills(year, month, day) {
 }
 
 function calcRoadmap() {
-  // Project forward up to 48 months from today
-  // Track balance, find affordable dates for each milestone
   let bal = S.bal4496 || 0;
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const milestones = {};
   const phaseDone = S.phaseDone || {};
+  const pendingPhases = EXPENSE_PHASES.filter(p => !phaseDone[p.id] && !p.isSavings);
+  const repairBufDone = phaseDone['repair-buf'];
 
-  // Which expense phases still need funding
-  const pendingPhases = EXPENSE_PHASES.filter(p => !phaseDone[p.id]);
+  // How much is due in the next 14 days from a given date
+  function billsDueNext14(fromYear, fromMonth, fromDay) {
+    let total = 0;
+    let d = new Date(fromYear, fromMonth, fromDay + 1);
+    for(let i = 0; i < 14; i++) {
+      const bills = getDailyBills(d.getFullYear(), d.getMonth(), d.getDate());
+      bills.forEach(b => { if(!b.isIncome && b.amt < 0) total += Math.abs(b.amt); });
+      d.setDate(d.getDate() + 1);
+    }
+    return total;
+  }
 
-  // Snowball state -- which cards still have balances
   const cardBals = {};
   SNOWBALL_TARGETS.forEach(t => {
     cardBals[t.id] = (S.cardBals && S.cardBals[t.id] !== undefined) ? S.cardBals[t.id] : t.startBal;
   });
 
-  // Monthly minimums still active (approximate)
-  function monthlyMins(key) {
-    let m = 0;
-    SNOWBALL_TARGETS.forEach(t => { if(cardBals[t.id] > 0) m += t.minPay; });
-    // Fixed installments
-    if(key <= '2027-08') m += 43; // eBay
-    if(key <= '2027-01') m += 61; // Newegg
-    if(key <= '2027-03') m += 95; // Chinese
-    return m;
-  }
-
   let snowballActive = pendingPhases.length === 0;
   let currentSnowTarget = SNOWBALL_TARGETS.findIndex(t => cardBals[t.id] > 0);
   if(currentSnowTarget === -1) currentSnowTarget = null;
 
-  // Walk day by day
-  let d = new Date(today);
+  // Repair buffer: $1,000 must be held in savings after Jon's tires
+  // Don't count it as available balance
+  let repairHeld = !repairBufDone && !phaseDone['jon-tires'] ? 0 : (!repairBufDone ? 1000 : 0);
+
+  let d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const maxDays = 48 * 30;
 
   for(let i = 0; i < maxDays; i++) {
     const year = d.getFullYear();
     const month = d.getMonth();
     const day = d.getDate();
-    const key = `${year}-${String(month+1).padStart(2,'0')}`;
     const dateStr = d.toISOString().split('T')[0];
 
     // Apply daily cashflow
     const dayBills = getDailyBills(year, month, day);
     dayBills.forEach(b => { bal += b.amt; });
 
-    // Check affordability every day (not just paychecks)
-    if(bal > 0 && !snowballActive && pendingPhases.length > 0) {
+    // After Jon's tires paid, hold $1,000 repair buffer
+    if(milestones['jon-tires'] && !repairBufDone && !milestones['repair-buf']) {
+      milestones['repair-buf'] = { date: milestones['jon-tires'].date };
+      repairHeld = 1000;
+    }
+
+    // Check if next phase is affordable
+    // Must have: cost + $300 buffer + upcoming 14-day bills + repair buffer held
+    if(!snowballActive && pendingPhases.length > 0) {
       const nextPhase = pendingPhases[0];
-      // Skip savings phases -- they don't drain the balance
-      if(nextPhase.isSavings) {
-        if(milestones['jon-tires']) {
-          milestones[nextPhase.id] = { date:milestones['jon-tires'].date };
+      if(!milestones[nextPhase.id]) {
+        const upcoming = billsDueNext14(year, month, day);
+        const needed = nextPhase.cost + BUFFER + upcoming + repairHeld;
+        if(bal >= needed) {
+          milestones[nextPhase.id] = { date: dateStr, bal: Math.round(bal) };
+          bal -= nextPhase.cost;
+          // Release repair buffer if this is Karen's tires or later
+          if(nextPhase.id === 'karen-tires') repairHeld = 0;
           pendingPhases.shift();
+          if(pendingPhases.length === 0) {
+            snowballActive = true;
+            milestones['snowball-start'] = { date: dateStr };
+          }
+          d.setDate(d.getDate() + 1);
+          continue;
         }
-      } else if(bal >= nextPhase.cost + BUFFER && !milestones[nextPhase.id]) {
-        milestones[nextPhase.id] = { date:dateStr, bal:Math.round(bal) };
-        bal -= nextPhase.cost;
-        pendingPhases.shift();
-        if(pendingPhases.length === 0) {
-          snowballActive = true;
-          milestones['snowball-start'] = { date:dateStr };
-        }
-        // Advance day so next phase doesn't trigger same day
-        d.setDate(d.getDate() + 1);
-        continue;
       }
     }
 
     // Snowball payments on paycheck days
     if((day===7||day===22||d.getDay()===4) && snowballActive && currentSnowTarget !== null) {
-        const target = SNOWBALL_TARGETS[currentSnowTarget];
-        // Monthly income minus all fixed bills = surplus
-        const monthlyIn = JON_PAY * 2 + (S.karenAvgPay||762) * 4.33;
-        const monthlyOut = 3300; // approximate fixed outgoings
-        const monthlySurplus = Math.max(0, monthlyIn - monthlyOut);
-        const biweeklySurplus = monthlySurplus / 2;
-
-        if(cardBals[target.id] > 0) {
-          const payment = Math.min(cardBals[target.id], biweeklySurplus);
-          cardBals[target.id] -= payment;
-          if(cardBals[target.id] <= 0) {
-            cardBals[target.id] = 0;
-            milestones[target.id + '-done'] = { date:dateStr, label:target.label };
-            currentSnowTarget++;
-            if(currentSnowTarget >= SNOWBALL_TARGETS.length) {
-              milestones['debt-free'] = { date:dateStr };
-              currentSnowTarget = null;
-            }
+      const target = SNOWBALL_TARGETS[currentSnowTarget];
+      const monthlyIn = JON_PAY * 2 + (S.karenAvgPay||762) * 4.33;
+      const monthlyOut = 3300;
+      const biweeklySurplus = Math.max(0, monthlyIn - monthlyOut) / 2;
+      if(cardBals[target.id] > 0) {
+        const payment = Math.min(cardBals[target.id], biweeklySurplus);
+        cardBals[target.id] -= payment;
+        if(cardBals[target.id] <= 0) {
+          cardBals[target.id] = 0;
+          milestones[target.id + '-done'] = { date: dateStr, label: target.label };
+          currentSnowTarget++;
+          if(currentSnowTarget >= SNOWBALL_TARGETS.length) {
+            milestones['debt-free'] = { date: dateStr };
+            currentSnowTarget = null;
           }
         }
+      }
     }
 
-    // Advance day
     d.setDate(d.getDate() + 1);
     if(milestones['debt-free']) break;
   }
