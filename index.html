@@ -445,6 +445,14 @@ function getDailyBills(year, month, day) {
   // Groceries every Sunday
   if(dow===0) bills.push({label:'Fresh Market',amt:-200});
 
+  // Discretionary $200/mo -- $50 every Friday
+  if(dow===5) bills.push({label:'Discretionary',amt:-50});
+
+  // Transport -- gas $60 twice a month, carwash $11 biweekly, SunPass $20/mo
+  if(day===1) bills.push({label:'SunPass',amt:-20});
+  if(day===1||day===15) bills.push({label:'Gas',amt:-60});
+  if(day===7||day===21) bills.push({label:'Car wash',amt:-11});
+
   // Fixed monthly
   if(day===1&&key<='2026-05') bills.push({label:'Amazon Store Card',amt:-29});
   if(day===2) bills.push({label:'Amazon Prime',amt:-15});
@@ -498,6 +506,7 @@ function calcRoadmap() {
   // Repair buffer: $1,000 must be held in savings after Jon's tires
   // Don't count it as available balance
   let repairHeld = !repairBufDone && !phaseDone['jon-tires'] ? 0 : (!repairBufDone ? 1000 : 0);
+  let lastPhaseDate = null; // enforce minimum gap between phases
 
   let d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const maxDays = 48 * 30;
@@ -520,15 +529,18 @@ function calcRoadmap() {
 
     // Check if next phase is affordable
     // Must have: cost + $300 buffer + upcoming 14-day bills + repair buffer held
+    // Also enforce minimum 21-day gap between phases
     if(!snowballActive && pendingPhases.length > 0) {
       const nextPhase = pendingPhases[0];
-      if(!milestones[nextPhase.id]) {
+      const daysSinceLast = lastPhaseDate
+        ? Math.floor((d - lastPhaseDate) / 86400000) : 999;
+      if(!milestones[nextPhase.id] && daysSinceLast >= 21) {
         const upcoming = billsDueNext14(year, month, day);
         const needed = nextPhase.cost + BUFFER + upcoming + repairHeld;
         if(bal >= needed) {
           milestones[nextPhase.id] = { date: dateStr, bal: Math.round(bal) };
           bal -= nextPhase.cost;
-          // Release repair buffer if this is Karen's tires or later
+          lastPhaseDate = new Date(d);
           if(nextPhase.id === 'karen-tires') repairHeld = 0;
           pendingPhases.shift();
           if(pendingPhases.length === 0) {
