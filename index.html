@@ -37,6 +37,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .pin-key.del{font-size:18px;color:var(--t2);}
 .pin-key.empty{background:transparent;border-color:transparent;pointer-events:none;}
 .pin-error{font-size:13px;color:var(--red);margin-top:16px;height:18px;}
+.loading-screen{position:fixed;inset:0;background:var(--bg);z-index:998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.loading-screen.hidden{display:none;}
+.spinner{width:32px;height:32px;border:3px solid var(--br);border-top-color:var(--blu);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 .nav{display:flex;overflow-x:auto;background:var(--sf);border-bottom:1px solid var(--br);position:sticky;top:0;z-index:100;scrollbar-width:none;}
 .nav::-webkit-scrollbar{display:none;}
 .nb{flex-shrink:0;padding:13px 15px;font-size:12px;font-weight:600;color:var(--t3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;letter-spacing:.03em;text-transform:uppercase;}
@@ -111,9 +115,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--s3);color:var(--tx);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;border:0.5px solid var(--br);}
 .toast.show{opacity:1;}
 .sync-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-left:6px;vertical-align:middle;}
-.sync-ok{background:var(--grn);}
-.sync-err{background:var(--red);}
-.sync-pending{background:var(--amb);}
+.sok{background:var(--grn);}
+.serr{background:var(--red);}
+.spend{background:var(--amb);}
 .confirm-banner{background:var(--abg);border:1px solid var(--am);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;}
 .cb-title{font-size:14px;font-weight:700;color:var(--amb);margin-bottom:4px;}
 .cb-sub{font-size:12px;color:var(--t2);margin-bottom:10px;}
@@ -121,6 +125,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </head>
 <body>
 
+<!-- PIN -->
 <div class="pin-screen" id="pin-screen">
   <div class="pin-logo">💰</div>
   <div class="pin-title">HF Tracker</div>
@@ -148,6 +153,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="pin-error" id="pin-error"></div>
 </div>
 
+<!-- LOADING -->
+<div class="loading-screen hidden" id="loading-screen">
+  <div class="spinner"></div>
+  <div style="font-size:13px;color:var(--t3);">Loading your data...</div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <div class="mbg" id="mbg" onclick="closeModal()">
@@ -166,38 +177,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<nav class="nav">
+<nav class="nav" style="display:none;" id="main-nav">
   <button class="nb on" onclick="sw('week',this)">This Week</button>
   <button class="nb" onclick="sw('month',this)">Month Plan</button>
   <button class="nb" onclick="sw('snowball',this)">Snowball</button>
   <button class="nb" onclick="sw('bills',this)">Bills</button>
 </nav>
 
-<div class="panel on" id="p-week">
+<div class="panel on" id="p-week" style="display:none;">
   <div id="week-banner"></div>
   <div class="bstrip">
     <div class="bitem" onclick="editBal('4496')">
       <div class="bacct">#4496</div>
-      <div class="bnum" id="b4496" style="color:var(--blu);">$1,258</div>
+      <div class="bnum" id="b4496" style="color:var(--blu);">--</div>
     </div>
     <div class="bitem" onclick="editBal('6764')">
       <div class="bacct">#6764</div>
-      <div class="bnum" id="b6764" style="color:var(--blu);">$19</div>
+      <div class="bnum" id="b6764" style="color:var(--blu);">--</div>
     </div>
     <div class="bitem" onclick="editBal('0725')">
       <div class="bacct">Savings</div>
-      <div class="bnum" id="b0725" style="color:var(--pur);">$654</div>
+      <div class="bnum" id="b0725" style="color:var(--pur);">--</div>
     </div>
   </div>
   <div style="font-size:10px;color:var(--t3);text-align:center;margin-bottom:10px;">
     Tap any balance to update
-    <span class="sync-dot sync-pending" id="sync-dot"></span>
-    <span id="sync-label" style="font-size:10px;color:var(--t3);">loading...</span>
+    <span class="sync-dot spend" id="sync-dot"></span>
+    <span id="sync-label" style="font-size:10px;color:var(--t3);">connecting...</span>
   </div>
   <div id="week-content"></div>
 </div>
 
-<div class="panel" id="p-month">
+<div class="panel" id="p-month" style="display:none;">
   <div class="mnav">
     <button class="mnavbtn" onclick="changeMonth(-1)">← Prev</button>
     <div class="mnavtitle" id="month-title"></div>
@@ -206,11 +217,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="month-content"></div>
 </div>
 
-<div class="panel" id="p-snowball">
+<div class="panel" id="p-snowball" style="display:none;">
   <div id="snowball-content"></div>
 </div>
 
-<div class="panel" id="p-bills">
+<div class="panel" id="p-bills" style="display:none;">
   <div style="font-size:20px;font-weight:700;margin-bottom:2px;">Monthly bills</div>
   <div style="font-size:12px;color:var(--t3);margin-bottom:12px;">All autopay — tap to verify processed</div>
   <div class="card">
@@ -219,305 +230,347 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<script>
-// ── CONFIG ──
-const PIN='0628';
-const BIN_ID='69eba44736566621a8ea195b';
-const BIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
-const BIN_KEY='$2a$10$jBMTQjl8lb7zesYfWGhA9OjjKT8liQLsvtPslxazhldFED7fI5OWy';
-const PKEY='hft_auth';
-const LKEY='hft_state'; // stable key -- never change
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, onValue, set, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
-// ── PIN ──
-let pinEntry='';
-function checkAuth(){if(sessionStorage.getItem(PKEY)==='ok')document.getElementById('pin-screen').classList.add('hidden');}
-function pinKey(k){if(pinEntry.length>=4)return;pinEntry+=k;updateDots();if(pinEntry.length===4)setTimeout(checkPin,120);}
-function pinDel(){pinEntry=pinEntry.slice(0,-1);document.getElementById('pin-error').textContent='';updateDots(false);}
-function updateDots(err=false){for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);d.classList.toggle('filled',i<pinEntry.length&&!err);d.classList.toggle('error',err&&i<4);}}
-function checkPin(){
-  if(pinEntry===PIN){
-    sessionStorage.setItem(PKEY,'ok');
-    document.getElementById('pin-screen').classList.add('hidden');
-    loadFromCloud();
-  }else{
-    updateDots(true);
-    document.getElementById('pin-error').textContent='Incorrect PIN';
-    setTimeout(()=>{pinEntry='';updateDots(false);document.getElementById('pin-error').textContent='';},900);
-  }
-}
-document.addEventListener('keydown',e=>{if(document.getElementById('pin-screen').classList.contains('hidden'))return;if(e.key>='0'&&e.key<='9')pinKey(e.key);if(e.key==='Backspace')pinDel();});
+// ── FIREBASE CONFIG ──
+const firebaseConfig = {
+  apiKey: "AIzaSyDsd7Pr0AEQ3j6n-bKXv7n06vYf9Hvew7Y",
+  authDomain: "hf-tracker-81e76.firebaseapp.com",
+  databaseURL: "https://hf-tracker-81e76-default-rtdb.firebaseio.com",
+  projectId: "hf-tracker-81e76",
+  storageBucket: "hf-tracker-81e76.firebasestorage.app",
+  messagingSenderId: "810272700127",
+  appId: "1:810272700127:web:f72c67e2a9d839a8049b6a"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const stateRef = ref(db, 'state');
 
 // ── CONSTANTS ──
-const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const JON_PAY=1641;
-const KAREN_AVG=762;
-const now=new Date();
-const mKey=`${now.getFullYear()}-${now.getMonth()}`;
+const PIN = '0628';
+const PKEY = 'hft_auth';
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const JON_PAY = 1641;
+const KAREN_AVG = 762;
+const now = new Date();
+const mKey = `${now.getFullYear()}-${now.getMonth()}`;
 
 // ── STATE ──
-let S={};
-let syncPending=false;
-let syncTimer=null;
+let S = {};
+let saveTimer = null;
+let appReady = false;
 
-function defaultState(){
+function defaultState() {
   return {
     mKey,
-    bal4496:1258,bal6764:19,bal0725:654,
-    karenLastPay:810.79,
-    discSpent:0,discLog:[],
-    weeks:[null,null,null,null],
-    randySessions:[],
-    billChecks:{},pcChecks:{},
-    snowballPhase:0,currentTarget:0,snowballLog:[],
-    unexpected:[{label:'Vehicle registration renewal',acct:'4496',amt:220.40,date:'4/23/2026'}],
-    confirmed:{},
-    regLogged:true,
+    bal4496: 1258, bal6764: 19, bal0725: 654,
+    karenLastPay: 810.79,
+    discSpent: 0, discLog: [],
+    weeks: [null,null,null,null],
+    randySessions: [],
+    billChecks: {}, pcChecks: {},
+    snowballPhase: 0, currentTarget: 0, snowballLog: [],
+    unexpected: [{label:'Vehicle registration renewal',acct:'4496',amt:220.40,date:'4/23/2026'}],
+    confirmed: {},
+    regLogged: true,
   };
 }
 
-function resetMonthly(s){
-  s.mKey=mKey;s.discSpent=0;s.discLog=[];
-  s.weeks=[null,null,null,null];s.randySessions=[];
-  s.billChecks={};s.pcChecks={};
+function resetMonthly(s) {
+  s.mKey = mKey; s.discSpent = 0; s.discLog = [];
+  s.weeks = [null,null,null,null]; s.randySessions = [];
+  s.billChecks = {}; s.pcChecks = {};
   return s;
 }
 
-// ── CLOUD SYNC ──
-function setSyncStatus(status){
-  const dot=document.getElementById('sync-dot');
-  const label=document.getElementById('sync-label');
-  if(!dot||!label)return;
-  dot.className='sync-dot sync-'+status;
-  label.textContent=status==='ok'?'synced':status==='err'?'sync error':'saving...';
+// ── SYNC ──
+function setSyncStatus(status) {
+  const dot = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  if (!dot || !label) return;
+  dot.className = 'sync-dot ' + (status === 'ok' ? 'sok' : status === 'err' ? 'serr' : 'spend');
+  label.textContent = status === 'ok' ? 'synced' : status === 'err' ? 'sync error' : 'saving...';
 }
 
-async function loadFromCloud(){
-  setSyncStatus('pending');
-  try{
-    const res=await fetch(BIN_URL+'/latest',{headers:{'X-Master-Key':BIN_KEY}});
-    if(!res.ok)throw new Error('fetch failed');
-    const data=await res.json();
-    const cloud=data.record||{};
-    // Merge with defaults for any missing fields
-    S={...defaultState(),...cloud};
-    // Reset monthly if new month
-    if(S.mKey!==mKey)S=resetMonthly(S);
-    // Save to localStorage as backup
-    localStorage.setItem(LKEY,JSON.stringify(S));
-    setSyncStatus('ok');
-    renderAll();
-  }catch(e){
-    // Fall back to localStorage
-    console.warn('Cloud load failed, using localStorage',e);
-    const local=localStorage.getItem(LKEY);
-    S=local?JSON.parse(local):defaultState();
-    if(S.mKey!==mKey)S=resetMonthly(S);
-    setSyncStatus('err');
-    renderAll();
-  }
-}
-
-async function saveToCloud(){
-  // Save to localStorage immediately
-  localStorage.setItem(LKEY,JSON.stringify(S));
-  // Debounce cloud save -- wait 1.5s after last change
-  setSyncStatus('pending');
-  if(syncTimer)clearTimeout(syncTimer);
-  syncTimer=setTimeout(async()=>{
-    try{
-      const res=await fetch(BIN_URL,{
-        method:'PUT',
-        headers:{'Content-Type':'application/json','X-Master-Key':BIN_KEY},
-        body:JSON.stringify(S)
-      });
-      if(!res.ok)throw new Error('save failed');
+function save(s) {
+  S = s;
+  setSyncStatus('spend');
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await set(stateRef, S);
       setSyncStatus('ok');
-    }catch(e){
-      console.warn('Cloud save failed',e);
+    } catch(e) {
+      console.warn('Firebase save failed', e);
       setSyncStatus('err');
     }
-  },1500);
+  }, 800);
 }
 
-function save(s){S=s;saveToCloud();}
+async function loadFromFirebase() {
+  document.getElementById('loading-screen').classList.remove('hidden');
+  try {
+    const snap = await get(stateRef);
+    if (snap.exists()) {
+      S = { ...defaultState(), ...snap.val() };
+    } else {
+      S = defaultState();
+      await set(stateRef, S);
+    }
+    if (S.mKey !== mKey) S = resetMonthly(S);
+    setSyncStatus('ok');
+  } catch(e) {
+    console.warn('Firebase load failed', e);
+    S = defaultState();
+    setSyncStatus('err');
+  }
+  document.getElementById('loading-screen').classList.add('hidden');
+  document.getElementById('main-nav').style.display = 'flex';
+  document.querySelectorAll('.panel').forEach(p => p.style.display = '');
+  // Restore correct panel display
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.getElementById('p-week').classList.add('on');
+  appReady = true;
+  renderAll();
+  // Listen for real-time updates from other devices
+  onValue(stateRef, snap => {
+    if (!snap.exists()) return;
+    const remote = snap.val();
+    // Only update if remote is newer (avoid overwriting our own pending save)
+    if (!saveTimer) {
+      S = { ...defaultState(), ...remote };
+      if (S.mKey !== mKey) S = resetMonthly(S);
+      renderAll();
+      setSyncStatus('ok');
+    }
+  });
+}
+
+// ── PIN ──
+let pinEntry = '';
+function checkAuth() {
+  if (sessionStorage.getItem(PKEY) === 'ok') {
+    document.getElementById('pin-screen').classList.add('hidden');
+    loadFromFirebase();
+  }
+}
+window.pinKey = function(k) {
+  if (pinEntry.length >= 4) return;
+  pinEntry += k;
+  updateDots();
+  if (pinEntry.length === 4) setTimeout(checkPin, 120);
+};
+window.pinDel = function() {
+  pinEntry = pinEntry.slice(0, -1);
+  document.getElementById('pin-error').textContent = '';
+  updateDots(false);
+};
+function updateDots(err = false) {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('pd' + i);
+    d.classList.toggle('filled', i < pinEntry.length && !err);
+    d.classList.toggle('error', err && i < 4);
+  }
+}
+function checkPin() {
+  if (pinEntry === PIN) {
+    sessionStorage.setItem(PKEY, 'ok');
+    document.getElementById('pin-screen').classList.add('hidden');
+    loadFromFirebase();
+  } else {
+    updateDots(true);
+    document.getElementById('pin-error').textContent = 'Incorrect PIN';
+    setTimeout(() => { pinEntry = ''; updateDots(false); document.getElementById('pin-error').textContent = ''; }, 900);
+  }
+}
+document.addEventListener('keydown', e => {
+  if (document.getElementById('pin-screen').classList.contains('hidden')) return;
+  if (e.key >= '0' && e.key <= '9') window.pinKey(e.key);
+  if (e.key === 'Backspace') window.pinDel();
+});
 
 // ── ROUTING ──
-function sw(id,el){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
-  document.getElementById('p-'+id).classList.add('on');
+window.sw = function(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  document.getElementById('p-' + id).classList.add('on');
   el.classList.add('on');
-  window.scrollTo(0,0);
-  if(id==='week')renderWeek();
-  if(id==='month')renderMonth();
-  if(id==='snowball')renderSnowball();
-  if(id==='bills')renderBills();
+  window.scrollTo(0, 0);
+  if (id === 'week') renderWeek();
+  if (id === 'month') renderMonth();
+  if (id === 'snowball') renderSnowball();
+  if (id === 'bills') renderBills();
+};
+function routeHash() {
+  const h = location.hash.replace('#', '');
+  const map = { week: 0, month: 1, snowball: 2, bills: 3 };
+  if (h && map[h] !== undefined && appReady) window.sw(h, document.querySelectorAll('.nb')[map[h]]);
 }
-function routeHash(){const h=location.hash.replace('#','');const map={week:0,month:1,snowball:2,bills:3};if(h&&map[h]!==undefined)sw(h,document.querySelectorAll('.nb')[map[h]]);}
-window.addEventListener('hashchange',routeHash);
+window.addEventListener('hashchange', routeHash);
 
-function renderAll(){renderWeek();renderMonth();renderSnowball();renderBills();}
+function renderAll() { renderWeek(); renderMonth(); renderSnowball(); renderBills(); }
 
 // ── TOAST ──
-function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+window.toast = function(m) {
+  const t = document.getElementById('toast');
+  t.textContent = m; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+};
 
 // ── MODAL ──
-let modalMode='';
-function openModal(mode,title,showLabel=false,showAcct=false){
-  modalMode=mode;
-  document.getElementById('mtitle').textContent=title;
-  document.getElementById('mi-label').style.display=showLabel?'block':'none';
-  document.getElementById('mi-acct').style.display=showAcct?'block':'none';
-  document.getElementById('mi-amt').value='';
-  document.getElementById('mi-label').value='';
+let modalMode = '';
+window.openModal = function(mode, title, showLabel = false, showAcct = false) {
+  modalMode = mode;
+  document.getElementById('mtitle').textContent = title;
+  document.getElementById('mi-label').style.display = showLabel ? 'block' : 'none';
+  document.getElementById('mi-acct').style.display = showAcct ? 'block' : 'none';
+  document.getElementById('mi-amt').value = '';
+  document.getElementById('mi-label').value = '';
   document.getElementById('mbg').classList.add('show');
-  setTimeout(()=>document.getElementById('mi-amt').focus(),120);
-}
-function closeModal(){document.getElementById('mbg').classList.remove('show');}
-function submitModal(){
-  const amt=parseFloat(document.getElementById('mi-amt').value);
-  if(isNaN(amt)||amt<=0){toast('Enter valid amount');return;}
-  const label=document.getElementById('mi-label').value||'Expense';
-  const acct=document.getElementById('mi-acct').value||'4496';
+  setTimeout(() => document.getElementById('mi-amt').focus(), 120);
+};
+window.closeModal = function() { document.getElementById('mbg').classList.remove('show'); };
+window.submitModal = function() {
+  const amt = parseFloat(document.getElementById('mi-amt').value);
+  if (isNaN(amt) || amt <= 0) { toast('Enter valid amount'); return; }
+  const label = document.getElementById('mi-label').value || 'Expense';
+  const acct = document.getElementById('mi-acct').value || '4496';
   closeModal();
-  if(modalMode==='bal4496'){S.bal4496=amt;save(S);renderWeek();toast('#4496 updated');}
-  if(modalMode==='bal6764'){S.bal6764=amt;save(S);renderWeek();toast('#6764 updated');}
-  if(modalMode==='bal0725'){S.bal0725=amt;save(S);renderWeek();toast('Savings updated');}
-  if(modalMode==='karen-pay'){S.karenLastPay=amt;S.bal4496+=amt;save(S);renderWeek();toast(`Karen's $${amt} added to #4496`);}
-  if(modalMode==='spend'){addSpend(amt,label);}
-  if(modalMode==='unexpected'){addUnexpected(label,acct,amt);}
-  if(modalMode==='snowball'){logSnowballPmt(amt);}
-}
-function editBal(a){openModal('bal'+a,`Update #${a==='0725'?'savings':a} balance`);}
+  if (modalMode === 'bal4496') { S.bal4496 = amt; save(S); renderWeek(); toast('#4496 updated'); }
+  if (modalMode === 'bal6764') { S.bal6764 = amt; save(S); renderWeek(); toast('#6764 updated'); }
+  if (modalMode === 'bal0725') { S.bal0725 = amt; save(S); renderWeek(); toast('Savings updated'); }
+  if (modalMode === 'karen-pay') { S.karenLastPay = amt; S.bal4496 += amt; save(S); renderWeek(); toast(`Karen's $${amt} added to #4496`); }
+  if (modalMode === 'spend') { addSpend(amt, label); }
+  if (modalMode === 'unexpected') { addUnexpected(label, acct, amt); }
+  if (modalMode === 'snowball') { logSnowballPmt(amt); }
+};
+window.editBal = function(a) { openModal('bal' + a, `Update #${a === '0725' ? 'savings' : a} balance`); };
 
 // ── EVENTS ENGINE ──
-function getEvents(year,month){
-  const evts=[];
-  const add=(day,title,amt,color,note,isIncome=false)=>{
-    const dim=new Date(year,month+1,0).getDate();
-    if(day>=1&&day<=dim)evts.push({day,title,amt,color,note,isIncome});
+function getEvents(year, month) {
+  const evts = [];
+  const add = (day, title, amt, color, note, isIncome = false) => {
+    const dim = new Date(year, month + 1, 0).getDate();
+    if (day >= 1 && day <= dim) evts.push({ day, title, amt, color, note, isIncome });
   };
-  const key=`${year}-${String(month+1).padStart(2,'0')}`;
-  const dim=new Date(year,month+1,0).getDate();
-  const fromDay=(year===2026&&month===3)?22:1;
-  const karenAmt=S.karenLastPay||KAREN_AVG;
+  const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const dim = new Date(year, month + 1, 0).getDate();
+  const fromDay = (year === 2026 && month === 3) ? 22 : 1;
+  const karenAmt = S.karenLastPay || KAREN_AVG;
+  const phase = S.snowballPhase || 0;
 
-  // Jon paychecks
-  const phase=S.snowballPhase||0;
-  const pcNote=phase>=4
-    ?' → Transfer surplus to snowball same day'
-    :month===4?' → Let surplus build for tires May 9'
-    :month===5?' → Let surplus build for Karen\'s tires'
-    :month===6?' → Let surplus build for dental + glasses'
-    :' → Let surplus build in #4496';
-  if(7>=fromDay) add(7,'Jon paycheck',JON_PAY,'#97C459',pcNote,true);
-  if(22>=fromDay) add(22,'Jon paycheck',JON_PAY,'#97C459',pcNote,true);
+  // Phase-aware paycheck note
+  const pcNote = phase >= 4
+    ? '→ Transfer surplus to snowball same day'
+    : month === 4 ? "→ Let surplus build — tires May 9"
+    : month === 5 ? "→ Let surplus build — Karen's tires"
+    : month === 6 ? "→ Let surplus build — dental + glasses"
+    : '→ Surplus building for upcoming expenses';
 
-  // Karen paychecks every Thursday
-  for(let d=fromDay;d<=dim;d++){
-    if(new Date(year,month,d).getDay()===4)
-      add(d,'Karen paycheck — Copans',karenAmt,'#97C459','→ Transfer full amount to #4496 same day',true);
+  if (7 >= fromDay) add(7, 'Jon paycheck', JON_PAY, '#97C459', pcNote, true);
+  if (22 >= fromDay) add(22, 'Jon paycheck', JON_PAY, '#97C459', pcNote, true);
+
+  for (let d = fromDay; d <= dim; d++) {
+    if (new Date(year, month, d).getDay() === 4)
+      add(d, 'Karen paycheck — Copans', karenAmt, '#97C459', '→ Transfer full amount to #4496 same day', true);
   }
 
-  // Fresh Market every Sunday
-  for(let d=fromDay;d<=dim;d++){
-    if(new Date(year,month,d).getDay()===0)
-      add(d,'Fresh Market',-200,'#85B7EB','$200/wk hard limit');
+  for (let d = fromDay; d <= dim; d++) {
+    if (new Date(year, month, d).getDay() === 0)
+      add(d, 'Fresh Market', -200, '#85B7EB', '$200/wk hard limit');
   }
 
-  // Fixed bills
-  if(key<='2026-05') add(1,'Amazon Store Card',-29,'#F09595','~29% APR');
-  add(2,'Amazon Prime',-15,'#666660','Subscription');
-  // Real-Debrid quarterly: Apr, Jul, Oct, Jan
-  if([0,3,6,9].includes(month)) add(2,'Real-Debrid',-11,'#666660','Quarterly $11');
-  add(4,'PayPal eBay',-43,'#EF9F27','35.99% APR fixed · done Aug 2027');
-  add(4,'ChatGPT',-22,'#666660','Karen subscription');
-  add(4,'Zelle Randy',-150,'#97C459','Personal training biweekly');
-  add(18,'Zelle Randy',-150,'#97C459','Personal training biweekly');
-  add(9,'Mazda CX-5',-638,'#EF9F27','12.72% APR · payoff Aug 2029');
-  add(11,'Merrick Bank',-35,'#F09595','31.95% APR');
-  if(key<='2026-10') add(13,'Affirm cluster',-131,'#b4b2a9','0% APR — verify in Affirm app');
-  if(key<='2027-01') add(13,'PayPal Newegg',-61,'#EF9F27','35.99% APR fixed');
-  add(13,'Karen PayPal Credit',-100,'#F09595','29.64% APR — MANUAL · hardship plan pending');
-  add(13,'Claude.ai',-20,'#666660','Subscription');
-  add(15,'T-Mobile',-152,'#b4b2a9','Both phones');
-  add(15,'IRS payment #1',-68,'#EF9F27','Installment plan · #4496');
-  add(16,'IRS payment #2',-35,'#EF9F27','Installment plan · #4496');
-  add(16,'AT&T fiber',-166,'#b4b2a9','Internet');
-  add(22,'Jon PayPal Credit',-22,'#b4b2a9','0% Customer Assistance Plan — do NOT overpay');
-  if(key<='2027-12') add(22,'TN unemployment',-153,'#EF9F27','~$153/mo');
-  add(22,'Spotify',-22,'#666660','Subscription');
-  add(23,'State Farm',-190,'#b4b2a9','Auto insurance · monitor — showing $160.27 Apr');
-  add(26,'Chase/Amazon',-26,'#b4b2a9','APR TBD — verify');
-  if(key<='2027-03'&&!(year===2026&&month===3)) add(30,'PayPal Chinese vendor',-95,'#EF9F27','24.99% APR fixed');
+  if (key <= '2026-05') add(1, 'Amazon Store Card', -29, '#F09595', '~29% APR');
+  add(2, 'Amazon Prime', -15, '#666660', 'Subscription');
+  if ([0, 3, 6, 9].includes(month)) add(2, 'Real-Debrid', -11, '#666660', 'Quarterly $11');
+  add(4, 'PayPal eBay', -43, '#EF9F27', '35.99% APR fixed · done Aug 2027');
+  add(4, 'ChatGPT', -22, '#666660', 'Karen subscription');
+  add(4, 'Zelle Randy', -150, '#97C459', 'Personal training biweekly');
+  add(18, 'Zelle Randy', -150, '#97C459', 'Personal training biweekly');
+  add(9, 'Mazda CX-5', -638, '#EF9F27', '12.72% APR · payoff Aug 2029');
+  add(11, 'Merrick Bank', -35, '#F09595', '31.95% APR');
+  if (key <= '2026-10') add(13, 'Affirm cluster', -131, '#b4b2a9', '0% APR — verify in Affirm app');
+  if (key <= '2027-01') add(13, 'PayPal Newegg', -61, '#EF9F27', '35.99% APR fixed');
+  add(13, 'Karen PayPal Credit', -100, '#F09595', '29.64% APR — MANUAL · hardship plan pending');
+  add(13, 'Claude.ai', -20, '#666660', 'Subscription');
+  add(15, 'T-Mobile', -152, '#b4b2a9', 'Both phones');
+  add(15, 'IRS payment #1', -68, '#EF9F27', 'Installment plan');
+  add(16, 'IRS payment #2', -35, '#EF9F27', 'Installment plan');
+  add(16, 'AT&T fiber', -166, '#b4b2a9', 'Internet');
+  add(22, 'Jon PayPal Credit', -22, '#b4b2a9', '0% Customer Assistance Plan — do NOT overpay');
+  if (key <= '2027-12') add(22, 'TN unemployment', -153, '#EF9F27', '~$153/mo');
+  add(22, 'Spotify', -22, '#666660', 'Subscription');
+  add(23, 'State Farm', -190, '#b4b2a9', 'Auto insurance · monitor — showing $160.27 Apr');
+  add(26, 'Chase/Amazon', -26, '#b4b2a9', 'APR TBD — verify');
+  if (key <= '2027-03' && !(year === 2026 && month === 3)) add(30, 'PayPal Chinese vendor', -95, '#EF9F27', '24.99% APR fixed');
 
-  // One-time
-  if(year===2026&&month===3){
-    add(23,'Vehicle registration',-220,'#F09595','One-time renewal');
-    add(30,'PayPal Chinese — FIRST PMT',-95,'#F09595','Confirm autopay set');
+  if (year === 2026 && month === 3) {
+    add(23, 'Vehicle registration', -220, '#F09595', 'One-time renewal');
+    add(30, 'PayPal Chinese — FIRST PMT', -95, '#F09595', 'Confirm autopay set');
   }
-  if(year===2026&&month===4) add(9,"JON'S TIRES + OIL",-1500,'#F09595','Mazda dealer · $1,500 max · $1,000 buffer stays in savings');
-  if(year===2026&&month===5) add(6,"KAREN'S TIRES",-1000,'#F09595','Mazda dealer · $1,000');
-  if(year===2026&&month===6){
-    add(1,'Dental — Jon + Karen',-500,'#EF9F27','Applied ABC insurance · ~$500 OOP');
-    add(1,'Glasses — Jon + Karen',-1000,'#EF9F27','Vision insurance · ~$1,000 total');
+  if (year === 2026 && month === 4) add(9, "JON'S TIRES + OIL", -1500, '#F09595', 'Mazda dealer · $1,500 max · $1,000 buffer stays in savings');
+  if (year === 2026 && month === 5) add(6, "KAREN'S TIRES", -1000, '#F09595', 'Mazda dealer · $1,000');
+  if (year === 2026 && month === 6) {
+    add(1, 'Dental — Jon + Karen', -500, '#EF9F27', 'Applied ABC insurance · ~$500 OOP');
+    add(1, 'Glasses — Jon + Karen', -1000, '#EF9F27', 'Vision insurance · ~$1,000 total');
   }
-  if(year===2026&&month===7) add(1,'🚀 SNOWBALL LAUNCHES',0,'#97C459','All expenses done. $2,800+/mo attacks debt.');
+  if (year === 2026 && month === 7) add(1, '🚀 SNOWBALL LAUNCHES', 0, '#97C459', 'All expenses done. $2,800+/mo attacks debt.');
 
-  evts.sort((a,b)=>a.day-b.day);
+  evts.sort((a, b) => a.day - b.day);
   return evts;
 }
 
 // ── SURPLUS CALC ──
-function nextPC(day){return day<7?7:day<22?22:7;}
-function nextPCMonth(day){return day>=22?(now.getMonth()+1>11?0:now.getMonth()+1):now.getMonth();}
-function calcSurplus(){
-  const today=now.getDate();
-  const npc=nextPC(today);
-  const npcm=nextPCMonth(today);
-  const evts=getEvents(now.getFullYear(),now.getMonth());
-  const isSame=npcm===now.getMonth();
-  const endDay=isSame?npc:32;
-  const due=evts.filter(e=>!e.isIncome&&typeof e.amt==='number'&&e.amt<0&&e.day>today&&e.day<endDay);
-  const totalDue=due.reduce((a,e)=>a+Math.abs(e.amt),0);
-  const safe=Math.max(0,S.bal4496-totalDue);
-  return{due,totalDue,safe,npcLabel:`${MONTHS[npcm].substring(0,3)} ${npc}`};
+function nextPC(day) { return day < 7 ? 7 : day < 22 ? 22 : 7; }
+function nextPCMonth(day) { return day >= 22 ? (now.getMonth() + 1 > 11 ? 0 : now.getMonth() + 1) : now.getMonth(); }
+function calcSurplus() {
+  const today = now.getDate();
+  const npc = nextPC(today);
+  const npcm = nextPCMonth(today);
+  const evts = getEvents(now.getFullYear(), now.getMonth());
+  const isSame = npcm === now.getMonth();
+  const endDay = isSame ? npc : 32;
+  const due = evts.filter(e => !e.isIncome && typeof e.amt === 'number' && e.amt < 0 && e.day > today && e.day < endDay);
+  const totalDue = due.reduce((a, e) => a + Math.abs(e.amt), 0);
+  const safe = Math.max(0, S.bal4496 - totalDue);
+  return { due, totalDue, safe, npcLabel: `${MONTHS[npcm].substring(0, 3)} ${npc}` };
 }
 
 // ── THIS WEEK ──
-function renderWeek(){
-  document.getElementById('b4496').textContent='$'+Math.round(S.bal4496).toLocaleString();
-  document.getElementById('b6764').textContent='$'+Math.round(S.bal6764).toLocaleString();
-  document.getElementById('b0725').textContent='$'+Math.round(S.bal0725).toLocaleString();
+function renderWeek() {
+  document.getElementById('b4496').textContent = '$' + Math.round(S.bal4496).toLocaleString();
+  document.getElementById('b6764').textContent = '$' + Math.round(S.bal6764).toLocaleString();
+  document.getElementById('b0725').textContent = '$' + Math.round(S.bal0725).toLocaleString();
 
-  const today=now.getDate();
-  document.getElementById('week-banner').innerHTML=`
+  const today = now.getDate();
+  document.getElementById('week-banner').innerHTML = `
     <div style="background:var(--abg);border:1px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">
       <div style="font-size:13px;font-weight:700;color:var(--amb);">Today — ${MONTHS[now.getMonth()]} ${today}, ${now.getFullYear()} (${DAYS[now.getDay()]})</div>
       <div style="font-size:11px;color:var(--t2);">Tap any balance to update · Unexpected charges auto-deduct</div>
     </div>`;
 
-  const sur=calcSurplus();
-  const phase=S.snowballPhase||0;
-  const safeColor=sur.safe<300?'var(--red)':sur.safe<600?'var(--amb)':'var(--grn)';
-  const phaseAction=phase>=4?'→ Extra payment to snowball target':'→ Let it build for upcoming expenses';
+  const sur = calcSurplus();
+  const phase = S.snowballPhase || 0;
+  const safeColor = sur.safe < 300 ? 'var(--red)' : sur.safe < 600 ? 'var(--amb)' : 'var(--grn)';
+  const phaseAction = phase >= 4 ? '→ Extra payment to snowball target' : '→ Surplus building for upcoming expenses';
 
-  let html='';
+  let html = '';
 
-  // Confirmation banners
-  const todayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(today).padStart(2,'0')}`;
-  if((today===7||today===22)&&!(S.confirmed&&S.confirmed[`jon-${todayKey}`])){
-    html+=`<div class="confirm-banner">
+  const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(today).padStart(2, '0')}`;
+  if ((today === 7 || today === 22) && !(S.confirmed && S.confirmed[`jon-${todayKey}`])) {
+    html += `<div class="confirm-banner">
       <div class="cb-title">💰 Jon paycheck landed today</div>
-      <div class="cb-sub">${phase>=4?`Transfer $${Math.round(sur.safe).toLocaleString()} to snowball target now`:'Surplus building in #4496 for upcoming expenses — no transfer needed today'}</div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btng btnsm" style="flex:1;margin:0;" onclick="confirmAction('jon-${todayKey}')">✓ Got it</button>
-      </div>
+      <div class="cb-sub">${phase >= 4 ? `Transfer $${Math.round(sur.safe).toLocaleString()} to snowball target now` : 'Surplus stays in #4496 — building for upcoming expenses'}</div>
+      <button class="btn btng btnsm" style="margin:0;" onclick="confirmAction('jon-${todayKey}')">✓ Got it</button>
     </div>`;
   }
-  if(now.getDay()===4&&!(S.confirmed&&S.confirmed[`karen-${todayKey}`])){
-    html+=`<div class="confirm-banner">
+  if (now.getDay() === 4 && !(S.confirmed && S.confirmed[`karen-${todayKey}`])) {
+    html += `<div class="confirm-banner">
       <div class="cb-title">💰 Karen paycheck expected today</div>
       <div class="cb-sub">Enter actual amount and confirm it landed in #4496</div>
       <div style="display:flex;gap:8px;margin-top:6px;">
@@ -527,8 +580,7 @@ function renderWeek(){
     </div>`;
   }
 
-  // Surplus card
-  html+=`<div class="card" style="border-color:var(--bm)40;">
+  html += `<div class="card" style="border-color:var(--bm)40;">
     <div class="ct">Safe to transfer — before ${sur.npcLabel}</div>
     <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px;">
       <div>
@@ -540,54 +592,52 @@ function renderWeek(){
         <div style="font-size:10px;color:var(--t3);">still due</div>
       </div>
     </div>`;
-  sur.due.forEach(e=>{
-    const ord=e.day%10===1&&e.day!==11?'st':e.day%10===2&&e.day!==12?'nd':e.day%10===3&&e.day!==13?'rd':'th';
-    html+=`<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:0.5px solid var(--br);font-size:12px;">
+  sur.due.forEach(e => {
+    const ord = e.day % 10 === 1 && e.day !== 11 ? 'st' : e.day % 10 === 2 && e.day !== 12 ? 'nd' : e.day % 10 === 3 && e.day !== 13 ? 'rd' : 'th';
+    html += `<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:0.5px solid var(--br);font-size:12px;">
       <span style="color:var(--t2);">${e.title} <span style="color:var(--t3);">~${e.day}${ord}</span></span>
       <span style="color:var(--red);">-$${Math.abs(e.amt).toLocaleString()}</span>
     </div>`;
   });
-  html+=`</div>`;
+  html += `</div>`;
 
-  // Next 7 days
-  const evts=getEvents(now.getFullYear(),now.getMonth());
-  const weekEvts=evts.filter(e=>e.day>=today&&e.day<=today+7);
-  const byDay={};
-  weekEvts.forEach(e=>{if(!byDay[e.day])byDay[e.day]=[];byDay[e.day].push(e);});
-  const days=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
-  if(days.length){
-    html+=`<div class="card"><div class="ct">Next 7 days</div>`;
-    days.forEach(day=>{
-      const isToday=day===today;
-      const dow=DAYS[new Date(now.getFullYear(),now.getMonth(),day).getDay()];
-      html+=`<div style="margin-bottom:2px;"><div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:5px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
-      byDay[day].forEach(e=>{
-        const isInc=e.isIncome;
-        const ac=isInc?'var(--grn)':Math.abs(e.amt||0)>500?'var(--red)':'var(--t2)';
-        const as=typeof e.amt==='number'&&e.amt!==0?(e.amt>0?'+$'+e.amt.toLocaleString():'-$'+Math.abs(e.amt).toLocaleString()):'';
-        html+=`<div class="event" style="padding:5px 0;">
+  const evts = getEvents(now.getFullYear(), now.getMonth());
+  const weekEvts = evts.filter(e => e.day >= today && e.day <= today + 7);
+  const byDay = {};
+  weekEvts.forEach(e => { if (!byDay[e.day]) byDay[e.day] = []; byDay[e.day].push(e); });
+  const days = Object.keys(byDay).map(Number).sort((a, b) => a - b);
+  if (days.length) {
+    html += `<div class="card"><div class="ct">Next 7 days</div>`;
+    days.forEach(day => {
+      const isToday = day === today;
+      const dow = DAYS[new Date(now.getFullYear(), now.getMonth(), day).getDay()];
+      html += `<div style="margin-bottom:2px;"><div style="font-size:10px;color:${isToday ? 'var(--amb)' : 'var(--t3)'};font-weight:700;padding:5px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday ? 'TODAY — ' : ''}${dow} ${day}</div>`;
+      byDay[day].forEach(e => {
+        const isInc = e.isIncome;
+        const ac = isInc ? 'var(--grn)' : Math.abs(e.amt || 0) > 500 ? 'var(--red)' : 'var(--t2)';
+        const as = typeof e.amt === 'number' && e.amt !== 0 ? (e.amt > 0 ? '+$' + e.amt.toLocaleString() : '-$' + Math.abs(e.amt).toLocaleString()) : '';
+        html += `<div class="event" style="padding:5px 0;">
           <div class="edot" style="background:${e.color};margin-top:4px;"></div>
           <div class="econtent">
             <div class="etitle" style="font-size:12px;">${e.title}</div>
-            ${e.note?`<div class="esub">${e.note}</div>`:''}
+            ${e.note ? `<div class="esub">${e.note}</div>` : ''}
           </div>
-          ${as?`<div class="eamt" style="color:${ac};font-size:12px;">${as}</div>`:''}
+          ${as ? `<div class="eamt" style="color:${ac};font-size:12px;">${as}</div>` : ''}
         </div>`;
       });
-      html+='</div>';
+      html += '</div>';
     });
-    html+=`</div>`;
+    html += `</div>`;
   }
 
-  // Spending pool
-  const spent=S.discSpent||0;
-  const rem=Math.max(0,200-spent);
-  const pct=Math.min(100,(spent/200)*100);
-  const sc=pct>80?'var(--red)':pct>50?'var(--amb)':'var(--grn)';
-  const cw=Math.min(3,Math.floor((today-1)/7));
-  html+=`<div class="card">
+  const spent = S.discSpent || 0;
+  const rem = Math.max(0, 200 - spent);
+  const pct = Math.min(100, (spent / 200) * 100);
+  const sc = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amb)' : 'var(--grn)';
+  const cw = Math.min(3, Math.floor((today - 1) / 7));
+  html += `<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <div class="ct" style="margin-bottom:0;">Discretionary — ${MONTHS[now.getMonth()].substring(0,3)}</div>
+      <div class="ct" style="margin-bottom:0;">Discretionary — ${MONTHS[now.getMonth()].substring(0, 3)}</div>
       <div style="font-size:11px;color:var(--t3);">$200/mo cap</div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4px;">
@@ -596,10 +646,10 @@ function renderWeek(){
     </div>
     <div class="prog"><div class="progfill" style="width:${pct}%;background:${sc};"></div></div>
     <div class="wgrid">
-      ${['Wk1','Wk2','Wk3','Wk4'].map((l,i)=>{
-        const st=(S.weeks||[])[i];
-        const cls=st==='used'?'used':i===cw?'cur':'';
-        const val=st==='used'?'-$50':'$50';
+      ${['Wk1','Wk2','Wk3','Wk4'].map((l, i) => {
+        const st = (S.weeks || [])[i];
+        const cls = st === 'used' ? 'used' : i === cw ? 'cur' : '';
+        const val = st === 'used' ? '-$50' : '$50';
         return `<div class="wp ${cls}" onclick="toggleWeek(${i})"><div class="wplabel">${l}</div><div class="wpval">${val}</div></div>`;
       }).join('')}
     </div>
@@ -610,44 +660,41 @@ function renderWeek(){
     </div>
   </div>`;
 
-  // Randy
-  const rs=(S.randySessions||[]).filter(s=>{const d=new Date(s.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
-  const rt=rs.reduce((a,s)=>a+s.amt,0);
-  html+=`<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rs.length?'10px':'0'};">
+  const rs = (S.randySessions || []).filter(s => { const d = new Date(s.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+  const rt = rs.reduce((a, s) => a + s.amt, 0);
+  html += `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rs.length ? '10px' : '0'};">
       <div>
         <div class="ct" style="margin-bottom:2px;">Randy — training</div>
-        <div style="font-size:22px;font-weight:700;color:var(--grn);">$${rt} <span style="font-size:12px;color:var(--t3);font-weight:400;">${rs.length} session${rs.length!==1?'s':''} this month</span></div>
+        <div style="font-size:22px;font-weight:700;color:var(--grn);">$${rt} <span style="font-size:12px;color:var(--t3);font-weight:400;">${rs.length} session${rs.length !== 1 ? 's' : ''} this month</span></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
         <button class="btn btng btnsm" style="width:auto;margin:0;padding:10px 16px;" onclick="logRandy()">✓ $150</button>
-        ${rs.length?`<button class="btn btnr btnsm" style="width:auto;margin:0;padding:6px 12px;font-size:11px;" onclick="undoRandy()">Undo last</button>`:''}
+        ${rs.length ? `<button class="btn btnr btnsm" style="width:auto;margin:0;padding:6px 12px;font-size:11px;" onclick="undoRandy()">Undo last</button>` : ''}
       </div>
     </div>
-    ${rs.length?`<div>${rs.slice(0,3).map((s,i)=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:0.5px solid var(--br);"><span style="color:var(--t2);">Session ${rs.length-i} · ${s.date}</span><span style="color:var(--grn);">$${s.amt}</span></div>`).join('')}</div>`:''}
+    ${rs.length ? `<div>${rs.slice(0, 3).map((s, i) => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:0.5px solid var(--br);"><span style="color:var(--t2);">Session ${rs.length - i} · ${s.date}</span><span style="color:var(--grn);">$${s.amt}</span></div>`).join('')}</div>` : ''}
   </div>`;
 
-  // Karen pay
-  html+=`<div class="card">
+  html += `<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div>
         <div class="ct" style="margin-bottom:2px;">Karen's last pay</div>
-        <div style="font-size:18px;font-weight:700;color:var(--amb);">$${S.karenLastPay||762}</div>
+        <div style="font-size:18px;font-weight:700;color:var(--amb);">$${S.karenLastPay || 762}</div>
         <div style="font-size:11px;color:var(--t3);">Update every Thursday when check lands</div>
       </div>
       <button class="btn btna btnsm" style="width:auto;margin:0;padding:10px 16px;" onclick="openModal('karen-pay','Karen\\'s actual pay')">Update</button>
     </div>
   </div>`;
 
-  // Unexpected charges
-  const unexp=S.unexpected||[];
-  if(unexp.length){
-    html+=`<div class="card">
+  const unexp = S.unexpected || [];
+  if (unexp.length) {
+    html += `<div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div class="ct" style="margin-bottom:0;">Unexpected charges</div>
         <button class="btn btno btnsm" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="clearUnexpected()">Clear</button>
       </div>
-      ${unexp.slice(0,5).map(e=>`
+      ${unexp.slice(0, 5).map(e => `
         <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:0.5px solid var(--br);font-size:12px;">
           <div><div style="font-weight:600;color:var(--tx);">${e.label}</div><div style="color:var(--t3);">#${e.acct} · ${e.date}</div></div>
           <div style="color:var(--red);font-weight:700;">-$${e.amt.toFixed(2)}</div>
@@ -655,11 +702,10 @@ function renderWeek(){
     </div>`;
   }
 
-  // Spend log
-  const log=S.discLog||[];
-  if(log.length){
-    html+=`<div class="card"><div class="ct">Spend log</div>
-      ${log.slice(0,8).map(e=>`
+  const log = S.discLog || [];
+  if (log.length) {
+    html += `<div class="card"><div class="ct">Spend log</div>
+      ${log.slice(0, 8).map(e => `
         <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--br);font-size:12px;">
           <span style="color:var(--t2);">${e.label} · ${e.date}</span>
           <span style="color:var(--red);">-$${e.amt.toFixed(2)}</span>
@@ -668,192 +714,194 @@ function renderWeek(){
     </div>`;
   }
 
-  document.getElementById('week-content').innerHTML=html;
+  document.getElementById('week-content').innerHTML = html;
 }
 
-function confirmAction(id){if(!S.confirmed)S.confirmed={};S.confirmed[id]=true;save(S);renderWeek();toast('Confirmed ✓');}
+window.confirmAction = function(id) { if (!S.confirmed) S.confirmed = {}; S.confirmed[id] = true; save(S); renderWeek(); toast('Confirmed ✓'); };
 
 // ── MONTH PLAN ──
-let vMonth=now.getMonth(),vYear=now.getFullYear();
-function changeMonth(dir){vMonth+=dir;if(vMonth>11){vMonth=0;vYear++;}if(vMonth<0){vMonth=11;vYear--;}renderMonth();}
+let vMonth = now.getMonth(), vYear = now.getFullYear();
+window.changeMonth = function(dir) { vMonth += dir; if (vMonth > 11) { vMonth = 0; vYear++; } if (vMonth < 0) { vMonth = 11; vYear--; } renderMonth(); };
 
-function projectBalances(toYear,toMonth){
-  let b4=S.bal4496;
-  let bSav=S.bal0725;
-  const startY=now.getFullYear(),startM=now.getMonth(),startD=now.getDate();
-  let y=startY,m=startM;
-  while(y<toYear||(y===toYear&&m<toMonth)){
-    const evts=getEvents(y,m);
-    const isCur=(y===startY&&m===startM);
-    evts.forEach(e=>{
-      if(isCur&&e.day<=startD)return;
-      if(typeof e.amt!=='number'||e.amt===0)return;
-      b4+=e.amt;
+function projectBalances(toYear, toMonth) {
+  let b4 = S.bal4496;
+  const startY = now.getFullYear(), startM = now.getMonth(), startD = now.getDate();
+  let y = startY, m = startM;
+  while (y < toYear || (y === toYear && m < toMonth)) {
+    const evts = getEvents(y, m);
+    const isCur = (y === startY && m === startM);
+    evts.forEach(e => {
+      if (isCur && e.day <= startD) return;
+      if (typeof e.amt !== 'number' || e.amt === 0) return;
+      b4 += e.amt;
     });
-    m++;if(m>11){m=0;y++;}
+    m++; if (m > 11) { m = 0; y++; }
   }
-  return{b4,bSav};
+  return { b4 };
 }
 
-function renderMonth(){
-  document.getElementById('month-title').textContent=`${MONTHS[vMonth]} ${vYear}`;
-  const evts=getEvents(vYear,vMonth);
-  const dim=new Date(vYear,vMonth+1,0).getDate();
-  const startDay=(vYear===2026&&vMonth===3)?22:1;
-  const isCurrentMonth=vYear===now.getFullYear()&&vMonth===now.getMonth();
-  const key=`${vYear}-${String(vMonth+1).padStart(2,'0')}`;
+function renderMonth() {
+  document.getElementById('month-title').textContent = `${MONTHS[vMonth]} ${vYear}`;
+  const evts = getEvents(vYear, vMonth);
+  const startDay = (vYear === 2026 && vMonth === 3) ? 22 : 1;
+  const isCurrentMonth = vYear === now.getFullYear() && vMonth === now.getMonth();
+  const key = `${vYear}-${String(vMonth + 1).padStart(2, '0')}`;
 
-  let runBal=isCurrentMonth?S.bal4496:projectBalances(vYear,vMonth).b4;
+  let runBal = isCurrentMonth ? S.bal4496 : projectBalances(vYear, vMonth).b4;
 
-  const totalIn=evts.filter(e=>e.isIncome&&e.day>=startDay).reduce((a,e)=>a+(e.amt||0),0);
-  const totalOut=evts.filter(e=>!e.isIncome&&e.day>=startDay&&typeof e.amt==='number'&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
-  const net=totalIn-totalOut;
+  const totalIn = evts.filter(e => e.isIncome && e.day >= startDay).reduce((a, e) => a + (e.amt || 0), 0);
+  const totalOut = evts.filter(e => !e.isIncome && e.day >= startDay && typeof e.amt === 'number' && e.amt < 0).reduce((a, e) => a + Math.abs(e.amt), 0);
+  const net = totalIn - totalOut;
 
-  let html=`<div class="card">
+  let html = `<div class="card">
     <div class="ct">Month overview</div>
     <div class="row"><div class="rl"><div class="rlabel">Expected income</div></div><div class="rval" style="color:var(--grn);">+$${totalIn.toLocaleString()}</div></div>
     <div class="row"><div class="rl"><div class="rlabel">Bills + spending</div></div><div class="rval" style="color:var(--red);">-$${totalOut.toLocaleString()}</div></div>
     <div class="row"><div class="rl"><div class="rlabel">Starting #4496</div></div><div class="rval" style="color:var(--blu);">$${Math.round(runBal).toLocaleString()}</div></div>
-    <div class="row"><div class="rl"><div class="rlabel" style="font-weight:700;">Net this month</div></div><div class="rval" style="color:${net>=0?'var(--grn)':'var(--red)'};">${net>=0?'+':'-'}$${Math.abs(net).toLocaleString()}</div></div>
+    <div class="row"><div class="rl"><div class="rlabel" style="font-weight:700;">Net this month</div></div><div class="rval" style="color:${net >= 0 ? 'var(--grn)' : 'var(--red)'};">${net >= 0 ? '+' : '-'}$${Math.abs(net).toLocaleString()}</div></div>
   </div>`;
 
-  const phases={
-    '2026-04':{l:'Phase 1 — Tire fund',n:"Aggressive budget active. $200/wk groceries. No dining out. No Starbucks. Building $1,500 for Jon's tires.",c:'var(--amb)'},
-    '2026-05':{l:"Phase 2 — Jon's tires + repair buffer",n:"Tires May 8-9 at Mazda dealer. $1,000 repair buffer stays in savings.",c:'var(--amb)'},
-    '2026-06':{l:"Phase 3 — Karen's tires",n:"Karen's tires early June. $1,000 budget.",c:'var(--amb)'},
-    '2026-07':{l:'Phase 4 — Dental + glasses',n:'Jon + Karen dental (~$500) and glasses (~$1,000) with Applied ABC insurance.',c:'var(--amb)'},
-    '2026-08':{l:'Phase 5 — SNOWBALL ACTIVE 🚀',n:'All expenses done. $2,700+/mo attacks debt. Amazon, Merrick, Cap One #3186 all dead this month.',c:'var(--grn)'},
-    '2026-09':{l:'Snowball rolling 🔥',n:"Karen's PayPal Credit + USAA Amex dead this month.",c:'var(--grn)'},
-    '2026-10':{l:'ALL CREDIT CARDS DEAD 🎉',n:'Cap One #4565, #5592, #7988, Chase all wiped. Only installments + Mazda remain.',c:'var(--grn)'},
-    '2026-12':{l:'TN Unemployment dead',n:'Consumer debt almost gone. IRS next.',c:'var(--grn)'},
-    '2027-01':{l:'🏆 CONSUMER DEBT FREE',n:'IRS paid off. Only Mazda remains at $638/mo. Payoff Aug 2029.',c:'var(--pur)'},
+  const phases = {
+    '2026-04': { l: 'Phase 1 — Tire fund', n: "Aggressive budget active. $200/wk groceries. No dining out. No Starbucks.", c: 'var(--amb)' },
+    '2026-05': { l: "Phase 2 — Jon's tires + repair buffer", n: "Tires May 8-9 at Mazda dealer. $1,000 repair buffer stays in savings.", c: 'var(--amb)' },
+    '2026-06': { l: "Phase 3 — Karen's tires", n: "Karen's tires early June. $1,000 budget.", c: 'var(--amb)' },
+    '2026-07': { l: 'Phase 4 — Dental + glasses', n: 'Jon + Karen dental (~$500) and glasses (~$1,000) with Applied ABC insurance.', c: 'var(--amb)' },
+    '2026-08': { l: 'Phase 5 — SNOWBALL ACTIVE 🚀', n: 'All expenses done. $2,700+/mo attacks debt. Amazon, Merrick, Cap One #3186 all dead this month.', c: 'var(--grn)' },
+    '2026-09': { l: 'Snowball rolling 🔥', n: "Karen's PayPal Credit + USAA Amex dead this month.", c: 'var(--grn)' },
+    '2026-10': { l: 'ALL CREDIT CARDS DEAD 🎉', n: 'Cap One #4565, #5592, #7988, Chase all wiped. Only installments + Mazda remain.', c: 'var(--grn)' },
+    '2026-12': { l: 'TN Unemployment dead', n: 'Consumer debt almost gone. IRS next.', c: 'var(--grn)' },
+    '2027-01': { l: '🏆 CONSUMER DEBT FREE', n: 'IRS paid off. Only Mazda remains at $638/mo. Payoff Aug 2029.', c: 'var(--pur)' },
   };
-  if(phases[key]){const p=phases[key];html+=`<div class="card" style="border-color:${p.c}40;"><div style="font-size:13px;font-weight:700;color:${p.c};margin-bottom:4px;">${p.l}</div><div style="font-size:12px;color:var(--t2);">${p.n}</div></div>`;}
+  if (phases[key]) { const p = phases[key]; html += `<div class="card" style="border-color:${p.c}40;"><div style="font-size:13px;font-weight:700;color:${p.c};margin-bottom:4px;">${p.l}</div><div style="font-size:12px;color:var(--t2);">${p.n}</div></div>`; }
 
-  const byDay={};
-  evts.forEach(e=>{if(e.day>=startDay){if(!byDay[e.day])byDay[e.day]=[];byDay[e.day].push(e);}});
-  const sortedDays=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
-  let weekDays=[],weeks=[];
-  sortedDays.forEach((day,i)=>{
+  const byDay = {};
+  evts.forEach(e => { if (e.day >= startDay) { if (!byDay[e.day]) byDay[e.day] = []; byDay[e.day].push(e); } });
+  const sortedDays = Object.keys(byDay).map(Number).sort((a, b) => a - b);
+  let weekDays = [], weeks = [];
+  sortedDays.forEach((day, i) => {
     weekDays.push(day);
-    const dow=new Date(vYear,vMonth,day).getDay();
-    if(dow===6||i===sortedDays.length-1){weeks.push([...weekDays]);weekDays=[];}
+    const dow = new Date(vYear, vMonth, day).getDay();
+    if (dow === 6 || i === sortedDays.length - 1) { weeks.push([...weekDays]); weekDays = []; }
   });
 
-  weeks.forEach(wdays=>{
-    const wStart=wdays[0],wEnd=wdays[wdays.length-1];
-    const mn=MONTHS[vMonth].substring(0,3);
-    const allW=wdays.flatMap(d=>byDay[d]);
-    const wIn=allW.filter(e=>e.isIncome).reduce((a,e)=>a+(e.amt||0),0);
-    const wOut=allW.filter(e=>!e.isIncome&&typeof e.amt==='number'&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
-    html+=`<div class="card"><div class="wheader"><span>${mn} ${wStart}–${wEnd}</span><span>${wIn>0?`<span style="color:var(--grn);">+$${wIn.toLocaleString()}</span> `:''}${wOut>0?`<span style="color:var(--red);">-$${wOut.toLocaleString()}</span>`:''}</span></div>`;
-    wdays.forEach(day=>{
-      const isToday=isCurrentMonth&&day===now.getDate();
-      const isPast=isCurrentMonth&&day<now.getDate();
-      const dow=DAYS[new Date(vYear,vMonth,day).getDay()];
-      html+=`<div style="${isPast?'opacity:0.5;':''}margin-bottom:2px;"><div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:4px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
-      byDay[day].forEach(e=>{
-        const isInc=e.isIncome;
-        const amtNum=typeof e.amt==='number'?e.amt:0;
-        const ac=isInc?'var(--grn)':Math.abs(amtNum)>500?'var(--red)':'var(--t2)';
-        const as=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
-        const isFuture=!isCurrentMonth||day>now.getDate()||day===now.getDate();
-        if(amtNum!==0&&isFuture)runBal+=amtNum;
-        const balWarn=runBal<300;
-        const balColor=runBal<300?'var(--red)':runBal<600?'var(--amb)':'var(--blu)';
-        html+=`<div class="event" style="padding:5px 0;">
+  weeks.forEach(wdays => {
+    const wStart = wdays[0], wEnd = wdays[wdays.length - 1];
+    const mn = MONTHS[vMonth].substring(0, 3);
+    const allW = wdays.flatMap(d => byDay[d]);
+    const wIn = allW.filter(e => e.isIncome).reduce((a, e) => a + (e.amt || 0), 0);
+    const wOut = allW.filter(e => !e.isIncome && typeof e.amt === 'number' && e.amt < 0).reduce((a, e) => a + Math.abs(e.amt), 0);
+    html += `<div class="card"><div class="wheader"><span>${mn} ${wStart}–${wEnd}</span><span>${wIn > 0 ? `<span style="color:var(--grn);">+$${wIn.toLocaleString()}</span> ` : ''}${wOut > 0 ? `<span style="color:var(--red);">-$${wOut.toLocaleString()}</span>` : ''}</span></div>`;
+    wdays.forEach(day => {
+      const isToday = isCurrentMonth && day === now.getDate();
+      const isPast = isCurrentMonth && day < now.getDate();
+      const dow = DAYS[new Date(vYear, vMonth, day).getDay()];
+      html += `<div style="${isPast ? 'opacity:0.5;' : ''}margin-bottom:2px;"><div style="font-size:10px;color:${isToday ? 'var(--amb)' : 'var(--t3)'};font-weight:700;padding:4px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday ? 'TODAY — ' : ''}${dow} ${day}</div>`;
+      byDay[day].forEach(e => {
+        const amtNum = typeof e.amt === 'number' ? e.amt : 0;
+        const isInc = e.isIncome;
+        const ac = isInc ? 'var(--grn)' : Math.abs(amtNum) > 500 ? 'var(--red)' : 'var(--t2)';
+        const as = amtNum !== 0 ? (amtNum > 0 ? '+$' + amtNum.toLocaleString() : '-$' + Math.abs(amtNum).toLocaleString()) : '';
+        const isFuture = !isCurrentMonth || day > now.getDate() || day === now.getDate();
+        if (amtNum !== 0 && isFuture) runBal += amtNum;
+        const balWarn = runBal < 300;
+        const balColor = runBal < 300 ? 'var(--red)' : runBal < 600 ? 'var(--amb)' : 'var(--blu)';
+        html += `<div class="event" style="padding:5px 0;">
           <div class="edot" style="background:${e.color};margin-top:4px;"></div>
           <div class="econtent">
             <div class="etitle" style="font-size:13px;">${e.title}</div>
-            ${e.note?`<div class="esub">${e.note}</div>`:''}
-            ${isFuture&&amtNum!==0?`<div class="ebal"><span style="color:${balColor};font-weight:${balWarn?'700':'400'};">#4496 → $${Math.round(runBal).toLocaleString()}${balWarn?' ⚠':''}</span></div>`:''}
+            ${e.note ? `<div class="esub">${e.note}</div>` : ''}
+            ${isFuture && amtNum !== 0 ? `<div class="ebal"><span style="color:${balColor};font-weight:${balWarn ? '700' : '400'};">#4496 → $${Math.round(runBal).toLocaleString()}${balWarn ? ' ⚠' : ''}</span></div>` : ''}
           </div>
-          ${as?`<div class="eamt" style="color:${ac};">${as}</div>`:''}
+          ${as ? `<div class="eamt" style="color:${ac};">${as}</div>` : ''}
         </div>`;
       });
-      html+='</div>';
+      html += '</div>';
     });
-    html+=`</div>`;
+    html += `</div>`;
   });
-  document.getElementById('month-content').innerHTML=html;
+  document.getElementById('month-content').innerHTML = html;
 }
 
 // ── SPENDING ──
-function addSpend(amt,label){
-  S.discSpent=(S.discSpent||0)+amt;
-  S.bal4496=Math.max(0,S.bal4496-amt);
-  (S.discLog=S.discLog||[]).unshift({type:'spend',amt,date:new Date().toLocaleDateString(),label:label||'Spend'});
-  save(S);renderWeek();toast(`-$${amt.toFixed(2)} logged`);
-}
-function addUnexpected(label,acct,amt){
-  if(!S.unexpected)S.unexpected=[];
-  S.unexpected.unshift({label,acct,amt,date:new Date().toLocaleDateString()});
-  if(acct==='4496')S.bal4496=Math.max(0,S.bal4496-amt);
-  if(acct==='savings')S.bal0725=Math.max(0,S.bal0725-amt);
-  if(acct==='6764')S.bal6764=Math.max(0,S.bal6764-amt);
-  save(S);renderWeek();toast(`$${amt.toFixed(2)} logged — balance updated`);
-}
-function clearUnexpected(){S.unexpected=[];save(S);renderWeek();toast('Cleared');}
-function resetSpend(){if(!confirm('Reset month?'))return;S.discSpent=0;S.discLog=[];S.weeks=[null,null,null,null];save(S);renderWeek();toast('Reset');}
+window.addSpend = function(amt, label) {
+  S.discSpent = (S.discSpent || 0) + amt;
+  S.bal4496 = Math.max(0, S.bal4496 - amt);
+  (S.discLog = S.discLog || []).unshift({ type: 'spend', amt, date: new Date().toLocaleDateString(), label: label || 'Spend' });
+  save(S); renderWeek(); toast(`-$${amt.toFixed(2)} logged`);
+};
+function addSpend(amt, label) { window.addSpend(amt, label); }
 
-function toggleWeek(i){
-  if(!S.weeks)S.weeks=[null,null,null,null];
-  const cur=S.weeks[i];
-  if(cur===null){
-    S.weeks[i]='used';
-    S.discSpent=(S.discSpent||0)+50;
-    S.bal4496=Math.max(0,S.bal4496-50);
-    (S.discLog=S.discLog||[]).unshift({type:'spend',amt:50,date:`Wk${i+1}`,label:`Week ${i+1} allowance`});
-  }else{
-    // Undo
-    S.weeks[i]=null;
-    S.discSpent=Math.max(0,(S.discSpent||0)-50);
-    S.bal4496+=50;
-    if(S.discLog&&S.discLog.length)S.discLog.shift();
+window.addUnexpected = function(label, acct, amt) {
+  if (!S.unexpected) S.unexpected = [];
+  S.unexpected.unshift({ label, acct, amt, date: new Date().toLocaleDateString() });
+  if (acct === '4496') S.bal4496 = Math.max(0, S.bal4496 - amt);
+  if (acct === 'savings') S.bal0725 = Math.max(0, S.bal0725 - amt);
+  if (acct === '6764') S.bal6764 = Math.max(0, S.bal6764 - amt);
+  save(S); renderWeek(); toast(`$${amt.toFixed(2)} logged — balance updated`);
+};
+function addUnexpected(label, acct, amt) { window.addUnexpected(label, acct, amt); }
+
+window.clearUnexpected = function() { S.unexpected = []; save(S); renderWeek(); toast('Cleared'); };
+window.resetSpend = function() { if (!confirm('Reset month?')) return; S.discSpent = 0; S.discLog = []; S.weeks = [null, null, null, null]; save(S); renderWeek(); toast('Reset'); };
+
+window.toggleWeek = function(i) {
+  if (!S.weeks) S.weeks = [null, null, null, null];
+  const cur = S.weeks[i];
+  if (cur === null) {
+    S.weeks[i] = 'used';
+    S.discSpent = (S.discSpent || 0) + 50;
+    S.bal4496 = Math.max(0, S.bal4496 - 50);
+    (S.discLog = S.discLog || []).unshift({ type: 'spend', amt: 50, date: `Wk${i + 1}`, label: `Week ${i + 1} allowance` });
+  } else {
+    S.weeks[i] = null;
+    S.discSpent = Math.max(0, (S.discSpent || 0) - 50);
+    S.bal4496 += 50;
+    if (S.discLog && S.discLog.length) S.discLog.shift();
   }
-  save(S);renderWeek();
-}
+  save(S); renderWeek();
+};
 
 // ── RANDY ──
-function logRandy(){
-  if(!S.randySessions)S.randySessions=[];
-  S.randySessions.unshift({date:new Date().toLocaleDateString(),amt:150});
-  S.bal4496=Math.max(0,S.bal4496-150);
-  save(S);renderWeek();toast('Session logged — $150');
-}
-function undoRandy(){
-  if(!S.randySessions||!S.randySessions.length)return;
-  S.bal4496+=S.randySessions[0].amt;
+window.logRandy = function() {
+  if (!S.randySessions) S.randySessions = [];
+  S.randySessions.unshift({ date: new Date().toLocaleDateString(), amt: 150 });
+  S.bal4496 = Math.max(0, S.bal4496 - 150);
+  save(S); renderWeek(); toast('Session logged — $150');
+};
+window.undoRandy = function() {
+  if (!S.randySessions || !S.randySessions.length) return;
+  S.bal4496 += S.randySessions[0].amt;
   S.randySessions.shift();
-  save(S);renderWeek();toast('Last session removed');
-}
+  save(S); renderWeek(); toast('Last session removed');
+};
 
 // ── SNOWBALL ──
-const PHASES=[
-  {l:'Phase 1 — Tire fund',d:"Saving $1,500 for Jon's tires. May 8-9.",c:'var(--amb)'},
-  {l:'Phase 2 — Repair buffer',d:'$1,000 in savings. Rolls to snowball if nothing found.',c:'var(--amb)'},
-  {l:"Phase 3 — Karen's tires",d:'$1,000 at Mazda dealer. June 2026.',c:'var(--amb)'},
-  {l:'Phase 4 — Dental + glasses',d:'~$1,500 OOP. July 2026.',c:'var(--amb)'},
-  {l:'Phase 5 — SNOWBALL ACTIVE 🚀',d:'$2,800+/mo attacking CC debt. All CCs dead by Oct 2026.',c:'var(--grn)'},
+const PHASES = [
+  { l: 'Phase 1 — Tire fund', d: "Saving $1,500 for Jon's tires. May 8-9.", c: 'var(--amb)' },
+  { l: 'Phase 2 — Repair buffer', d: '$1,000 in savings. Rolls to snowball if nothing found.', c: 'var(--amb)' },
+  { l: "Phase 3 — Karen's tires", d: '$1,000 at Mazda dealer. June 2026.', c: 'var(--amb)' },
+  { l: 'Phase 4 — Dental + glasses', d: '~$1,500 OOP. July 2026.', c: 'var(--amb)' },
+  { l: 'Phase 5 — SNOWBALL ACTIVE 🚀', d: '$2,800+/mo attacking CC debt. All CCs dead by Oct 2026.', c: 'var(--grn)' },
 ];
-const TARGETS=[
-  {n:'Amazon Store Card',b:206,a:'~29%',m:29,w:'Jon',note:'Nearly dead',dead:'Aug 2026'},
-  {n:'Merrick Bank',b:926,a:'31.95%',m:35,w:'Jon',note:'Highest APR',dead:'Aug 2026'},
-  {n:'Cap One #3186',b:491,a:'28.24%',m:25,w:'Karen',note:'',dead:'Aug 2026'},
-  {n:"Karen's PayPal Credit",b:1958,a:'29.64%',m:100,w:'Karen',note:'Hardship plan pending',dead:'Sep 2026'},
-  {n:'USAA Amex',b:1847,a:'27.40%',m:63,w:'Karen',note:'Set autopay on usaa.com',dead:'Sep 2026'},
-  {n:'Cap One #4565',b:726,a:'~29%',m:25,w:'Jon',note:'',dead:'Oct 2026'},
-  {n:'Cap One #5592',b:731,a:'28.99%',m:25,w:'Karen',note:'',dead:'Oct 2026'},
-  {n:'Cap One #7988',b:843,a:'~29%',m:30,w:'Jon',note:'Near limit',dead:'Oct 2026'},
-  {n:'Chase/Amazon',b:1000,a:'TBD',m:26,w:'Jon',note:'Verify APR',dead:'Oct 2026'},
-  {n:'TN Unemployment',b:3653,a:'0%',m:153,w:'Karen',note:'After all CCs',dead:'Dec 2026'},
-  {n:'IRS 2024',b:4767,a:'0%',m:103,w:'Jon',note:'After TN',dead:'Jan 2027'},
+const TARGETS = [
+  { n: 'Amazon Store Card', b: 206, a: '~29%', m: 29, w: 'Jon', note: 'Nearly dead', dead: 'Aug 2026' },
+  { n: 'Merrick Bank', b: 926, a: '31.95%', m: 35, w: 'Jon', note: 'Highest APR', dead: 'Aug 2026' },
+  { n: 'Cap One #3186', b: 491, a: '28.24%', m: 25, w: 'Karen', note: '', dead: 'Aug 2026' },
+  { n: "Karen's PayPal Credit", b: 1958, a: '29.64%', m: 100, w: 'Karen', note: 'Hardship plan pending', dead: 'Sep 2026' },
+  { n: 'USAA Amex', b: 1847, a: '27.40%', m: 63, w: 'Karen', note: 'Set autopay on usaa.com', dead: 'Sep 2026' },
+  { n: 'Cap One #4565', b: 726, a: '~29%', m: 25, w: 'Jon', note: '', dead: 'Oct 2026' },
+  { n: 'Cap One #5592', b: 731, a: '28.99%', m: 25, w: 'Karen', note: '', dead: 'Oct 2026' },
+  { n: 'Cap One #7988', b: 843, a: '~29%', m: 30, w: 'Jon', note: 'Near limit', dead: 'Oct 2026' },
+  { n: 'Chase/Amazon', b: 1000, a: 'TBD', m: 26, w: 'Jon', note: 'Verify APR', dead: 'Oct 2026' },
+  { n: 'TN Unemployment', b: 3653, a: '0%', m: 153, w: 'Karen', note: 'After all CCs', dead: 'Dec 2026' },
+  { n: 'IRS 2024', b: 4767, a: '0%', m: 103, w: 'Jon', note: 'After TN', dead: 'Jan 2027' },
 ];
-function renderSnowball(){
-  const ph=S.snowballPhase||0;
-  const p=PHASES[ph];
-  const ct=S.currentTarget||0;
-  let html=`<div style="font-size:20px;font-weight:700;margin-bottom:2px;">Debt snowball</div>
+
+function renderSnowball() {
+  const ph = S.snowballPhase || 0;
+  const p = PHASES[ph];
+  const ct = S.currentTarget || 0;
+  let html = `<div style="font-size:20px;font-weight:700;margin-bottom:2px;">Debt snowball</div>
     <div style="font-size:12px;color:var(--t3);margin-bottom:12px;">$2,800+/mo after Aug 2026 · Consumer debt free Jan 2027</div>
     <div class="card">
       <div class="ct">Milestones</div>
@@ -867,86 +915,83 @@ function renderSnowball(){
       <div style="font-size:15px;font-weight:700;color:${p.c};margin-bottom:4px;">${p.l}</div>
       <div style="font-size:12px;color:var(--t2);margin-bottom:12px;">${p.d}</div>
       <div style="display:flex;gap:8px;">
-        ${ph>0?`<button class="btn btno btnsm" style="flex:1;margin:0;" onclick="setPhase(${ph-1})">← Back</button>`:''}
-        ${ph<PHASES.length-1?`<button class="btn btna btnsm" style="flex:1;margin:0;" onclick="setPhase(${ph+1})">Complete → next phase</button>`:`<div style="font-size:12px;color:var(--grn);padding:6px 0;">Snowball is rolling! 🎉</div>`}
+        ${ph > 0 ? `<button class="btn btno btnsm" style="flex:1;margin:0;" onclick="setPhase(${ph - 1})">← Back</button>` : ''}
+        ${ph < PHASES.length - 1 ? `<button class="btn btna btnsm" style="flex:1;margin:0;" onclick="setPhase(${ph + 1})">Complete → next phase</button>` : `<div style="font-size:12px;color:var(--grn);padding:6px 0;">Snowball is rolling! 🎉</div>`}
       </div>
     </div>
     <div class="card"><div class="ct">Payoff order</div>`;
-  TARGETS.forEach((t,i)=>{
-    const act=i===ct,done=i<ct;
-    html+=`<div class="tcard ${act?'active':''} ${done?'tdone':''}">
+  TARGETS.forEach((t, i) => {
+    const act = i === ct, done = i < ct;
+    html += `<div class="tcard ${act ? 'active' : ''} ${done ? 'tdone' : ''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;">
-          <div style="font-size:14px;font-weight:700;color:${done?'var(--grn)':act?'var(--amb)':'var(--tx)'};">${done?'✓ ':act?'🎯 ':`${i+1}. `}${t.n}</div>
-          <div style="font-size:11px;color:var(--t3);margin-top:1px;">${t.w} · ${t.a} APR · $${t.m}/mo min${t.note?' · '+t.note:''}</div>
-          <div style="font-size:10px;color:${act?'var(--amb)':'var(--t3)'};margin-top:1px;">Target: ${t.dead}</div>
+          <div style="font-size:14px;font-weight:700;color:${done ? 'var(--grn)' : act ? 'var(--amb)' : 'var(--tx)'};">${done ? '✓ ' : act ? '🎯 ' : `${i + 1}. `}${t.n}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:1px;">${t.w} · ${t.a} APR · $${t.m}/mo min${t.note ? ' · ' + t.note : ''}</div>
+          <div style="font-size:10px;color:${act ? 'var(--amb)' : 'var(--t3)'};margin-top:1px;">Target: ${t.dead}</div>
         </div>
-        <div style="font-size:17px;font-weight:700;color:${done?'var(--grn)':act?'var(--amb)':'var(--t2)'};">$${t.b.toLocaleString()}</div>
+        <div style="font-size:17px;font-weight:700;color:${done ? 'var(--grn)' : act ? 'var(--amb)' : 'var(--t2)'};">$${t.b.toLocaleString()}</div>
       </div>
-      ${act?`<button class="btn btng btnsm" style="margin-top:10px;margin-bottom:0;" onclick="advanceTarget()">Mark paid off → next target</button>`:''}
+      ${act ? `<button class="btn btng btnsm" style="margin-top:10px;margin-bottom:0;" onclick="advanceTarget()">Mark paid off → next target</button>` : ''}
     </div>`;
   });
-  html+=`</div><div class="card"><div class="ct">Log extra payment</div>
+  html += `</div><div class="card"><div class="ct">Log extra payment</div>
     <button class="btn btna" onclick="openModal('snowball','Log snowball payment')">💸 Log payment</button>
     <div style="margin-top:8px;">`;
-  const log=S.snowballLog||[];
-  if(!log.length)html+='<div style="font-size:13px;color:var(--t3);">No payments logged</div>';
-  else html+=log.slice(0,8).map(e=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--br);font-size:12px;"><span style="color:var(--t2);">${e.target} · ${e.date}</span><span style="color:var(--grn);">-$${e.amt.toFixed(2)}</span></div>`).join('');
-  html+=`</div></div>`;
-  document.getElementById('snowball-content').innerHTML=html;
+  const log = S.snowballLog || [];
+  if (!log.length) html += '<div style="font-size:13px;color:var(--t3);">No payments logged</div>';
+  else html += log.slice(0, 8).map(e => `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--br);font-size:12px;"><span style="color:var(--t2);">${e.target} · ${e.date}</span><span style="color:var(--grn);">-$${e.amt.toFixed(2)}</span></div>`).join('');
+  html += `</div></div>`;
+  document.getElementById('snowball-content').innerHTML = html;
 }
-function setPhase(n){S.snowballPhase=n;save(S);renderSnowball();toast('Phase updated');}
-function advanceTarget(){S.currentTarget=(S.currentTarget||0)+1;save(S);renderSnowball();toast('🎉 Target paid off!');}
-function logSnowballPmt(amt){
-  if(!S.snowballLog)S.snowballLog=[];
-  const t=TARGETS[S.currentTarget||0];
-  S.snowballLog.unshift({amt,target:t?t.n:'Unknown',date:new Date().toLocaleDateString()});
-  save(S);renderSnowball();toast(`$${amt.toFixed(2)} logged`);
+window.setPhase = function(n) { S.snowballPhase = n; save(S); renderSnowball(); toast('Phase updated'); };
+window.advanceTarget = function() { S.currentTarget = (S.currentTarget || 0) + 1; save(S); renderSnowball(); toast('🎉 Target paid off!'); };
+function logSnowballPmt(amt) {
+  if (!S.snowballLog) S.snowballLog = [];
+  const t = TARGETS[S.currentTarget || 0];
+  S.snowballLog.unshift({ amt, target: t ? t.n : 'Unknown', date: new Date().toLocaleDateString() });
+  save(S); renderSnowball(); toast(`$${amt.toFixed(2)} logged`);
 }
 
 // ── BILLS ──
-const BILLS=[
-  {id:'mazda',t:'Mazda CX-5 — $638.06',s:'#4496 · ~9th · 12.72% APR'},
-  {id:'att',t:'AT&T Fiber — $165.85',s:'#4496 · ~16th'},
-  {id:'tmobile',t:'T-Mobile — $151.85',s:'#4496 · ~15th'},
-  {id:'statefarm',t:'State Farm — ~$190',s:'#4496 · ~23rd · showing $160.27 Apr — monitor'},
-  {id:'tn',t:'TN Unemployment — ~$153',s:'#4496 · ~22nd-24th · $3,653 remaining'},
-  {id:'irs1',t:'IRS payment #1 — $68',s:'#4496 · ~15th-16th'},
-  {id:'irs2',t:'IRS payment #2 — $35',s:'#4496 · ~15th-16th'},
-  {id:'merrick',t:'Merrick Bank — $35',s:'#4496 · ~11th · 31.95% APR'},
-  {id:'affirm',t:'Affirm cluster — ~$131',s:'#4496 · ~13th · 0% APR · verify in Affirm app'},
-  {id:'newegg',t:'PayPal Newegg — $60.68',s:'#4496 · ~13th · 35.99% APR · done Jan 2027'},
-  {id:'ebay',t:'PayPal eBay — $42.69',s:'#4496 · ~4th · 35.99% APR · done Aug 2027'},
-  {id:'chinese',t:'PayPal Chinese vendor — $94.94',s:'#4496 · 30th · 24.99% APR · done Mar 2027'},
-  {id:'jonpaypal',t:'Jon PayPal Credit — $22',s:'#4496 · 0% Customer Assistance Plan · do NOT overpay'},
-  {id:'karenpaypal',t:'Karen PayPal Credit — $100',s:'MANUAL · 29.64% APR · due ~13th · hardship plan pending'},
-  {id:'usaaamex',t:'USAA Amex Karen — $63 min',s:'27.40% APR · set autopay on usaa.com'},
-  {id:'chase',t:'Chase/Amazon Prime — $26',s:'#4496 · ~26th · APR TBD'},
-  {id:'amazon-store',t:'Amazon Store Card — $29',s:'#4496 · ~1st · ~29% APR'},
-  {id:'spotify',t:'Spotify — $21.53',s:'#4496 · ~22nd'},
-  {id:'claude',t:'Claude.ai — $20',s:'#4496 · ~13th'},
-  {id:'chatgpt',t:'ChatGPT — $21.94',s:'#4496 · ~4th'},
-  {id:'prime',t:'Amazon Prime — $15.17',s:'#4496 · ~2nd'},
-  {id:'realdebrid',t:'Real-Debrid — $11/quarter',s:'#4496 · 2nd of Apr/Jul/Oct/Jan · next Jul 2'},
+const BILLS = [
+  { id: 'mazda', t: 'Mazda CX-5 — $638.06', s: '#4496 · ~9th · 12.72% APR' },
+  { id: 'att', t: 'AT&T Fiber — $165.85', s: '#4496 · ~16th' },
+  { id: 'tmobile', t: 'T-Mobile — $151.85', s: '#4496 · ~15th' },
+  { id: 'statefarm', t: 'State Farm — ~$190', s: '#4496 · ~23rd · showing $160.27 Apr — monitor' },
+  { id: 'tn', t: 'TN Unemployment — ~$153', s: '#4496 · ~22nd-24th · $3,653 remaining' },
+  { id: 'irs1', t: 'IRS payment #1 — $68', s: '#4496 · ~15th-16th' },
+  { id: 'irs2', t: 'IRS payment #2 — $35', s: '#4496 · ~15th-16th' },
+  { id: 'merrick', t: 'Merrick Bank — $35', s: '#4496 · ~11th · 31.95% APR' },
+  { id: 'affirm', t: 'Affirm cluster — ~$131', s: '#4496 · ~13th · 0% APR · verify in Affirm app' },
+  { id: 'newegg', t: 'PayPal Newegg — $60.68', s: '#4496 · ~13th · 35.99% APR · done Jan 2027' },
+  { id: 'ebay', t: 'PayPal eBay — $42.69', s: '#4496 · ~4th · 35.99% APR · done Aug 2027' },
+  { id: 'chinese', t: 'PayPal Chinese vendor — $94.94', s: '#4496 · 30th · 24.99% APR · done Mar 2027' },
+  { id: 'jonpaypal', t: 'Jon PayPal Credit — $22', s: '#4496 · 0% Customer Assistance Plan · do NOT overpay' },
+  { id: 'karenpaypal', t: 'Karen PayPal Credit — $100', s: 'MANUAL · 29.64% APR · due ~13th · hardship plan pending' },
+  { id: 'usaaamex', t: 'USAA Amex Karen — $63 min', s: '27.40% APR · set autopay on usaa.com' },
+  { id: 'chase', t: 'Chase/Amazon Prime — $26', s: '#4496 · ~26th · APR TBD' },
+  { id: 'amazon-store', t: 'Amazon Store Card — $29', s: '#4496 · ~1st · ~29% APR' },
+  { id: 'spotify', t: 'Spotify — $21.53', s: '#4496 · ~22nd' },
+  { id: 'claude', t: 'Claude.ai — $20', s: '#4496 · ~13th' },
+  { id: 'chatgpt', t: 'ChatGPT — $21.94', s: '#4496 · ~4th' },
+  { id: 'prime', t: 'Amazon Prime — $15.17', s: '#4496 · ~2nd' },
+  { id: 'realdebrid', t: 'Real-Debrid — $11/quarter', s: '#4496 · 2nd of Apr/Jul/Oct/Jan · next Jul 2' },
 ];
-function renderBills(){
-  document.getElementById('bills-list').innerHTML=BILLS.map(b=>{
-    const done=S.billChecks&&S.billChecks[b.id];
-    return `<div class="ci ${done?'done':''}" onclick="toggleBill('${b.id}')">
-      <div class="cb ${done?'done':''}"><span class="ck">✓</span></div>
+function renderBills() {
+  document.getElementById('bills-list').innerHTML = BILLS.map(b => {
+    const done = S.billChecks && S.billChecks[b.id];
+    return `<div class="ci ${done ? 'done' : ''}" onclick="toggleBill('${b.id}')">
+      <div class="cb ${done ? 'done' : ''}"><span class="ck">✓</span></div>
       <div class="cil"><div class="cititle">${b.t}</div><div class="cisub">${b.s}</div></div>
     </div>`;
   }).join('');
 }
-function toggleBill(id){if(!S.billChecks)S.billChecks={};S.billChecks[id]=!S.billChecks[id];save(S);renderBills();}
-function resetBills(){S.billChecks={};save(S);renderBills();toast('Bills reset');}
+window.toggleBill = function(id) { if (!S.billChecks) S.billChecks = {}; S.billChecks[id] = !S.billChecks[id]; save(S); renderBills(); };
+window.resetBills = function() { S.billChecks = {}; save(S); renderBills(); toast('Bills reset'); };
+window.logRandy = window.logRandy;
 
 // ── INIT ──
-vMonth=now.getMonth();vYear=now.getFullYear();
 checkAuth();
-// If already authenticated load cloud, otherwise PIN screen handles it
-if(sessionStorage.getItem(PKEY)==='ok'){loadFromCloud();}
-routeHash();
 </script>
 </body>
 </html>
