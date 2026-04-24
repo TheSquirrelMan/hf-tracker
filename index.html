@@ -362,10 +362,11 @@ function getEvents(year,month){
   if(new Date(year,month,7).getDate()&&7>=fromDay) add(7,'Jon paycheck',JON_PAY,'#97C459','→ Transfer surplus to savings/snowball same day',true);
   if(22>=fromDay) add(22,'Jon paycheck',JON_PAY,'#97C459','→ Transfer surplus to savings/snowball same day',true);
 
-  // Karen paychecks every Thursday
+  // Karen paychecks every Thursday -- use actual saved pay if available
+  const karenAmt=(typeof S!=='undefined'&&S.karenLastPay)?S.karenLastPay:KAREN_AVG;
   for(let d=fromDay;d<=daysInMonth;d++){
     if(new Date(year,month,d).getDay()===4)
-      add(d,'Karen paycheck — Copans',KAREN_AVG,'#97C459','→ Transfer full amount to #4496 same day',true);
+      add(d,'Karen paycheck — Copans',karenAmt,'#97C459','→ Transfer full amount to #4496 same day',true);
   }
 
   // Fresh Market every Sunday
@@ -398,7 +399,7 @@ function getEvents(year,month){
   add(22,'Spotify',-22,'#666660','Subscription');
   add(23,'State Farm',-190,'#b4b2a9','Auto insurance');
   add(26,'Chase/Amazon',-26,'#b4b2a9','APR TBD');
-  if(key<='2027-03') add(30,'PayPal Chinese vendor',-95,'#EF9F27','24.99% APR fixed');
+  if(key<='2027-03'&&!(year===2026&&month===3)) add(30,'PayPal Chinese vendor',-95,'#EF9F27','24.99% APR fixed');
   add(15,'Amazon Prime membership',-15,'#666660','Subscription');
 
   // One-time events
@@ -649,19 +650,18 @@ function changeMonth(dir){
 function projectBalances(toYear,toMonth){
   let b4=S.bal4496;
   let bSav=S.bal0725;
-  const startM=now.getMonth(),startY=now.getFullYear();
-  // Step through months from current to target
+  const startY=now.getFullYear(),startM=now.getMonth(),startD=now.getDate();
   let y=startY,m=startM;
   while(y<toYear||(y===toYear&&m<toMonth)){
     const evts=getEvents(y,m);
-    const fromDay=(y===2026&&m===3)?22:1;
+    const isCurMonth=(y===startY&&m===startM);
     evts.forEach(e=>{
-      if(e.day<fromDay)return;
+      // Skip past days in current month -- already in actual balance
+      if(isCurMonth&&e.day<=startD)return;
       if(typeof e.amt!=='number'||e.amt===0)return;
       if(e.isSavings){bSav+=e.amt;}
       else{b4+=e.amt;}
     });
-    // Advance month
     m++;if(m>11){m=0;y++;}
   }
   return{b4,bSav};
@@ -750,20 +750,20 @@ function renderMonth(){
         const ac=isInc?'var(--grn)':Math.abs(amtNum)>500?'var(--red)':'var(--t2)';
         const as=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
 
-        // Update running balance
-        if(amtNum!==0) runBal+=amtNum;
+        // Only update running balance for future events -- past events already in actual balance
+        const isFuture=!isCurrentMonth||(day>now.getDate())||(day===now.getDate());
+        if(amtNum!==0&&isFuture) runBal+=amtNum;
         const balWarn=runBal<300;
         const balColor=runBal<300?'var(--red)':runBal<600?'var(--amb)':'var(--blu)';
+        // Only show balance projection on future events
+        const showBal=isFuture&&amtNum!==0;
 
         html+=`<div class="event" style="padding:5px 0;">
           <div class="edot" style="background:${e.color};margin-top:4px;"></div>
           <div class="econtent">
             <div class="etitle" style="font-size:13px;">${e.title}</div>
             ${e.note?`<div class="esub">${e.note}</div>`:''}
-            <div class="ebal">
-              <span style="color:${balColor};font-weight:${balWarn?'700':'400'};">#4496 → $${Math.round(runBal).toLocaleString()}${balWarn?' ⚠':''}</span>
-              ${e.isSavings?`<span style="color:var(--pur);margin-left:8px;">Savings → $${Math.round(runSav).toLocaleString()}</span>`:''}
-            </div>
+            ${showBal?`<div class="ebal"><span style="color:${balColor};font-weight:${balWarn?'700':'400'};">#4496 → $${Math.round(runBal).toLocaleString()}${balWarn?' ⚠':''}</span></div>`:''}
           </div>
           ${as?`<div class="eamt" style="color:${ac};">${as}</div>`:''}
         </div>`;
