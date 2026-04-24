@@ -183,28 +183,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <!-- THIS WEEK -->
 <div class="panel on" id="p-week">
   <div id="week-banner"></div>
+
+  <!-- BALANCE STRIP - compact 3 col -->
   <div class="bstrip">
     <div class="bitem" onclick="editBal('4496')">
       <div class="bacct">#4496</div>
-      <div class="bnum" id="b4496" style="color:var(--blu);">$828</div>
+      <div class="bnum" id="b4496" style="color:var(--blu);">$1,258</div>
     </div>
     <div class="bitem" onclick="editBal('6764')">
       <div class="bacct">#6764</div>
-      <div class="bnum" id="b6764" style="color:var(--blu);">$869</div>
+      <div class="bnum" id="b6764" style="color:var(--blu);">$19</div>
     </div>
     <div class="bitem" onclick="editBal('0725')">
       <div class="bacct">Savings</div>
-      <div class="bnum" id="b0725" style="color:var(--grn);">$454</div>
+      <div class="bnum" id="b0725" style="color:var(--grn);">$654</div>
     </div>
   </div>
-  <div style="font-size:11px;color:var(--t3);margin-bottom:12px;text-align:center;">Tap any balance to update</div>
+  <div style="font-size:10px;color:var(--t3);margin:-6px 0 12px;text-align:center;">Tap any balance to update</div>
+
+  <!-- DYNAMIC CONTENT: surplus + week events + spending + randy + unexpected -->
   <div id="week-content"></div>
-  <div class="card" style="margin-top:4px;">
-    <div class="ct">Unexpected charges</div>
-    <div id="unexpected-list"></div>
-    <button class="btn btnr btnsm" style="margin-top:8px;" onclick="openUnexpected()">➕ Log unexpected charge</button>
-    <button class="btn btno btnsm" onclick="clearUnexpected()">Clear log</button>
-  </div>
 </div>
 
 <!-- MONTH PLAN -->
@@ -343,9 +341,9 @@ if(S.mKey!==mKey){
   S.billChecks={};S.pcChecks={};
   save(S);
 }
-if(!S.bal4496)S.bal4496=828;
-if(!S.bal6764)S.bal6764=869;
-if(!S.bal0725)S.bal0725=454;
+if(!S.bal4496)S.bal4496=1258;
+if(!S.bal6764)S.bal6764=19;
+if(!S.bal0725)S.bal0725=654;
 if(!S.snowballPhase)S.snowballPhase=0;
 if(!S.currentTarget)S.currentTarget=0;
 if(!S.snowballLog)S.snowballLog=[];
@@ -425,16 +423,6 @@ function addUnexpected(label,acct,amt){
   toast(`$${amt.toFixed(2)} logged — balance updated`);
 }
 function clearUnexpected(){S.unexpected=[];save(S);renderWeek();toast('Cleared');}
-function renderUnexpected(){
-  const list=S.unexpected||[];
-  const el=document.getElementById('unexpected-list');
-  if(!list.length){el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:4px 0;">No unexpected charges logged</div>';return;}
-  el.innerHTML=list.slice(0,10).map(e=>`
-    <div class="unexpected-item">
-      <div><div style="font-weight:600;color:var(--text);">${e.label}</div><div style="color:var(--t3);">${e.acct} · ${e.date}</div></div>
-      <div style="color:var(--red);font-weight:700;">-$${e.amt.toFixed(2)}</div>
-    </div>`).join('');
-}
 
 // ── MONTH EVENTS ENGINE ──
 function getEvents(year,month){
@@ -506,200 +494,213 @@ function getEvents(year,month){
   return evts;
 }
 
-// ── THIS WEEK ──
-// Determine next paycheck date from today
-function nextPaycheck(fromDay){
-  // Jon paychecks on 7th and 22nd
-  if(fromDay<7)return 7;
-  if(fromDay<22)return 22;
-  return 7; // next month's 7th
-}
-function nextPaycheckMonth(fromDay){
-  if(fromDay>=22)return now.getMonth()+1>11?0:now.getMonth()+1;
-  return now.getMonth();
-}
+// ── SURPLUS CALCULATOR (single account #4496) ──
+function nextPaycheck(fromDay){ if(fromDay<7)return 7; if(fromDay<22)return 22; return 7; }
+function nextPaycheckMonth(fromDay){ if(fromDay>=22){const m=now.getMonth()+1;return m>11?0:m;} return now.getMonth(); }
 
-// Calculate bills still due from #4496 and #6764 before next paycheck
 function calcSurplus(){
   const today=now.getDate();
   const nextPC=nextPaycheck(today);
   const nextPCMonth=nextPaycheckMonth(today);
   const allEvts=getEvents(now.getFullYear(),now.getMonth());
-
-  // Bills from today+1 up to (not including) next paycheck day, same month
-  // If next paycheck is next month, include rest of this month
   const isSameMonth=nextPCMonth===now.getMonth();
-  const endDay=isSameMonth?nextPC:32; // 32 catches all remaining days in month
+  const endDay=isSameMonth?nextPC:32;
 
-  const due4496=allEvts.filter(e=>{
+  // All autopay bills from #4496 due between today+1 and next paycheck
+  const due=allEvts.filter(e=>{
     if(e.isIncome||!e.amt||e.amt>=0)return false;
-    if(!e.acct||!e.acct.includes('4496'))return false;
+    if(!e.acct)return false;
+    const a=e.acct.toLowerCase();
+    if(!a.includes('4496')&&!a.includes('paypal'))return false;
     return e.day>today&&e.day<endDay;
   });
 
-  const due6764=allEvts.filter(e=>{
-    if(e.isIncome||!e.amt||e.amt>=0)return false;
-    if(!e.acct||!e.acct.includes('6764'))return false;
-    return e.day>today&&e.day<endDay;
-  });
+  // IRS still on #6764 temporarily -- note separately
+  const irsStillOn6764=allEvts.filter(e=>e.title.toLowerCase().includes('irs')&&e.day>today&&e.day<endDay);
 
-  // Also include unexpected charges already logged today
-  const unexpectedTotal=(S.unexpected||[])
-    .filter(u=>u.date===new Date().toLocaleDateString()&&u.acct==='#4496')
-    .reduce((a,u)=>a+u.amt,0);
-
-  const total4496Due=due4496.reduce((a,e)=>a+Math.abs(e.amt),0);
-  const total6764Due=due6764.reduce((a,e)=>a+Math.abs(e.amt),0);
-
-  const safe4496=Math.max(0,S.bal4496-total4496Due);
-  const safe6764=Math.max(0,S.bal6764-total6764Due);
-
-  // Karen should transfer everything except what #6764 needs
-  const karenTransfer=Math.max(0,S.bal6764-total6764Due);
-
-  return {due4496,due6764,total4496Due,total6764Due,safe4496,safe6764,karenTransfer,nextPC,nextPCMonth,isSameMonth};
+  const totalDue=due.reduce((a,e)=>a+Math.abs(e.amt),0);
+  const safe=Math.max(0,S.bal4496-totalDue);
+  const nextPCLabel=`${MONTHS[nextPCMonth].substring(0,3)} ${nextPC}`;
+  return {due,irsStillOn6764,totalDue,safe,nextPCLabel};
 }
 
 function renderWeek(){
+  // Update balance display
   document.getElementById('b4496').textContent='$'+Math.round(S.bal4496).toLocaleString();
   document.getElementById('b6764').textContent='$'+Math.round(S.bal6764).toLocaleString();
   document.getElementById('b0725').textContent='$'+Math.round(S.bal0725).toLocaleString();
 
   const today=now.getDate();
-  const banner=document.getElementById('week-banner');
-  banner.innerHTML=`<div class="today-banner"><p class="bold">Today — ${MONTHS[now.getMonth()]} ${today}, ${now.getFullYear()} (${DAYS[now.getDay()]})</p><p>Tap any balance above to update · Log unexpected charges below</p></div>`;
+  document.getElementById('week-banner').innerHTML=`
+    <div class="today-banner">
+      <p class="bold">Today — ${MONTHS[now.getMonth()]} ${today}, ${now.getFullYear()} (${DAYS[now.getDay()]})</p>
+      <p>Tap any balance above to update · Unexpected charges auto-deduct</p>
+    </div>`;
 
-  // ── SURPLUS CALCULATOR ──
   const sur=calcSurplus();
-  const nextPCLabel=`${MONTHS[sur.nextPCMonth].substring(0,3)} ${sur.nextPC}`;
-  const safe4496Color=sur.safe4496<300?'var(--red)':sur.safe4496<600?'var(--amb)':'var(--grn)';
-  const safe6764Color=sur.safe6764<200?'var(--red)':sur.safe6764<400?'var(--amb)':'var(--grn)';
-
-  let surHtml=`<div class="card" style="border-color:var(--bmid)40;margin-bottom:12px;">
-    <div class="ct">Safe to transfer — before ${nextPCLabel} paycheck</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      <div style="background:var(--s2);border-radius:var(--rs);padding:12px;text-align:center;">
-        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">#4496 safe to move</div>
-        <div style="font-size:26px;font-weight:700;color:${safe4496Color};">$${Math.round(sur.safe4496).toLocaleString()}</div>
-        <div style="font-size:10px;color:var(--t3);margin-top:2px;">$${Math.round(sur.total4496Due).toLocaleString()} still due</div>
-      </div>
-      <div style="background:var(--s2);border-radius:var(--rs);padding:12px;text-align:center;">
-        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">#6764 Karen transfers</div>
-        <div style="font-size:26px;font-weight:700;color:${safe6764Color};">$${Math.round(sur.karenTransfer).toLocaleString()}</div>
-        <div style="font-size:10px;color:var(--t3);margin-top:2px;">$${Math.round(sur.total6764Due).toLocaleString()} still due</div>
-      </div>
-    </div>`;
-
-  // Bills still due breakdown #4496
-  if(sur.due4496.length){
-    surHtml+=`<div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;">#4496 upcoming before ${nextPCLabel}</div>`;
-    sur.due4496.forEach(e=>{
-      surHtml+=`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12px;">
-        <span style="color:var(--t2);">${e.title} <span style="color:var(--t3);">~${e.day}${['st','nd','rd','th'][Math.min(3,(e.day-1)%10)]}</span></span>
-        <span style="color:var(--red);">-$${Math.abs(e.amt).toLocaleString()}</span>
-      </div>`;
-    });
-    surHtml+=`<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;font-weight:700;">
-      <span style="color:var(--t2);">Total due #4496</span>
-      <span style="color:var(--red);">-$${Math.round(sur.total4496Due).toLocaleString()}</span>
-    </div>`;
-  }
-
-  // Bills still due breakdown #6764
-  if(sur.due6764.length){
-    surHtml+=`<div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;margin-top:10px;">#6764 upcoming before ${nextPCLabel}</div>`;
-    sur.due6764.forEach(e=>{
-      surHtml+=`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12px;">
-        <span style="color:var(--t2);">${e.title} <span style="color:var(--t3);">~${e.day}${['st','nd','rd','th'][Math.min(3,(e.day-1)%10)]}</span></span>
-        <span style="color:var(--red);">-$${Math.abs(e.amt).toLocaleString()}</span>
-      </div>`;
-    });
-    surHtml+=`<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;font-weight:700;">
-      <span style="color:var(--t2);">Total due #6764</span>
-      <span style="color:var(--red);">-$${Math.round(sur.total6764Due).toLocaleString()}</span>
-    </div>`;
-  }
-
-  // What to do with the surplus
+  const safeColor=sur.safe<300?'var(--red)':sur.safe<600?'var(--amb)':'var(--grn)';
   const phase=S.snowballPhase||0;
-  const phaseAction=phase<4?'→ Transfer to savings #0725 (tire/expense fund)':'→ Pay extra to current snowball target';
-  surHtml+=`<div style="background:var(--gbg);border-radius:var(--rs);padding:10px;margin-top:10px;border:1px solid var(--gmid)30;">
-    <div style="font-size:12px;color:var(--grn);font-weight:700;">Transfer $${Math.round(sur.safe4496).toLocaleString()} from #4496</div>
-    <div style="font-size:11px;color:var(--t2);margin-top:2px;">${phaseAction}</div>
-  </div>`;
+  const phaseAction=phase<4?'Transfer to savings #0725 — tire/expense fund':'Pay extra to current snowball target';
 
-  surHtml+=`</div>`;
+  let html='';
 
-  // ── UPCOMING EVENTS THIS WEEK ──
-  const weekEnd=today+7;
+  // ── SURPLUS CARD ──
+  html+=`<div class="card" style="border-color:var(--bmid)40;">
+    <div class="ct">Safe to transfer before ${sur.nextPCLabel}</div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:6px;">
+      <div>
+        <div style="font-size:38px;font-weight:700;color:${safeColor};line-height:1;">$${Math.round(sur.safe).toLocaleString()}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:3px;">${phaseAction}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:13px;font-weight:700;color:var(--red);">-$${Math.round(sur.totalDue).toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--t3);">still due</div>
+      </div>
+    </div>`;
+
+  if(sur.due.length){
+    sur.due.forEach(e=>{
+      const ord=['th','st','nd','rd'];
+      const v=e.day%100;
+      const suffix=ord[(v-20)%10]||ord[v]||ord[0];
+      html+=`<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:0.5px solid var(--border);font-size:12px;">
+        <span style="color:var(--t2);">${e.title} <span style="color:var(--t3);">~${e.day}${suffix}</span></span>
+        <span style="color:var(--red);">-$${Math.abs(e.amt).toLocaleString()}</span>
+      </div>`;
+    });
+  }
+  if(sur.irsStillOn6764.length){
+    html+=`<div style="font-size:11px;color:var(--amb);padding:6px 0;border-top:0.5px solid var(--border);">⚠ IRS payments still on #6764 — update when portal allows</div>`;
+  }
+  html+=`</div>`;
+
+  // ── THIS WEEK EVENTS ──
   const allEvts=getEvents(now.getFullYear(),now.getMonth());
-  const weekEvts=allEvts.filter(e=>e.day>=today&&e.day<=weekEnd);
+  const weekEvts=allEvts.filter(e=>e.day>=today&&e.day<=today+7);
   const byDay={};
   weekEvts.forEach(e=>{if(!byDay[e.day])byDay[e.day]=[];byDay[e.day].push(e);});
   const days=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
 
-  let html=surHtml;
   if(days.length){
-    html+=`<div class="card"><div class="ct">This week — ${MONTHS[now.getMonth()].substring(0,3)} ${today}–${Math.min(today+7,31)}</div>`;
+    html+=`<div class="card"><div class="ct">Next 7 days</div>`;
     days.forEach(day=>{
       const isToday=day===today;
       const dow=DAYS[new Date(now.getFullYear(),now.getMonth(),day).getDay()];
-      html+=`<div style="margin-bottom:4px;">
-        <div style="font-size:11px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:600;padding:4px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
+      html+=`<div style="margin-bottom:2px;">
+        <div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:5px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
       byDay[day].forEach(e=>{
         const isInc=e.isIncome||e.amt>0;
-        const amtColor=isInc?'var(--grn)':(Math.abs(e.amt)>500?'var(--red)':'var(--t2)');
-        const amtStr=typeof e.amt==='number'&&e.amt!==0?(e.amt>0?'+$'+e.amt.toLocaleString():'-$'+Math.abs(e.amt).toLocaleString()):'';
-        html+=`<div class="event">
-          <div class="edot" style="background:${e.color};"></div>
+        const ac=isInc?'var(--grn)':(Math.abs(e.amt)>500?'var(--red)':'var(--t2)');
+        const as=typeof e.amt==='number'&&e.amt!==0?(e.amt>0?'+$'+e.amt.toLocaleString():'-$'+Math.abs(e.amt).toLocaleString()):'';
+        html+=`<div class="event" style="padding:5px 0;">
+          <div class="edot" style="background:${e.color};margin-top:4px;"></div>
           <div class="econtent">
-            <div class="etitle">${e.title}</div>
+            <div class="etitle" style="font-size:13px;">${e.title}</div>
             ${e.note?`<div class="esub">${e.note}</div>`:''}
             <div class="eacct">${e.acct||''}</div>
           </div>
-          ${amtStr?`<div class="eamt" style="color:${amtColor};">${amtStr}</div>`:''}
+          ${as?`<div class="eamt" style="color:${ac};font-size:13px;">${as}</div>`:''}
         </div>`;
       });
       html+='</div>';
     });
-    html+='</div>';
+    html+=`</div>`;
   }
 
-  // Karen pay update
+  // ── SPENDING POOL (compact) ──
+  const spent=S.discSpent||0;
+  const rem=Math.max(0,200-spent);
+  const pct=Math.min(100,(spent/200)*100);
+  const sc=pct>80?'var(--red)':pct>50?'var(--amb)':'var(--grn)';
+  const cw=Math.min(3,Math.floor((today-1)/7));
+  const wLabels=['Wk 1','Wk 2','Wk 3','Wk 4'];
+
   html+=`<div class="card">
-    <div class="ct">Karen's paycheck</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div>
-        <div style="font-size:13px;color:var(--text);">Last entered: <span style="font-weight:700;color:var(--amb);">$${S.karenPay||720}</span></div>
-        <div style="font-size:11px;color:var(--t3);">Updates #6764 balance + recalculates surplus</div>
-      </div>
-      <button class="btn btna btnsm" style="width:auto;margin:0;padding:8px 16px;" onclick="openModal('karen-pay','Enter Karen\\'s actual pay','Amount she received')">Update</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div class="ct" style="margin-bottom:0;">Discretionary — April</div>
+      <div style="font-size:11px;color:var(--t3);">$200/mo cap</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;">
+      <div style="font-size:28px;font-weight:700;color:${sc};">$${rem.toFixed(0)} <span style="font-size:13px;color:var(--t3);font-weight:400;">left</span></div>
+      <div style="font-size:13px;color:var(--red);font-weight:700;">$${spent.toFixed(2)} used</div>
+    </div>
+    <div class="prog" style="margin:0 0 8px;"><div class="progfill" style="width:${pct}%;background:${sc};"></div></div>
+    <div class="wgrid" style="margin-bottom:8px;">
+      ${wLabels.map((l,i)=>{
+        const st=S.weeks&&S.weeks[i];
+        const cls=st==='used'?'used':st==='saved'?'saved':i===cw?'cur':'';
+        const val=st==='used'?'-$50':st==='saved'?'saved':'$50';
+        return `<div class="wp ${cls}" onclick="toggleWeek(${i})"><div class="wplabel">${l}</div><div class="wpval">${val}</div></div>`;
+      }).join('')}
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btnr btnsm" style="flex:1;margin:0;" onclick="openSpend()">➕ Log spend</button>
+      <button class="btn btno btnsm" style="flex:1;margin:0;" onclick="openUnexpected()">⚠ Unexpected</button>
     </div>
   </div>`;
 
-  // Paycheck checklist -- simplified since surplus calc does the math
-  html+=`<div class="card"><div class="ct">Paycheck actions</div>
-    <div class="ci" onclick="togglePC('savings')">
-      <div class="cb ${S.pcChecks&&S.pcChecks.savings?'done':''}"><span class="ck">✓</span></div>
-      <div class="cil"><div class="cititle">Transfer $${Math.round(sur.safe4496).toLocaleString()} from #4496 to savings</div><div class="cisub">${phaseAction}</div></div>
+  // ── RANDY (compact) ──
+  const randySessions=(S.randySessions||[]).filter(s=>{const d=new Date(s.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+  const randyTotal=randySessions.reduce((a,s)=>a+s.amt,0);
+  html+=`<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div class="ct" style="margin-bottom:2px;">Personal training — Randy</div>
+        <div style="font-size:22px;font-weight:700;color:var(--grn);">$${randyTotal} <span style="font-size:12px;color:var(--t3);font-weight:400;">${randySessions.length} session${randySessions.length!==1?'s':''} this month</span></div>
+      </div>
+      <button class="btn btng btnsm" style="width:auto;margin:0;padding:10px 16px;" onclick="logRandy()">✓ $150</button>
+    </div>
+    ${randySessions.length?`<div style="margin-top:8px;">${randySessions.slice(0,3).map((s,i)=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:0.5px solid var(--border);"><span style="color:var(--t2);">Session ${randySessions.length-i} · ${s.date}</span><span style="color:var(--grn);">-$${s.amt}</span></div>`).join('')}</div>`:''}
+  </div>`;
+
+  // ── UNEXPECTED LOG (compact) ──
+  const unexp=S.unexpected||[];
+  if(unexp.length){
+    html+=`<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div class="ct" style="margin-bottom:0;">Unexpected charges</div>
+        <button class="btn btno btnsm" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="clearUnexpected()">Clear</button>
+      </div>`;
+    unexp.slice(0,5).forEach(e=>{
+      html+=`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px;">
+        <div><div style="font-weight:600;color:var(--text);">${e.label}</div><div style="color:var(--t3);">${e.acct} · ${e.date}</div></div>
+        <div style="color:var(--red);font-weight:700;flex-shrink:0;">-$${e.amt.toFixed(2)}</div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // ── PAYCHECK ACTIONS ──
+  html+=`<div class="card">
+    <div class="ct">Paycheck actions</div>
+    <div class="ci" onclick="togglePC('transfer')">
+      <div class="cb ${S.pcChecks&&S.pcChecks.transfer?'done':''}"><span class="ck">✓</span></div>
+      <div class="cil">
+        <div class="cititle">Transfer $${Math.round(sur.safe).toLocaleString()} from #4496</div>
+        <div class="cisub">${phaseAction}</div>
+      </div>
+      <div class="ciamt" style="color:${safeColor};">$${Math.round(sur.safe).toLocaleString()}</div>
     </div>
     <div class="ci" onclick="togglePC('karen')">
       <div class="cb ${S.pcChecks&&S.pcChecks.karen?'done':''}"><span class="ck">✓</span></div>
-      <div class="cil"><div class="cititle">Karen transfers $${Math.round(sur.karenTransfer).toLocaleString()} from #6764 to #4496</div><div class="cisub">After her #6764 bills are covered</div></div>
+      <div class="cil">
+        <div class="cititle">Karen transfers full Copans check to #4496</div>
+        <div class="cisub">Same day it lands — update Karen's pay below</div>
+      </div>
     </div>
     <div class="ci" onclick="togglePC('fresh')">
       <div class="cb ${S.pcChecks&&S.pcChecks.fresh?'done':''}"><span class="ck">✓</span></div>
       <div class="cil"><div class="cititle">Sunday Fresh Market — $150 HARD LIMIT</div><div class="cisub">Check cart before submitting</div></div>
       <div class="ciamt">$150</div>
     </div>
-    <button class="btn btno btnsm" style="margin-top:8px;" onclick="resetPC()">Reset checklist</button>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn btna btnsm" style="flex:1;margin:0;" onclick="openModal('karen-pay','Karen\\'s actual pay this week','Amount she received')">Update Karen's pay</button>
+      <button class="btn btno btnsm" style="flex:1;margin:0;" onclick="resetPC()">Reset</button>
+    </div>
   </div>`;
 
   document.getElementById('week-content').innerHTML=html;
-  renderUnexpected();
 }
-function togglePC(id){if(!S.pcChecks)S.pcChecks={};S.pcChecks[id]=!S.pcChecks[id];save(S);renderWeek();}
-function resetPC(){S.pcChecks={};save(S);renderWeek();toast('Checklist reset');}
 
 // ── MONTH PLAN ──
 let vMonth=now.getMonth(),vYear=now.getFullYear();
