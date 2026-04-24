@@ -400,6 +400,7 @@ function submitModal(){
   if(modalMode==='bal4496'){S.bal4496=amt;save(S);renderWeek();toast('#4496 updated');}
   if(modalMode==='bal6764'){S.bal6764=amt;save(S);renderWeek();toast('#6764 updated');}
   if(modalMode==='bal0725'){S.bal0725=amt;save(S);renderWeek();toast('Savings updated');}
+  if(modalMode==='karen-pay'){S.karenPay=amt;S.bal6764=(S.bal6764||0)+amt;save(S);renderWeek();toast(`Karen pay $${amt} logged — #6764 updated`);}
   if(modalMode==='spend'){addSpend(amt,label);}
   if(modalMode==='refund'){addRefund(amt,label);}
   if(modalMode==='unexpected'){addUnexpected(label,acct,amt);}
@@ -506,36 +507,148 @@ function getEvents(year,month){
 }
 
 // ── THIS WEEK ──
+// Determine next paycheck date from today
+function nextPaycheck(fromDay){
+  // Jon paychecks on 7th and 22nd
+  if(fromDay<7)return 7;
+  if(fromDay<22)return 22;
+  return 7; // next month's 7th
+}
+function nextPaycheckMonth(fromDay){
+  if(fromDay>=22)return now.getMonth()+1>11?0:now.getMonth()+1;
+  return now.getMonth();
+}
+
+// Calculate bills still due from #4496 and #6764 before next paycheck
+function calcSurplus(){
+  const today=now.getDate();
+  const nextPC=nextPaycheck(today);
+  const nextPCMonth=nextPaycheckMonth(today);
+  const allEvts=getEvents(now.getFullYear(),now.getMonth());
+
+  // Bills from today+1 up to (not including) next paycheck day, same month
+  // If next paycheck is next month, include rest of this month
+  const isSameMonth=nextPCMonth===now.getMonth();
+  const endDay=isSameMonth?nextPC:32; // 32 catches all remaining days in month
+
+  const due4496=allEvts.filter(e=>{
+    if(e.isIncome||!e.amt||e.amt>=0)return false;
+    if(!e.acct||!e.acct.includes('4496'))return false;
+    return e.day>today&&e.day<endDay;
+  });
+
+  const due6764=allEvts.filter(e=>{
+    if(e.isIncome||!e.amt||e.amt>=0)return false;
+    if(!e.acct||!e.acct.includes('6764'))return false;
+    return e.day>today&&e.day<endDay;
+  });
+
+  // Also include unexpected charges already logged today
+  const unexpectedTotal=(S.unexpected||[])
+    .filter(u=>u.date===new Date().toLocaleDateString()&&u.acct==='#4496')
+    .reduce((a,u)=>a+u.amt,0);
+
+  const total4496Due=due4496.reduce((a,e)=>a+Math.abs(e.amt),0);
+  const total6764Due=due6764.reduce((a,e)=>a+Math.abs(e.amt),0);
+
+  const safe4496=Math.max(0,S.bal4496-total4496Due);
+  const safe6764=Math.max(0,S.bal6764-total6764Due);
+
+  // Karen should transfer everything except what #6764 needs
+  const karenTransfer=Math.max(0,S.bal6764-total6764Due);
+
+  return {due4496,due6764,total4496Due,total6764Due,safe4496,safe6764,karenTransfer,nextPC,nextPCMonth,isSameMonth};
+}
+
 function renderWeek(){
-  // Update balance display
   document.getElementById('b4496').textContent='$'+Math.round(S.bal4496).toLocaleString();
   document.getElementById('b6764').textContent='$'+Math.round(S.bal6764).toLocaleString();
   document.getElementById('b0725').textContent='$'+Math.round(S.bal0725).toLocaleString();
 
   const today=now.getDate();
   const banner=document.getElementById('week-banner');
-  banner.innerHTML=`<div class="today-banner"><p class="bold">Today — ${MONTHS[now.getMonth()]} ${today}, ${now.getFullYear()} (${DAYS[now.getDay()]})</p><p>Tap any balance above to update it · Log unexpected charges below</p></div>`;
+  banner.innerHTML=`<div class="today-banner"><p class="bold">Today — ${MONTHS[now.getMonth()]} ${today}, ${now.getFullYear()} (${DAYS[now.getDay()]})</p><p>Tap any balance above to update · Log unexpected charges below</p></div>`;
 
-  const allEvts=getEvents(now.getFullYear(),now.getMonth());
+  // ── SURPLUS CALCULATOR ──
+  const sur=calcSurplus();
+  const nextPCLabel=`${MONTHS[sur.nextPCMonth].substring(0,3)} ${sur.nextPC}`;
+  const safe4496Color=sur.safe4496<300?'var(--red)':sur.safe4496<600?'var(--amb)':'var(--grn)';
+  const safe6764Color=sur.safe6764<200?'var(--red)':sur.safe6764<400?'var(--amb)':'var(--grn)';
+
+  let surHtml=`<div class="card" style="border-color:var(--bmid)40;margin-bottom:12px;">
+    <div class="ct">Safe to transfer — before ${nextPCLabel} paycheck</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <div style="background:var(--s2);border-radius:var(--rs);padding:12px;text-align:center;">
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">#4496 safe to move</div>
+        <div style="font-size:26px;font-weight:700;color:${safe4496Color};">$${Math.round(sur.safe4496).toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:2px;">$${Math.round(sur.total4496Due).toLocaleString()} still due</div>
+      </div>
+      <div style="background:var(--s2);border-radius:var(--rs);padding:12px;text-align:center;">
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">#6764 Karen transfers</div>
+        <div style="font-size:26px;font-weight:700;color:${safe6764Color};">$${Math.round(sur.karenTransfer).toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:2px;">$${Math.round(sur.total6764Due).toLocaleString()} still due</div>
+      </div>
+    </div>`;
+
+  // Bills still due breakdown #4496
+  if(sur.due4496.length){
+    surHtml+=`<div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;">#4496 upcoming before ${nextPCLabel}</div>`;
+    sur.due4496.forEach(e=>{
+      surHtml+=`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12px;">
+        <span style="color:var(--t2);">${e.title} <span style="color:var(--t3);">~${e.day}${['st','nd','rd','th'][Math.min(3,(e.day-1)%10)]}</span></span>
+        <span style="color:var(--red);">-$${Math.abs(e.amt).toLocaleString()}</span>
+      </div>`;
+    });
+    surHtml+=`<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;font-weight:700;">
+      <span style="color:var(--t2);">Total due #4496</span>
+      <span style="color:var(--red);">-$${Math.round(sur.total4496Due).toLocaleString()}</span>
+    </div>`;
+  }
+
+  // Bills still due breakdown #6764
+  if(sur.due6764.length){
+    surHtml+=`<div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px;margin-top:10px;">#6764 upcoming before ${nextPCLabel}</div>`;
+    sur.due6764.forEach(e=>{
+      surHtml+=`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12px;">
+        <span style="color:var(--t2);">${e.title} <span style="color:var(--t3);">~${e.day}${['st','nd','rd','th'][Math.min(3,(e.day-1)%10)]}</span></span>
+        <span style="color:var(--red);">-$${Math.abs(e.amt).toLocaleString()}</span>
+      </div>`;
+    });
+    surHtml+=`<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;font-weight:700;">
+      <span style="color:var(--t2);">Total due #6764</span>
+      <span style="color:var(--red);">-$${Math.round(sur.total6764Due).toLocaleString()}</span>
+    </div>`;
+  }
+
+  // What to do with the surplus
+  const phase=S.snowballPhase||0;
+  const phaseAction=phase<4?'→ Transfer to savings #0725 (tire/expense fund)':'→ Pay extra to current snowball target';
+  surHtml+=`<div style="background:var(--gbg);border-radius:var(--rs);padding:10px;margin-top:10px;border:1px solid var(--gmid)30;">
+    <div style="font-size:12px;color:var(--grn);font-weight:700;">Transfer $${Math.round(sur.safe4496).toLocaleString()} from #4496</div>
+    <div style="font-size:11px;color:var(--t2);margin-top:2px;">${phaseAction}</div>
+  </div>`;
+
+  surHtml+=`</div>`;
+
+  // ── UPCOMING EVENTS THIS WEEK ──
   const weekEnd=today+7;
+  const allEvts=getEvents(now.getFullYear(),now.getMonth());
   const weekEvts=allEvts.filter(e=>e.day>=today&&e.day<=weekEnd);
-
   const byDay={};
   weekEvts.forEach(e=>{if(!byDay[e.day])byDay[e.day]=[];byDay[e.day].push(e);});
   const days=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
 
-  let html='';
-  if(!days.length){html='<div class="card" style="color:var(--t3);font-size:13px;">No events in the next 7 days.</div>';}
-  else{
+  let html=surHtml;
+  if(days.length){
+    html+=`<div class="card"><div class="ct">This week — ${MONTHS[now.getMonth()].substring(0,3)} ${today}–${Math.min(today+7,31)}</div>`;
     days.forEach(day=>{
       const isToday=day===today;
-      const date=new Date(now.getFullYear(),now.getMonth(),day);
-      const dow=DAYS[date.getDay()];
-      html+=`<div class="card" style="${isToday?'border-color:var(--amid);':''}">`;
-      html+=`<div style="font-size:11px;font-weight:700;color:${isToday?'var(--amb)':'var(--t3)'};letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;">${isToday?'TODAY — ':''}${dow} ${MONTHS[now.getMonth()].substring(0,3)} ${day}</div>`;
+      const dow=DAYS[new Date(now.getFullYear(),now.getMonth(),day).getDay()];
+      html+=`<div style="margin-bottom:4px;">
+        <div style="font-size:11px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:600;padding:4px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
       byDay[day].forEach(e=>{
-        const isIncome=e.isIncome||e.amt>0;
-        const amtColor=isIncome?'var(--grn)':(Math.abs(e.amt)>500?'var(--red)':'var(--t2)');
+        const isInc=e.isIncome||e.amt>0;
+        const amtColor=isInc?'var(--grn)':(Math.abs(e.amt)>500?'var(--red)':'var(--t2)');
         const amtStr=typeof e.amt==='number'&&e.amt!==0?(e.amt>0?'+$'+e.amt.toLocaleString():'-$'+Math.abs(e.amt).toLocaleString()):'';
         html+=`<div class="event">
           <div class="edot" style="background:${e.color};"></div>
@@ -549,25 +662,38 @@ function renderWeek(){
       });
       html+='</div>';
     });
+    html+='</div>';
   }
 
-  // Paycheck checklist
-  const pcItems=[
-    {id:'savings',title:'Transfer $200 to savings #0725',sub:'Do this FIRST',amt:'$200'},
-    {id:'karen-transfer',title:'Transfer Karen remainder to #4496',sub:'After #6764 bills covered'},
-    {id:'expense',title:'Make expense / snowball payment',sub:'Same day paycheck lands — do not let it sit'},
-    {id:'fresh',title:'Sunday Fresh Market — $150 HARD LIMIT',sub:'Check cart before submitting',amt:'$150'},
-  ];
-  html+=`<div class="card"><div class="ct">Paycheck action checklist</div>`;
-  pcItems.forEach(c=>{
-    const done=S.pcChecks&&S.pcChecks[c.id];
-    html+=`<div class="ci ${done?'done':''}" onclick="togglePC('${c.id}')">
-      <div class="cb ${done?'done':''}"><span class="ck">✓</span></div>
-      <div class="cil"><div class="cititle">${c.title}</div><div class="cisub">${c.sub||''}</div></div>
-      ${c.amt?`<div class="ciamt">${c.amt}</div>`:''}
-    </div>`;
-  });
-  html+=`<button class="btn btno btnsm" style="margin-top:8px;" onclick="resetPC()">Reset checklist</button></div>`;
+  // Karen pay update
+  html+=`<div class="card">
+    <div class="ct">Karen's paycheck</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div>
+        <div style="font-size:13px;color:var(--text);">Last entered: <span style="font-weight:700;color:var(--amb);">$${S.karenPay||720}</span></div>
+        <div style="font-size:11px;color:var(--t3);">Updates #6764 balance + recalculates surplus</div>
+      </div>
+      <button class="btn btna btnsm" style="width:auto;margin:0;padding:8px 16px;" onclick="openModal('karen-pay','Enter Karen\\'s actual pay','Amount she received')">Update</button>
+    </div>
+  </div>`;
+
+  // Paycheck checklist -- simplified since surplus calc does the math
+  html+=`<div class="card"><div class="ct">Paycheck actions</div>
+    <div class="ci" onclick="togglePC('savings')">
+      <div class="cb ${S.pcChecks&&S.pcChecks.savings?'done':''}"><span class="ck">✓</span></div>
+      <div class="cil"><div class="cititle">Transfer $${Math.round(sur.safe4496).toLocaleString()} from #4496 to savings</div><div class="cisub">${phaseAction}</div></div>
+    </div>
+    <div class="ci" onclick="togglePC('karen')">
+      <div class="cb ${S.pcChecks&&S.pcChecks.karen?'done':''}"><span class="ck">✓</span></div>
+      <div class="cil"><div class="cititle">Karen transfers $${Math.round(sur.karenTransfer).toLocaleString()} from #6764 to #4496</div><div class="cisub">After her #6764 bills are covered</div></div>
+    </div>
+    <div class="ci" onclick="togglePC('fresh')">
+      <div class="cb ${S.pcChecks&&S.pcChecks.fresh?'done':''}"><span class="ck">✓</span></div>
+      <div class="cil"><div class="cititle">Sunday Fresh Market — $150 HARD LIMIT</div><div class="cisub">Check cart before submitting</div></div>
+      <div class="ciamt">$150</div>
+    </div>
+    <button class="btn btno btnsm" style="margin-top:8px;" onclick="resetPC()">Reset checklist</button>
+  </div>`;
 
   document.getElementById('week-content').innerHTML=html;
   renderUnexpected();
