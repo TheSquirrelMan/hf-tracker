@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a1a18">
-    <title>HF Tracker Pro</title>
+    <title>HF Vault</title>
     <style>
         :root {
             --bg:#1a1a18; --sf:#252523; --s2:#2c2c2a; --s3:#343432;
@@ -23,51 +23,51 @@
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--tx); font-size: 15px; line-height: 1.5; overflow: hidden; height: 100vh; }
         
         /* PIN Screen */
-        .pin-screen { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; transition: opacity 0.3s; }
-        .pin-screen.hidden { opacity: 0; pointer-events: none; }
+        .pin-screen { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; }
+        .pin-screen.hidden { display: none; }
         .pin-dots { display: flex; gap: 14px; margin-bottom: 32px; }
         .pin-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--s3); border: 2px solid var(--br); transition: all .15s; }
-        .pin-dot.filled { background: var(--blu); border-color: var(--bm); transform: scale(1.1); }
+        .pin-dot.filled { background: var(--blu); border-color: var(--bm); }
         .pin-dot.error { background: var(--red); border-color: var(--rm); animation: shake 0.2s 2; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
         
         .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 280px; }
         .pin-key { background: var(--sf); border: 0.5px solid var(--br); border-radius: var(--r); padding: 20px; font-size: 22px; font-weight: 600; cursor: pointer; text-align: center; user-select: none; }
-        .pin-key:active { background: var(--s3); transform: scale(0.95); }
+        .pin-key:active { background: var(--s3); }
 
-        /* Navigation */
+        /* Main UI */
         .nav { display: flex; background: var(--sf); border-bottom: 1px solid var(--br); position: sticky; top: 0; z-index: 100; }
-        .nb { flex: 1; padding: 15px; font-size: 12px; font-weight: 700; color: var(--t3); background: none; border: none; border-bottom: 2px solid transparent; text-transform: uppercase; letter-spacing: 0.05em; }
+        .nb { flex: 1; padding: 15px; font-size: 12px; font-weight: 700; color: var(--t3); background: none; border: none; border-bottom: 2px solid transparent; text-transform: uppercase; }
         .nb.on { color: var(--blu); border-bottom-color: var(--blu); }
 
-        /* Panels */
-        .panel { display: none; padding: 12px; max-width: 600px; margin: 0 auto; height: calc(100vh - 50px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .panel { display: none; padding: 12px; max-width: 600px; margin: 0 auto; height: calc(100vh - 50px); overflow-y: auto; }
         .panel.on { display: block; }
         
         .card { background: var(--sf); border-radius: var(--r); border: 0.5px solid var(--br); padding: 16px; margin-bottom: 12px; }
-        .btn { display: block; width: 100%; padding: 14px; border-radius: var(--rs); border: none; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 8px; text-align: center; color: var(--tx); transition: opacity 0.1s; }
-        .btn:active { opacity: 0.7; }
+        .btn { display: block; width: 100%; padding: 14px; border-radius: var(--rs); border: none; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 8px; text-align: center; color: var(--tx); }
         .btno { background: var(--s2); border: 1px solid var(--br); }
         .btng { background: var(--gbg); color: var(--grn); border: 1px solid var(--gm); }
 
         .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
         .sok { background: var(--grn); } .serr { background: var(--red); } .spend { background: var(--amb); }
 
-        /* Modal Area */
+        /* Progress Bar */
+        .prog-wrap { height: 6px; background: var(--s2); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+        .prog-fill { height: 100%; background: var(--blu); transition: width 0.5s ease-out; }
+
+        /* Modal */
         .mbg { position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 1000; display: none; align-items: flex-end; justify-content: center; }
         .mbg.show { display: flex; }
-        .modal { background: var(--sf); border-radius: var(--r) var(--r) 0 0; padding: 24px; width: 100%; max-width: 500px; border-top: 1px solid var(--br); animation: slideUp 0.2s ease-out; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        input { width: 100%; background: var(--s2); border: 1px solid var(--br); padding: 14px; color: var(--tx); border-radius: var(--rs); margin-bottom: 12px; font-size: 16px; outline: none; }
-        input:focus { border-color: var(--blu); }
+        .modal { background: var(--sf); border-radius: var(--r) var(--r) 0 0; padding: 24px; width: 100%; max-width: 500px; border-top: 1px solid var(--br); }
+        input { width: 100%; background: var(--s2); border: 1px solid var(--br); padding: 14px; color: var(--tx); border-radius: var(--rs); margin-bottom: 12px; font-size: 18px; outline: none; }
     </style>
 </head>
 <body>
 
 <div class="pin-screen" id="pin-screen">
     <div style="font-size:32px; margin-bottom:12px;">🛡️</div>
-    <div style="font-size:20px; font-weight:700; letter-spacing: 0.5px;">ENCRYPTED ACCESS</div>
-    <div style="font-size:11px; color:var(--t3); margin-bottom:32px; text-transform: uppercase; letter-spacing: 0.1em;">HF Vault v2.0</div>
+    <div style="font-size:20px; font-weight:700; letter-spacing: 0.5px;">SECURE ACCESS</div>
+    <div style="font-size:11px; color:var(--t3); margin-bottom:32px; text-transform: uppercase;">Encrypted Tracker v2.1</div>
     <div class="pin-dots">
         <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
         <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
@@ -78,39 +78,34 @@
         <div class="pin-key" onclick="pinKey('7')">7</div><div class="pin-key" onclick="pinKey('8')">8</div><div class="pin-key" onclick="pinKey('9')">9</div>
         <div class="pin-key" style="visibility:hidden"></div><div class="pin-key" onclick="pinKey('0')">0</div><div class="pin-key" onclick="pinDel()">⌫</div>
     </div>
-    <div id="pin-err" style="color:var(--red); font-size:13px; margin-top:20px; height:20px; font-weight: 600;"></div>
 </div>
 
 <nav class="nav" id="main-nav" style="display:none;">
-    <button class="nb on" id="btn-week" onclick="sw('week',this)">Ledger</button>
-    <button class="nb" id="btn-snow" onclick="sw('snowball',this)">Snowball</button>
+    <button class="nb on" onclick="sw('week',this)">Ledger</button>
+    <button class="nb" onclick="sw('snowball',this)">Snowball</button>
 </nav>
 
-<div class="panel on" id="p-week">
+<div class="panel on" id="p-week" style="display:none;">
     <div class="card">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-            <div class="btno" style="padding:14px; border-radius:var(--rs); text-align:center; cursor:pointer;" onclick="openEdit('bal4496', '#4496 Checking')">
-                <div style="font-size:10px; color:var(--t3); margin-bottom:4px;">#4496</div>
+            <div class="btno" style="padding:14px; border-radius:var(--rs); text-align:center;" onclick="openEdit('bal4496', '#4496 Balance')">
+                <div style="font-size:10px; color:var(--t3); margin-bottom:4px;">#4496 CHECKING</div>
                 <div style="font-size:18px; font-weight:700; color:var(--blu);" id="v4496">--</div>
             </div>
-            <div class="btno" style="padding:14px; border-radius:var(--rs); text-align:center; cursor:pointer;" onclick="openEdit('bal0725', 'Savings Account')">
-                <div style="font-size:10px; color:var(--t3); margin-bottom:4px;">SAVINGS</div>
+            <div class="btno" style="padding:14px; border-radius:var(--rs); text-align:center;" onclick="openEdit('bal0725', 'Savings Balance')">
+                <div style="font-size:10px; color:var(--t3); margin-bottom:4px;">#0725 SAVINGS</div>
                 <div style="font-size:18px; font-weight:700; color:var(--pur);" id="v0725">--</div>
             </div>
         </div>
         <div style="text-align:center; margin-top:16px; font-size:10px; color:var(--t3);">
-            <span class="sync-dot" id="sync-dot"></span> <span id="sync-lbl">connecting to vault...</span>
+            <span class="sync-dot" id="sync-dot"></span> <span id="sync-lbl">encrypted connection</span>
         </div>
     </div>
-    <div id="roadmap-placeholder" style="color:var(--t3); text-align:center; font-size:13px; margin-top:40px;">
-        Vault unlocked. Ready for ledger entry.
-    </div>
+    <div id="roadmap"></div>
 </div>
 
-<div class="panel" id="p-snowball">
-    <div class="card" style="text-align:center; color:var(--t3);">
-        Snowball logic will appear here once cards are added.
-    </div>
+<div class="panel" id="p-snowball" style="display:none;">
+    <div id="snow-list"></div>
 </div>
 
 <div class="mbg" id="mbg" onclick="closeModal()">
@@ -118,7 +113,7 @@
         <div id="mtitle" style="font-size:16px; font-weight:700; margin-bottom:16px;"></div>
         <input type="number" id="m-amt" placeholder="0.00" inputmode="decimal">
         <button class="btn btng" onclick="saveEdit()">Update Ledger</button>
-        <button class="btn btno" onclick="closeModal()">Cancel</button>
+        <button class="btn btno" onclick="closeModal()">Dismiss</button>
     </div>
 </div>
 
@@ -136,20 +131,79 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     let stateRef = null;
-    let S = { bal4496: 0, bal0725: 0, phaseDone: {}, cardBals: {} };
+    let S = { bal4496: 0, bal0725: 0, phaseDone: {} };
     let saveTimer = null;
     let pinEntry = '';
-    const SALT = "hf_private_vault_2026"; // THE SECRET SALT
+    const SALT = "hf_proactive_vault_2026"; 
 
-    // --- ENCRYPTION ---
-    async function hashPin(pin) {
-        const msgUint8 = new TextEncoder().encode(pin + SALT);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    // --- RECOVERED DATA ---
+    const BILLS = [
+        { n: "Rent", a: 1200, d: 1 },
+        { n: "Utilities", a: 160, d: 15 },
+        { n: "Insurance", a: 110, d: 20 },
+        { n: "TN Unempl.", a: 50, d: 5 },
+        { n: "IRS 2024", a: 100, d: 15 }
+    ];
+
+    const PHASES = [
+        { id: 'tires_j', n: "Jon's Tires & Oil", t: 600 },
+        { id: 'repair', n: "Repair Buffer (Savings)", t: 1000 },
+        { id: 'tires_k', n: "Karen's Tires", t: 550 },
+        { id: 'dental', n: "Dental Work", t: 800 },
+        { id: 'eye', n: "Eye Care", t: 300 }
+    ];
+
+    // --- PROJECTOR BRAIN ---
+    function renderProjector() {
+        const cont = document.getElementById('roadmap');
+        let html = `<div style="font-size:11px; color:var(--t3); margin:20px 0 8px; font-weight:700; text-transform:uppercase;">Next 14 Days</div>`;
+        
+        let simBal = S.bal4496;
+        let now = new Date();
+        let currentDay = now.getDate();
+
+        // 1. Upcoming Bills logic
+        let billsDue = BILLS.filter(b => b.d >= currentDay && b.d <= currentDay + 14);
+        html += `<div class="card" style="border-left:4px solid var(--amb)">`;
+        if(billsDue.length === 0) {
+            html += `<div style="font-size:13px; color:var(--t2)">No major bills due in next 14 days.</div>`;
+        } else {
+            billsDue.forEach(b => {
+                let statusColor = simBal >= b.a ? 'var(--grn)' : 'var(--red)';
+                html += `<div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:13px; color:${statusColor}">
+                            <span>${b.n} (${b.d}th)</span><span>$${b.a}</span>
+                         </div>`;
+                simBal -= b.a;
+            });
+        }
+        html += `</div>`;
+
+        // 2. Life Phase Tracker
+        html += `<div style="font-size:11px; color:var(--t3); margin:20px 0 8px; font-weight:700; text-transform:uppercase;">Strategy Milestones</div>`;
+        PHASES.forEach(p => {
+            let progress = 0;
+            if(p.id === 'repair') progress = (S.bal0725 / p.t) * 100;
+            
+            html += `<div class="card" style="border-left:4px solid var(--blu)">
+                        <div style="display:flex; justify-content:space-between; font-weight:700; font-size:14px; margin-bottom:4px;">
+                            <span>${p.n}</span><span>$${p.t}</span>
+                        </div>
+                        <div class="prog-wrap"><div class="prog-fill" style="width:${Math.min(progress, 100)}%"></div></div>
+                        <div style="font-size:11px; color:var(--t3); margin-top:8px;">
+                            ${simBal > 100 ? 'Surplus ready for allocation' : 'Hold current balance for bills'}
+                        </div>
+                     </div>`;
+        });
+        cont.innerHTML = html;
     }
 
-    // --- AUTH ---
+    // --- AUTH & SYNC ---
+    async function hashPin(pin) {
+        const msg = new TextEncoder().encode(pin + SALT);
+        const buffer = await crypto.subtle.digest('SHA-256', msg);
+        return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     window.pinKey = async k => {
         if(pinEntry.length >= 4) return;
         pinEntry += k;
@@ -157,21 +211,10 @@
         if(pinEntry.length === 4) {
             const h = await hashPin(pinEntry);
             stateRef = ref(db, 'vault/' + h);
-            
-            try {
-                const snap = await get(stateRef);
-                if(snap.exists()) {
-                    S = { ...S, ...snap.val() };
-                } else {
-                    // Initialize new secure folder
-                    await set(stateRef, S);
-                }
-                unlock();
-            } catch (e) {
-                document.getElementById('pin-err').textContent = "Connection Error";
-                pinEntry = '';
-                updateDots(true);
-            }
+            const snap = await get(stateRef);
+            if(snap.exists()) S = snap.val();
+            else await set(stateRef, S);
+            unlock();
         }
     };
 
@@ -180,69 +223,47 @@
         document.getElementById('main-nav').style.display = 'flex';
         document.getElementById('p-week').style.display = 'block';
         render();
-        // Start live sync
-        onValue(stateRef, (snap) => {
-            if(snap.exists() && !saveTimer) {
-                S = snap.val();
-                render();
-            }
-        });
-        document.getElementById('sync-dot').className = 'sync-dot sok';
-        document.getElementById('sync-lbl').textContent = 'securely synced';
+        onValue(stateRef, (snap) => { if(snap.exists() && !saveTimer) { S = snap.val(); render(); } });
     }
 
-    window.pinDel = () => { 
-        pinEntry = pinEntry.slice(0,-1); 
-        document.getElementById('pin-err').textContent = "";
-        updateDots(); 
-    };
-
+    window.pinDel = () => { pinEntry = pinEntry.slice(0,-1); updateDots(); };
     function updateDots(err=false) {
         for(let i=0; i<4; i++) {
             const d = document.getElementById('pd'+i);
-            d.classList.toggle('filled', i < pinEntry.length);
-            d.classList.toggle('error', err);
+            d.className = 'pin-dot' + (i < pinEntry.length ? ' filled' : '') + (err ? ' error' : '');
         }
-        if(err) setTimeout(() => updateDots(false), 500);
     }
 
-    // --- RENDER ---
+    // --- UI HELPERS ---
     function render() {
-        document.getElementById('v4496').textContent = "$" + S.bal4496.toLocaleString(undefined, {minimumFractionDigits: 2});
-        document.getElementById('v0725').textContent = "$" + S.bal0725.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('v4496').textContent = "$" + S.bal4496.toLocaleString(undefined, {minimumFractionDigits:2});
+        document.getElementById('v0725').textContent = "$" + S.bal0725.toLocaleString(undefined, {minimumFractionDigits:2});
+        renderProjector();
     }
 
-    // --- SAVE ---
-    function triggerSave() {
+    window.saveData = () => {
         if(saveTimer) clearTimeout(saveTimer);
         document.getElementById('sync-dot').className = 'sync-dot spend';
-        document.getElementById('sync-lbl').textContent = 'saving to vault...';
         saveTimer = setTimeout(async () => {
             await set(stateRef, S);
             saveTimer = null;
             document.getElementById('sync-dot').className = 'sync-dot sok';
-            document.getElementById('sync-lbl').textContent = 'securely synced';
-        }, 1200);
-    }
+        }, 1000);
+    };
 
-    // --- MODALS ---
-    let activeKey = '';
-    window.openEdit = (key, title) => {
-        activeKey = key;
-        document.getElementById('mtitle').textContent = title;
-        document.getElementById('m-amt').value = S[key] || '';
+    window.openEdit = (k, t) => {
+        activeKey = k;
+        document.getElementById('mtitle').textContent = t;
+        document.getElementById('m-amt').value = S[k] || '';
         document.getElementById('mbg').classList.add('show');
         setTimeout(() => document.getElementById('m-amt').focus(), 100);
     };
+
+    let activeKey = '';
     window.closeModal = () => document.getElementById('mbg').classList.remove('show');
     window.saveEdit = () => {
-        const val = parseFloat(document.getElementById('m-amt').value);
-        if(!isNaN(val)) {
-            S[activeKey] = val;
-            render();
-            triggerSave();
-            closeModal();
-        }
+        const v = parseFloat(document.getElementById('m-amt').value);
+        if(!isNaN(v)) { S[activeKey] = v; render(); saveData(); closeModal(); }
     };
 
     window.sw = (id, el) => {
@@ -251,11 +272,6 @@
         document.getElementById('p-'+id).classList.add('on');
         el.classList.add('on');
     };
-
-    // Emergency save on close
-    window.addEventListener('beforeunload', () => {
-        if(saveTimer && stateRef) set(stateRef, S);
-    });
 </script>
 </body>
 </html>
