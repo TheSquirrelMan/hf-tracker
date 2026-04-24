@@ -1,1192 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1a1a18">
-<title>HF Tracker</title>
-<style>
-:root{
-  --bg:#1a1a18;--sf:#252523;--s2:#2c2c2a;--s3:#343432;
-  --br:rgba(255,255,255,0.08);
-  --tx:#f0efe9;--t2:#b4b2a9;--t3:#666660;
-  --red:#F09595;--rbg:#3d1515;--rm:#A32D2D;
-  --amb:#EF9F27;--abg:#3d2800;--am:#854F0B;
-  --grn:#97C459;--gbg:#1a2e08;--gm:#3B6D11;
-  --blu:#85B7EB;--bbg:#0c2240;--bm:#185FA5;
-  --pur:#C4B5FD;--pbg:#1e1a3d;--pm:#5B4FBF;
-  --r:14px;--rs:8px;
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);font-size:15px;line-height:1.5;overflow-x:hidden;}
-.pin-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;}
-.pin-screen.hidden{display:none;}
-.pin-logo{font-size:36px;margin-bottom:8px;}
-.pin-title{font-size:22px;font-weight:700;margin-bottom:4px;}
-.pin-sub{font-size:13px;color:var(--t3);margin-bottom:32px;}
-.pin-dots{display:flex;gap:14px;margin-bottom:32px;}
-.pin-dot{width:16px;height:16px;border-radius:50%;background:var(--s3);border:2px solid var(--br);transition:all .15s;}
-.pin-dot.filled{background:var(--blu);border-color:var(--bm);}
-.pin-dot.error{background:var(--red);border-color:var(--rm);}
-.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px;}
-.pin-key{background:var(--sf);border:0.5px solid var(--br);border-radius:var(--r);padding:18px;font-size:22px;font-weight:600;color:var(--tx);cursor:pointer;text-align:center;transition:opacity .1s,transform .1s;user-select:none;}
-.pin-key:active{opacity:.7;transform:scale(.95);}
-.pin-key.del{font-size:18px;color:var(--t2);}
-.pin-key.empty{background:transparent;border-color:transparent;pointer-events:none;}
-.pin-error{font-size:13px;color:var(--red);margin-top:16px;height:18px;}
-.loading-screen{position:fixed;inset:0;background:var(--bg);z-index:998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
-.loading-screen.hidden{display:none;}
-.spinner{width:32px;height:32px;border:3px solid var(--br);border-top-color:var(--blu);border-radius:50%;animation:spin .8s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-.nav{display:flex;overflow-x:auto;background:var(--sf);border-bottom:1px solid var(--br);position:sticky;top:0;z-index:100;scrollbar-width:none;}
-.nav::-webkit-scrollbar{display:none;}
-.nb{flex-shrink:0;padding:13px 15px;font-size:12px;font-weight:600;color:var(--t3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;letter-spacing:.03em;text-transform:uppercase;}
-.nb.on{color:var(--blu);border-bottom-color:var(--blu);}
-.panel{display:none;padding:12px 12px 100px;max-width:600px;margin:0 auto;}
-.panel.on{display:block;}
-.card{background:var(--sf);border-radius:var(--r);border:0.5px solid var(--br);padding:14px;margin-bottom:10px;}
-.ct{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;}
-.bstrip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;}
-.bitem{background:var(--sf);border-radius:var(--rs);padding:8px 6px;border:0.5px solid var(--br);text-align:center;cursor:pointer;}
-.bitem:active{opacity:.7;}
-.bacct{font-size:9px;color:var(--t3);letter-spacing:.04em;text-transform:uppercase;}
-.bnum{font-size:15px;font-weight:700;margin-top:1px;}
-.btn{display:block;width:100%;padding:13px;border-radius:var(--rs);border:none;font-size:15px;font-weight:700;cursor:pointer;text-align:center;margin-bottom:8px;transition:opacity .15s,transform .1s;}
-.btn:active{opacity:.8;transform:scale(.98);}
-.btng{background:var(--gbg);color:var(--grn);border:1px solid var(--gm);}
-.btnr{background:var(--rbg);color:var(--red);border:1px solid var(--rm);}
-.btna{background:var(--abg);color:var(--amb);border:1px solid var(--am);}
-.btnb{background:var(--bbg);color:var(--blu);border:1px solid var(--bm);}
-.btno{background:var(--s2);color:var(--t2);border:0.5px solid var(--br);}
-.btnsm{padding:9px 14px;font-size:13px;margin-bottom:6px;}
-.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--br);gap:8px;}
-.row:last-child{border-bottom:none;}
-.rl{flex:1;}
-.rlabel{font-size:14px;color:var(--tx);}
-.rsub{font-size:11px;color:var(--t3);margin-top:1px;}
-.rval{font-size:14px;font-weight:700;flex-shrink:0;}
-.ci{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--br);cursor:pointer;}
-.ci:last-child{border-bottom:none;}
-.cb{width:24px;height:24px;border-radius:6px;border:2px solid var(--br);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px;}
-.cb.done{background:var(--gbg);border-color:var(--gm);}
-.ck{font-size:13px;opacity:0;transition:opacity .2s;color:var(--grn);}
-.cb.done .ck{opacity:1;}
-.cil{flex:1;}
-.cititle{font-size:14px;color:var(--tx);transition:color .2s;}
-.ci.done .cititle{color:var(--t3);text-decoration:line-through;}
-.cisub{font-size:11px;color:var(--t3);margin-top:1px;}
-.wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0;}
-.wp{border-radius:var(--rs);padding:10px 4px;text-align:center;cursor:pointer;border:1px solid var(--br);background:var(--s2);transition:all .2s;}
-.wp.used{background:var(--rbg);border-color:var(--rm);}
-.wp.cur{border-color:var(--amb);border-width:2px;}
-.wplabel{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;}
-.wp.used .wplabel{color:var(--red);}
-.wp.cur .wplabel{color:var(--amb);}
-.wpval{font-size:14px;font-weight:700;margin-top:2px;color:var(--t2);}
-.wp.used .wpval{color:var(--red);}
-.wp.cur .wpval{color:var(--amb);}
-.prog{height:6px;border-radius:3px;background:var(--s2);margin:8px 0;overflow:hidden;}
-.progfill{height:100%;border-radius:3px;transition:width .4s;}
-.mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.mnavtitle{font-size:17px;font-weight:700;}
-.mnavbtn{background:var(--s2);border:0.5px solid var(--br);border-radius:var(--rs);padding:8px 14px;font-size:14px;color:var(--tx);cursor:pointer;}
-.event{display:flex;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--br);}
-.event:last-child{border-bottom:none;}
-.edot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
-.econtent{flex:1;min-width:0;}
-.etitle{font-size:13px;font-weight:600;color:var(--tx);}
-.esub{font-size:11px;color:var(--t3);margin-top:1px;}
-.ebal{font-size:10px;margin-top:2px;}
-.eamt{font-size:13px;font-weight:700;flex-shrink:0;text-align:right;min-width:52px;}
-.wheader{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;padding:8px 0 5px;border-bottom:1px solid var(--br);margin-bottom:4px;display:flex;justify-content:space-between;}
-.tcard{background:var(--s2);border-radius:var(--rs);padding:13px;margin-bottom:8px;border:1px solid var(--br);}
-.tcard.active{border-color:var(--am);background:var(--abg);}
-.tcard.tdone{opacity:0.35;}
-.mbg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:flex-end;justify-content:center;}
-.mbg.show{display:flex;}
-.modal{background:var(--sf);border-radius:var(--r) var(--r) 0 0;padding:20px;width:100%;max-width:600px;}
-.mtitle{font-size:17px;font-weight:700;margin-bottom:14px;}
-.modal input,.modal select{width:100%;background:var(--s2);border:1px solid var(--br);border-radius:var(--rs);padding:12px 14px;font-size:16px;color:var(--tx);margin-bottom:10px;}
-.modal input::placeholder{color:var(--t3);}
-.modal select option{background:var(--s2);}
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--s3);color:var(--tx);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;border:0.5px solid var(--br);}
-.toast.show{opacity:1;}
-.sync-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-left:6px;vertical-align:middle;}
-.sok{background:var(--grn);}
-.serr{background:var(--red);}
-.spend{background:var(--amb);}
-.confirm-banner{background:var(--abg);border:1px solid var(--am);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;}
-.cb-title{font-size:14px;font-weight:700;color:var(--amb);margin-bottom:4px;}
-.cb-sub{font-size:12px;color:var(--t2);margin-bottom:10px;}
-.milestone{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--br);}
-.milestone:last-child{border-bottom:none;}
-.ms-label{font-size:13px;color:var(--tx);flex:1;}
-.ms-sub{font-size:11px;color:var(--t3);margin-top:1px;}
-.ms-date{font-size:13px;font-weight:700;flex-shrink:0;text-align:right;}
-.ms-done{color:var(--grn);}
-.ms-soon{color:var(--amb);}
-.ms-future{color:var(--t2);}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a18">
+    <title>HF Tracker Pro</title>
+    <style>
+        :root {
+            --bg:#1a1a18; --sf:#252523; --s2:#2c2c2a; --s3:#343432;
+            --br:rgba(255,255,255,0.08);
+            --tx:#f0efe9; --t2:#b4b2a9; --t3:#666660;
+            --red:#F09595; --rbg:#3d1515; --rm:#A32D2D;
+            --amb:#EF9F27; --abg:#3d2800; --am:#854F0B;
+            --grn:#97C459; --gbg:#1a2e08; --gm:#3B6D11;
+            --blu:#85B7EB; --bbg:#0c2240; --bm:#185FA5;
+            --pur:#C4B5FD; --pbg:#1e1a3d; --pm:#5B4FBF;
+            --r:14px; --rs:8px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--tx); font-size: 15px; line-height: 1.5; overflow: hidden; height: 100vh; }
+        
+        /* PIN Screen */
+        .pin-screen { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; transition: opacity 0.3s; }
+        .pin-screen.hidden { opacity: 0; pointer-events: none; }
+        .pin-dots { display: flex; gap: 14px; margin-bottom: 32px; }
+        .pin-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--s3); border: 2px solid var(--br); transition: all .15s; }
+        .pin-dot.filled { background: var(--blu); border-color: var(--bm); transform: scale(1.1); }
+        .pin-dot.error { background: var(--red); border-color: var(--rm); animation: shake 0.2s 2; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+        
+        .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 280px; }
+        .pin-key { background: var(--sf); border: 0.5px solid var(--br); border-radius: var(--r); padding: 20px; font-size: 22px; font-weight: 600; cursor: pointer; text-align: center; user-select: none; }
+        .pin-key:active { background: var(--s3); transform: scale(0.95); }
+
+        /* Navigation */
+        .nav { display: flex; background: var(--sf); border-bottom: 1px solid var(--br); position: sticky; top: 0; z-index: 100; }
+        .nb { flex: 1; padding: 15px; font-size: 12px; font-weight: 700; color: var(--t3); background: none; border: none; border-bottom: 2px solid transparent; text-transform: uppercase; letter-spacing: 0.05em; }
+        .nb.on { color: var(--blu); border-bottom-color: var(--blu); }
+
+        /* Panels */
+        .panel { display: none; padding: 12px; max-width: 600px; margin: 0 auto; height: calc(100vh - 50px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .panel.on { display: block; }
+        
+        .card { background: var(--sf); border-radius: var(--r); border: 0.5px solid var(--br); padding: 16px; margin-bottom: 12px; }
+        .btn { display: block; width: 100%; padding: 14px; border-radius: var(--rs); border: none; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 8px; text-align: center; color: var(--tx); transition: opacity 0.1s; }
+        .btn:active { opacity: 0.7; }
+        .btno { background: var(--s2); border: 1px solid var(--br); }
+        .btng { background: var(--gbg); color: var(--grn); border: 1px solid var(--gm); }
+
+        .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .sok { background: var(--grn); } .serr { background: var(--red); } .spend { background: var(--amb); }
+
+        /* Modal Area */
+        .mbg { position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 1000; display: none; align-items: flex-end; justify-content: center; }
+        .mbg.show { display: flex; }
+        .modal { background: var(--sf); border-radius: var(--r) var(--r) 0 0; padding: 24px; width: 100%; max-width: 500px; border-top: 1px solid var(--br); animation: slideUp 0.2s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        input { width: 100%; background: var(--s2); border: 1px solid var(--br); padding: 14px; color: var(--tx); border-radius: var(--rs); margin-bottom: 12px; font-size: 16px; outline: none; }
+        input:focus { border-color: var(--blu); }
+    </style>
 </head>
 <body>
 
 <div class="pin-screen" id="pin-screen">
-  <div class="pin-logo">💰</div>
-  <div class="pin-title">HF Tracker</div>
-  <div class="pin-sub">Enter PIN to continue</div>
-  <div class="pin-dots">
-    <div class="pin-dot" id="pd0"></div>
-    <div class="pin-dot" id="pd1"></div>
-    <div class="pin-dot" id="pd2"></div>
-    <div class="pin-dot" id="pd3"></div>
-  </div>
-  <div class="pin-grid">
-    <div class="pin-key" onclick="pinKey('1')">1</div>
-    <div class="pin-key" onclick="pinKey('2')">2</div>
-    <div class="pin-key" onclick="pinKey('3')">3</div>
-    <div class="pin-key" onclick="pinKey('4')">4</div>
-    <div class="pin-key" onclick="pinKey('5')">5</div>
-    <div class="pin-key" onclick="pinKey('6')">6</div>
-    <div class="pin-key" onclick="pinKey('7')">7</div>
-    <div class="pin-key" onclick="pinKey('8')">8</div>
-    <div class="pin-key" onclick="pinKey('9')">9</div>
-    <div class="pin-key empty"></div>
-    <div class="pin-key" onclick="pinKey('0')">0</div>
-    <div class="pin-key del" onclick="pinDel()">⌫</div>
-  </div>
-  <div class="pin-error" id="pin-error"></div>
+    <div style="font-size:32px; margin-bottom:12px;">🛡️</div>
+    <div style="font-size:20px; font-weight:700; letter-spacing: 0.5px;">ENCRYPTED ACCESS</div>
+    <div style="font-size:11px; color:var(--t3); margin-bottom:32px; text-transform: uppercase; letter-spacing: 0.1em;">HF Vault v2.0</div>
+    <div class="pin-dots">
+        <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-grid">
+        <div class="pin-key" onclick="pinKey('1')">1</div><div class="pin-key" onclick="pinKey('2')">2</div><div class="pin-key" onclick="pinKey('3')">3</div>
+        <div class="pin-key" onclick="pinKey('4')">4</div><div class="pin-key" onclick="pinKey('5')">5</div><div class="pin-key" onclick="pinKey('6')">6</div>
+        <div class="pin-key" onclick="pinKey('7')">7</div><div class="pin-key" onclick="pinKey('8')">8</div><div class="pin-key" onclick="pinKey('9')">9</div>
+        <div class="pin-key" style="visibility:hidden"></div><div class="pin-key" onclick="pinKey('0')">0</div><div class="pin-key" onclick="pinDel()">⌫</div>
+    </div>
+    <div id="pin-err" style="color:var(--red); font-size:13px; margin-top:20px; height:20px; font-weight: 600;"></div>
 </div>
 
-<div class="loading-screen hidden" id="loading-screen">
-  <div class="spinner"></div>
-  <div style="font-size:13px;color:var(--t3);">Loading...</div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<div class="mbg" id="mbg" onclick="closeModal()">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="mtitle" id="mtitle"></div>
-    <input type="text" id="mi-label" placeholder="Description" style="display:none;">
-    <select id="mi-acct" style="display:none;">
-      <option value="4496">#4496 checking</option>
-      <option value="savings">Savings #0725</option>
-      <option value="6764">#6764 (transitional)</option>
-      <option value="cash">Cash / other</option>
-    </select>
-    <input type="number" id="mi-amt" placeholder="Amount" inputmode="decimal">
-    <button class="btn btng" onclick="submitModal()">Confirm</button>
-    <button class="btn btno" onclick="closeModal()">Cancel</button>
-  </div>
-</div>
-
-<nav class="nav" style="display:none;" id="main-nav">
-  <button class="nb on" onclick="sw('week',this)">This Week</button>
-  <button class="nb" onclick="sw('month',this)">Month Plan</button>
-  <button class="nb" onclick="sw('snowball',this)">Snowball</button>
-  <button class="nb" onclick="sw('bills',this)">Bills</button>
+<nav class="nav" id="main-nav" style="display:none;">
+    <button class="nb on" id="btn-week" onclick="sw('week',this)">Ledger</button>
+    <button class="nb" id="btn-snow" onclick="sw('snowball',this)">Snowball</button>
 </nav>
 
-<div class="panel on" id="p-week" style="display:none;">
-  <div id="week-banner"></div>
-  <div class="bstrip">
-    <div class="bitem" onclick="editBal('4496')">
-      <div class="bacct">#4496</div>
-      <div class="bnum" id="b4496" style="color:var(--blu);">--</div>
+<div class="panel on" id="p-week">
+    <div class="card">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="btno" style="padding:14px; border-radius:var(--rs); text-align:center; cursor:pointer;" onclick="openEdit('bal4496', '#4496 Checking')">
+                <div style="font-size:10px; color:var(--t3); margin-bottom:4px;">#4496</div>
+                <div style="font-size:18px; font-weight:700; color:var(--blu);" id="v4496">--</div>
+            </div>
+            <div class="btno" style="padding:14px; border-radius:var(--rs); text-align:center; cursor:pointer;" onclick="openEdit('bal0725', 'Savings Account')">
+                <div style="font-size:10px; color:var(--t3); margin-bottom:4px;">SAVINGS</div>
+                <div style="font-size:18px; font-weight:700; color:var(--pur);" id="v0725">--</div>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:16px; font-size:10px; color:var(--t3);">
+            <span class="sync-dot" id="sync-dot"></span> <span id="sync-lbl">connecting to vault...</span>
+        </div>
     </div>
-    <div class="bitem" onclick="editBal('6764')">
-      <div class="bacct">#6764</div>
-      <div class="bnum" id="b6764" style="color:var(--blu);">--</div>
+    <div id="roadmap-placeholder" style="color:var(--t3); text-align:center; font-size:13px; margin-top:40px;">
+        Vault unlocked. Ready for ledger entry.
     </div>
-    <div class="bitem" onclick="editBal('0725')">
-      <div class="bacct">Savings</div>
-      <div class="bnum" id="b0725" style="color:var(--pur);">--</div>
-    </div>
-  </div>
-  <div style="font-size:10px;color:var(--t3);text-align:center;margin-bottom:10px;">
-    Tap any balance to update
-    <span class="sync-dot spend" id="sync-dot"></span>
-    <span id="sync-label" style="font-size:10px;color:var(--t3);">connecting...</span>
-  </div>
-  <div id="week-content"></div>
 </div>
 
-<div class="panel" id="p-month" style="display:none;">
-  <div class="mnav">
-    <button class="mnavbtn" onclick="changeMonth(-1)">← Prev</button>
-    <div class="mnavtitle" id="month-title"></div>
-    <button class="mnavbtn" onclick="changeMonth(1)">Next →</button>
-  </div>
-  <div id="month-content"></div>
+<div class="panel" id="p-snowball">
+    <div class="card" style="text-align:center; color:var(--t3);">
+        Snowball logic will appear here once cards are added.
+    </div>
 </div>
 
-<div class="panel" id="p-snowball" style="display:none;">
-  <div id="snowball-content"></div>
-</div>
-
-<div class="panel" id="p-bills" style="display:none;">
-  <div style="font-size:20px;font-weight:700;margin-bottom:2px;">Monthly bills</div>
-  <div style="font-size:12px;color:var(--t3);margin-bottom:12px;">All autopay — tap to verify processed</div>
-  <div class="card">
-    <div id="bills-list"></div>
-    <button class="btn btno btnsm" style="margin-top:10px;" onclick="resetBills()">Reset all</button>
-  </div>
+<div class="mbg" id="mbg" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div id="mtitle" style="font-size:16px; font-weight:700; margin-bottom:16px;"></div>
+        <input type="number" id="m-amt" placeholder="0.00" inputmode="decimal">
+        <button class="btn btng" onclick="saveEdit()">Update Ledger</button>
+        <button class="btn btno" onclick="closeModal()">Cancel</button>
+    </div>
 </div>
 
 <script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue, set, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getDatabase, ref, onValue, set, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDsd7Pr0AEQ3j6n-bKXv7n06vYf9Hvew7Y",
-  authDomain: "hf-tracker-81e76.firebaseapp.com",
-  databaseURL: "https://hf-tracker-81e76-default-rtdb.firebaseio.com",
-  projectId: "hf-tracker-81e76",
-  storageBucket: "hf-tracker-81e76.firebasestorage.app",
-  messagingSenderId: "810272700127",
-  appId: "1:810272700127:web:f72c67e2a9d839a8049b6a"
-};
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const stateRef = ref(db, 'state');
+    const firebaseConfig = {
+        apiKey: "AIzaSyDsd7Pr0AEQ3j6n-bKXv7n06vYf9Hvew7Y",
+        authDomain: "hf-tracker-81e76.firebaseapp.com",
+        databaseURL: "https://hf-tracker-81e76-default-rtdb.firebaseio.com",
+        projectId: "hf-tracker-81e76",
+    };
 
-// ── CONSTANTS ──
-const PIN = '0628';
-const PKEY = 'hft_auth';
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const JON_PAY = 1641;
-const now = new Date();
-const mKey = `${now.getFullYear()}-${now.getMonth()}`;
-const BUFFER = 300; // minimum safe buffer in #4496 after any expense
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    let stateRef = null;
+    let S = { bal4496: 0, bal0725: 0, phaseDone: {}, cardBals: {} };
+    let saveTimer = null;
+    let pinEntry = '';
+    const SALT = "hf_private_vault_2026"; // THE SECRET SALT
 
-// Expense phases in order with cost
-const EXPENSE_PHASES = [
-  { id:'jon-tires',   label:"Jon's tires + oil",     cost:1500, done:false },
-  { id:'repair-buf',  label:'Repair buffer (savings)',cost:1000, done:false, isSavings:true },
-  { id:'karen-tires', label:"Karen's tires",          cost:1000, done:false },
-  { id:'dental',      label:'Dental — Jon + Karen',   cost:500,  done:false },
-  { id:'glasses',     label:'Glasses — Jon + Karen',  cost:1000, done:false },
-];
-
-// Snowball targets in order
-const SNOWBALL_TARGETS = [
-  { id:'amazon',    label:'Amazon Store Card',      startBal:206,  minPay:29,  apr:0.29 },
-  { id:'merrick',   label:'Merrick Bank',           startBal:926,  minPay:35,  apr:0.3195 },
-  { id:'cap3186',   label:'Cap One #3186 (Karen)',  startBal:491,  minPay:25,  apr:0.2824 },
-  { id:'kpaypal',   label:"Karen's PayPal Credit",  startBal:1958, minPay:100, apr:0.2964 },
-  { id:'usaaAmex',  label:'USAA Amex (Karen)',      startBal:1847, minPay:63,  apr:0.274 },
-  { id:'cap4565',   label:'Cap One #4565 (Jon)',    startBal:726,  minPay:25,  apr:0.29 },
-  { id:'cap5592',   label:'Cap One #5592 (Karen)',  startBal:731,  minPay:25,  apr:0.2899 },
-  { id:'cap7988',   label:'Cap One #7988 (Jon)',    startBal:843,  minPay:30,  apr:0.29 },
-  { id:'chase',     label:'Chase/Amazon Prime',     startBal:1000, minPay:26,  apr:0.24 },
-  { id:'tn',        label:'TN Unemployment',        startBal:3653, minPay:153, apr:0 },
-  { id:'irs',       label:'IRS 2024',               startBal:4767, minPay:103, apr:0 },
-];
-
-// ── STATE ──
-let S = {};
-let saveTimer = null;
-let appReady = false;
-
-function defaultState() {
-  return {
-    mKey,
-    bal4496:1258, bal6764:19, bal0725:654,
-    karenLastPay:810.79, karenAvgPay:762,
-    discSpent:0, discLog:[],
-    weeks:[null,null,null,null],
-    randySessions:[],
-    billChecks:{}, pcChecks:{},
-    snowballPhase:0,
-    phaseDone:{},      // which expense phases are marked done
-    cardBals:{},       // current balances updated by user
-    snowballLog:[],
-    unexpected:[{label:'Vehicle registration renewal',acct:'4496',amt:220.40,date:'4/23/2026'}],
-    confirmed:{},
-    regLogged:true,
-  };
-}
-
-function resetMonthly(s) {
-  s.mKey=mKey; s.discSpent=0; s.discLog=[];
-  s.weeks=[null,null,null,null]; s.randySessions=[];
-  s.billChecks={}; s.pcChecks={};
-  return s;
-}
-
-// ── SYNC ──
-function setSyncStatus(st) {
-  const dot=document.getElementById('sync-dot');
-  const lbl=document.getElementById('sync-label');
-  if(!dot||!lbl)return;
-  dot.className='sync-dot '+(st==='ok'?'sok':st==='err'?'serr':'spend');
-  lbl.textContent=st==='ok'?'synced':st==='err'?'sync error':'saving...';
-}
-function save(s) {
-  S=s; setSyncStatus('spend');
-  if(saveTimer)clearTimeout(saveTimer);
-  saveTimer=setTimeout(async()=>{
-    try{ await set(stateRef,S); setSyncStatus('ok'); }
-    catch(e){ setSyncStatus('err'); }
-  },800);
-}
-async function loadFromFirebase() {
-  document.getElementById('loading-screen').classList.remove('hidden');
-  try {
-    const snap=await get(stateRef);
-    S=snap.exists()?{...defaultState(),...snap.val()}:defaultState();
-    if(!snap.exists())await set(stateRef,S);
-    if(S.mKey!==mKey)S=resetMonthly(S);
-    setSyncStatus('ok');
-  } catch(e) { S=defaultState(); setSyncStatus('err'); }
-  document.getElementById('loading-screen').classList.add('hidden');
-  document.getElementById('main-nav').style.display='flex';
-  document.querySelectorAll('.panel').forEach(p=>p.style.display='');
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
-  document.getElementById('p-week').classList.add('on');
-  appReady=true;
-  renderAll();
-  onValue(stateRef,snap=>{
-    if(!snap.exists()||saveTimer)return;
-    S={...defaultState(),...snap.val()};
-    if(S.mKey!==mKey)S=resetMonthly(S);
-    renderAll(); setSyncStatus('ok');
-  });
-}
-
-// ── PIN ──
-let pinEntry='';
-function checkAuth(){if(sessionStorage.getItem(PKEY)==='ok'){document.getElementById('pin-screen').classList.add('hidden');loadFromFirebase();}}
-window.pinKey=k=>{if(pinEntry.length>=4)return;pinEntry+=k;updateDots();if(pinEntry.length===4)setTimeout(checkPin,120);};
-window.pinDel=()=>{pinEntry=pinEntry.slice(0,-1);document.getElementById('pin-error').textContent='';updateDots(false);};
-function updateDots(err=false){for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);d.classList.toggle('filled',i<pinEntry.length&&!err);d.classList.toggle('error',err&&i<4);}}
-function checkPin(){
-  if(pinEntry===PIN){sessionStorage.setItem(PKEY,'ok');document.getElementById('pin-screen').classList.add('hidden');loadFromFirebase();}
-  else{updateDots(true);document.getElementById('pin-error').textContent='Incorrect PIN';setTimeout(()=>{pinEntry='';updateDots(false);document.getElementById('pin-error').textContent='';},900);}
-}
-document.addEventListener('keydown',e=>{if(document.getElementById('pin-screen').classList.contains('hidden'))return;if(e.key>='0'&&e.key<='9')window.pinKey(e.key);if(e.key==='Backspace')window.pinDel();});
-
-// ── ROUTING ──
-window.sw=function(id,el){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
-  document.getElementById('p-'+id).classList.add('on');
-  el.classList.add('on');
-  window.scrollTo(0,0);
-  if(id==='week')renderWeek();
-  if(id==='month')renderMonth();
-  if(id==='snowball')renderSnowball();
-  if(id==='bills')renderBills();
-};
-function routeHash(){const h=location.hash.replace('#','');const map={week:0,month:1,snowball:2,bills:3};if(h&&map[h]!==undefined&&appReady)window.sw(h,document.querySelectorAll('.nb')[map[h]]);}
-window.addEventListener('hashchange',routeHash);
-function renderAll(){renderWeek();renderMonth();renderSnowball();renderBills();}
-
-// ── TOAST ──
-window.toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);};
-
-// ── MODAL ──
-let modalMode='';
-window.openModal=function(mode,title,showLabel=false,showAcct=false){
-  modalMode=mode;
-  document.getElementById('mtitle').textContent=title;
-  document.getElementById('mi-label').style.display=showLabel?'block':'none';
-  document.getElementById('mi-acct').style.display=showAcct?'block':'none';
-  document.getElementById('mi-amt').value='';
-  document.getElementById('mi-label').value='';
-  document.getElementById('mbg').classList.add('show');
-  setTimeout(()=>document.getElementById('mi-amt').focus(),120);
-};
-window.closeModal=()=>document.getElementById('mbg').classList.remove('show');
-window.submitModal=function(){
-  const amt=parseFloat(document.getElementById('mi-amt').value);
-  if(isNaN(amt)||amt<0){toast('Enter valid amount');return;}
-  const label=document.getElementById('mi-label').value||'Expense';
-  const acct=document.getElementById('mi-acct').value||'4496';
-  closeModal();
-  if(modalMode==='bal4496'){S.bal4496=amt;save(S);renderAll();toast('#4496 updated');}
-  if(modalMode==='bal6764'){S.bal6764=amt;save(S);renderWeek();toast('#6764 updated');}
-  if(modalMode==='bal0725'){S.bal0725=amt;save(S);renderAll();toast('Savings updated');}
-  if(modalMode==='karen-pay'){S.karenLastPay=amt;S.karenAvgPay=amt;S.bal4496+=amt;save(S);renderAll();toast(`Karen's $${amt} added`);}
-  if(modalMode==='spend'){addSpend(amt,label);}
-  if(modalMode==='unexpected'){addUnexpected(label,acct,amt);}
-  if(modalMode==='snowball-pmt'){logSnowballPmt(amt);}
-  // Card balance update
-  if(modalMode.startsWith('card-')){
-    const id=modalMode.replace('card-','');
-    if(!S.cardBals)S.cardBals={};
-    S.cardBals[id]=amt;
-    save(S);renderSnowball();toast('Balance updated');
-  }
-};
-window.editBal=a=>openModal('bal'+a,`Update #${a==='0725'?'savings':a} balance`);
-
-// ─────────────────────────────────────────────
-// ── CORE: DAILY CASHFLOW PROJECTOR ──
-// Walks forward day by day from today, applying
-// all known income and bills, returns a daily
-// balance array and key milestone dates.
-// ─────────────────────────────────────────────
-function getDailyBills(year, month, day) {
-  // Returns array of {label, amt} for bills on this exact date
-  const bills = [];
-  const key = `${year}-${String(month+1).padStart(2,'0')}`;
-  const dow = new Date(year,month,day).getDay();
-  const karenAmt = S.karenAvgPay || 762;
-
-  // Income
-  if(day===7||day===22) bills.push({label:'Jon paycheck',amt:JON_PAY,isIncome:true});
-  if(dow===4) bills.push({label:'Karen paycheck',amt:karenAmt,isIncome:true});
-
-  // Groceries every Sunday
-  if(dow===0) bills.push({label:'Fresh Market',amt:-200});
-
-  // Discretionary $200/mo -- $50 every Friday
-  if(dow===5) bills.push({label:'Discretionary',amt:-50});
-
-  // Transport -- gas $60 twice a month, carwash $11 biweekly, SunPass $20/mo
-  if(day===1) bills.push({label:'SunPass',amt:-20});
-  if(day===1||day===15) bills.push({label:'Gas',amt:-60});
-  if(day===7||day===21) bills.push({label:'Car wash',amt:-11});
-
-  // Fixed monthly
-  if(day===1&&key<='2026-05') bills.push({label:'Amazon Store Card',amt:-29});
-  if(day===2) bills.push({label:'Amazon Prime',amt:-15});
-  if(day===2&&[0,3,6,9].includes(month)) bills.push({label:'Real-Debrid',amt:-11});
-  if(day===4) bills.push({label:'PayPal eBay',amt:-43},{label:'ChatGPT',amt:-22});
-  if(day===4||day===18) bills.push({label:'Randy training',amt:-150});
-  if(day===9) bills.push({label:'Mazda CX-5',amt:-638});
-  if(day===11) bills.push({label:'Merrick Bank',amt:-35});
-  if(day===13&&key<='2026-10') bills.push({label:'Affirm cluster',amt:-131});
-  if(day===13&&key<='2027-01') bills.push({label:'PayPal Newegg',amt:-61});
-  if(day===13) bills.push({label:'Karen PayPal Credit',amt:-100},{label:'Claude.ai',amt:-20});
-  if(day===15) bills.push({label:'T-Mobile',amt:-152},{label:'IRS #1',amt:-68});
-  if(day===16) bills.push({label:'IRS #2',amt:-35},{label:'AT&T fiber',amt:-166});
-  if(day===22) bills.push({label:'Jon PayPal Credit',amt:-22},{label:'Spotify',amt:-22});
-  if(day===22&&key<='2027-12') bills.push({label:'TN unemployment',amt:-153});
-  if(day===23) bills.push({label:'State Farm',amt:-190});
-  if(day===26) bills.push({label:'Chase/Amazon',amt:-26});
-  if(day===30&&key<='2027-03') bills.push({label:'PayPal Chinese',amt:-95});
-
-  return bills.filter(b=>b.amt!==0);
-}
-
-function calcRoadmap() {
-  let bal = S.bal4496 || 0;
-  const milestones = {};
-  const phaseDone = S.phaseDone || {};
-  const pendingPhases = EXPENSE_PHASES.filter(p => !phaseDone[p.id] && !p.isSavings);
-  const repairBufDone = phaseDone['repair-buf'];
-
-  // How much is due in the next 14 days from a given date
-  function billsDueNext14(fromYear, fromMonth, fromDay) {
-    let total = 0;
-    let d = new Date(fromYear, fromMonth, fromDay + 1);
-    for(let i = 0; i < 14; i++) {
-      const bills = getDailyBills(d.getFullYear(), d.getMonth(), d.getDate());
-      bills.forEach(b => { if(!b.isIncome && b.amt < 0) total += Math.abs(b.amt); });
-      d.setDate(d.getDate() + 1);
-    }
-    return total;
-  }
-
-  const cardBals = {};
-  SNOWBALL_TARGETS.forEach(t => {
-    cardBals[t.id] = (S.cardBals && S.cardBals[t.id] !== undefined) ? S.cardBals[t.id] : t.startBal;
-  });
-
-  let snowballActive = pendingPhases.length === 0;
-  let currentSnowTarget = SNOWBALL_TARGETS.findIndex(t => cardBals[t.id] > 0);
-  if(currentSnowTarget === -1) currentSnowTarget = null;
-
-  // Repair buffer: $1,000 must be held in savings after Jon's tires
-  // Don't count it as available balance
-  let repairHeld = !repairBufDone && !phaseDone['jon-tires'] ? 0 : (!repairBufDone ? 1000 : 0);
-  let lastPhaseDate = null; // enforce minimum gap between phases
-
-  let d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const maxDays = 48 * 30;
-
-  for(let i = 0; i < maxDays; i++) {
-    const year = d.getFullYear();
-    const month = d.getMonth();
-    const day = d.getDate();
-    const dateStr = d.toISOString().split('T')[0];
-
-    // Apply daily cashflow
-    const dayBills = getDailyBills(year, month, day);
-    dayBills.forEach(b => { bal += b.amt; });
-
-    // After Jon's tires paid, hold $1,000 repair buffer
-    if(milestones['jon-tires'] && !repairBufDone && !milestones['repair-buf']) {
-      milestones['repair-buf'] = { date: milestones['jon-tires'].date };
-      repairHeld = 1000;
+    // --- ENCRYPTION ---
+    async function hashPin(pin) {
+        const msgUint8 = new TextEncoder().encode(pin + SALT);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // Check if next phase is affordable
-    // Must have: cost + $300 buffer + upcoming 14-day bills + repair buffer held
-    // Also enforce minimum 21-day gap between phases
-    if(!snowballActive && pendingPhases.length > 0) {
-      const nextPhase = pendingPhases[0];
-      const daysSinceLast = lastPhaseDate
-        ? Math.floor((d - lastPhaseDate) / 86400000) : 999;
-      if(!milestones[nextPhase.id] && daysSinceLast >= 21) {
-        const upcoming = billsDueNext14(year, month, day);
-        const needed = nextPhase.cost + BUFFER + upcoming + repairHeld;
-        if(bal >= needed) {
-          milestones[nextPhase.id] = { date: dateStr, bal: Math.round(bal) };
-          bal -= nextPhase.cost;
-          lastPhaseDate = new Date(d);
-          if(nextPhase.id === 'karen-tires') repairHeld = 0;
-          pendingPhases.shift();
-          if(pendingPhases.length === 0) {
-            snowballActive = true;
-            milestones['snowball-start'] = { date: dateStr };
-          }
-          d.setDate(d.getDate() + 1);
-          continue;
+    // --- AUTH ---
+    window.pinKey = async k => {
+        if(pinEntry.length >= 4) return;
+        pinEntry += k;
+        updateDots();
+        if(pinEntry.length === 4) {
+            const h = await hashPin(pinEntry);
+            stateRef = ref(db, 'vault/' + h);
+            
+            try {
+                const snap = await get(stateRef);
+                if(snap.exists()) {
+                    S = { ...S, ...snap.val() };
+                } else {
+                    // Initialize new secure folder
+                    await set(stateRef, S);
+                }
+                unlock();
+            } catch (e) {
+                document.getElementById('pin-err').textContent = "Connection Error";
+                pinEntry = '';
+                updateDots(true);
+            }
         }
-      }
+    };
+
+    function unlock() {
+        document.getElementById('pin-screen').classList.add('hidden');
+        document.getElementById('main-nav').style.display = 'flex';
+        document.getElementById('p-week').style.display = 'block';
+        render();
+        // Start live sync
+        onValue(stateRef, (snap) => {
+            if(snap.exists() && !saveTimer) {
+                S = snap.val();
+                render();
+            }
+        });
+        document.getElementById('sync-dot').className = 'sync-dot sok';
+        document.getElementById('sync-lbl').textContent = 'securely synced';
     }
 
-    // Snowball payments on paycheck days
-    if((day===7||day===22||d.getDay()===4) && snowballActive && currentSnowTarget !== null) {
-      const target = SNOWBALL_TARGETS[currentSnowTarget];
-      const monthlyIn = JON_PAY * 2 + (S.karenAvgPay||762) * 4.33;
-      const monthlyOut = 3300;
-      const biweeklySurplus = Math.max(0, monthlyIn - monthlyOut) / 2;
-      if(cardBals[target.id] > 0) {
-        const payment = Math.min(cardBals[target.id], biweeklySurplus);
-        cardBals[target.id] -= payment;
-        if(cardBals[target.id] <= 0) {
-          cardBals[target.id] = 0;
-          milestones[target.id + '-done'] = { date: dateStr, label: target.label };
-          currentSnowTarget++;
-          if(currentSnowTarget >= SNOWBALL_TARGETS.length) {
-            milestones['debt-free'] = { date: dateStr };
-            currentSnowTarget = null;
-          }
+    window.pinDel = () => { 
+        pinEntry = pinEntry.slice(0,-1); 
+        document.getElementById('pin-err').textContent = "";
+        updateDots(); 
+    };
+
+    function updateDots(err=false) {
+        for(let i=0; i<4; i++) {
+            const d = document.getElementById('pd'+i);
+            d.classList.toggle('filled', i < pinEntry.length);
+            d.classList.toggle('error', err);
         }
-      }
+        if(err) setTimeout(() => updateDots(false), 500);
     }
 
-    d.setDate(d.getDate() + 1);
-    if(milestones['debt-free']) break;
-  }
-
-  return milestones;
-}
-
-// ── SURPLUS CALC ──
-function nextPC(day){return day<7?7:day<22?22:7;}
-function nextPCMonth(day){return day>=22?(now.getMonth()+1>11?0:now.getMonth()+1):now.getMonth();}
-function calcSurplus(){
-  const today=now.getDate();
-  const npc=nextPC(today);
-  const npcm=nextPCMonth(today);
-  const evts=getMonthEvents(now.getFullYear(),now.getMonth());
-  const isSame=npcm===now.getMonth();
-  const endDay=isSame?npc:32;
-  const due=evts.filter(e=>!e.isIncome&&typeof e.amt==='number'&&e.amt<0&&e.day>today&&e.day<endDay);
-  const totalDue=due.reduce((a,e)=>a+Math.abs(e.amt),0);
-  const safe=Math.max(0,S.bal4496-totalDue-BUFFER);
-  return{due,totalDue,safe,npcLabel:`${MONTHS[npcm].substring(0,3)} ${npc}`};
-}
-
-// ── MONTH EVENTS (for calendar display) ──
-function getMonthEvents(year, month) {
-  const evts=[];
-  const add=(day,title,amt,color,note,isIncome=false)=>{
-    const dim=new Date(year,month+1,0).getDate();
-    if(day>=1&&day<=dim)evts.push({day,title,amt,color,note,isIncome});
-  };
-  const key=`${year}-${String(month+1).padStart(2,'0')}`;
-  const dim=new Date(year,month+1,0).getDate();
-  const fromDay=(year===2026&&month===3)?22:1;
-  const karenAmt=S.karenLastPay||S.karenAvgPay||762;
-  const roadmap=calcRoadmap();
-  const phaseDone=S.phaseDone||{};
-
-  // Paycheck note based on what's next
-  const nextPending=EXPENSE_PHASES.find(p=>!phaseDone[p.id]);
-  const pcNote=nextPending
-    ?`→ Saving for ${nextPending.label} ($${nextPending.cost.toLocaleString()})`
-    :'→ Transfer surplus to snowball same day';
-
-  if(7>=fromDay) add(7,'Jon paycheck',JON_PAY,'#97C459',pcNote,true);
-  if(22>=fromDay) add(22,'Jon paycheck',JON_PAY,'#97C459',pcNote,true);
-  for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===4)add(d,'Karen paycheck — Copans',karenAmt,'#97C459','→ Transfer full amount to #4496 same day',true);}
-  for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===0)add(d,'Fresh Market',-200,'#85B7EB','$200/wk hard limit');}
-
-  if(key<='2026-05') add(1,'Amazon Store Card',-29,'#F09595','~29% APR');
-  add(2,'Amazon Prime',-15,'#666660','Subscription');
-  if([0,3,6,9].includes(month)) add(2,'Real-Debrid',-11,'#666660','Quarterly $11');
-  add(4,'PayPal eBay',-43,'#EF9F27','35.99% APR · done Aug 2027');
-  add(4,'ChatGPT',-22,'#666660','Karen subscription');
-  add(4,'Zelle Randy',-150,'#97C459','Biweekly training');
-  add(18,'Zelle Randy',-150,'#97C459','Biweekly training');
-  add(9,'Mazda CX-5',-638,'#EF9F27','12.72% APR · payoff Aug 2029');
-  add(11,'Merrick Bank',-35,'#F09595','31.95% APR');
-  if(key<='2026-10') add(13,'Affirm cluster',-131,'#b4b2a9','0% APR — verify in Affirm app');
-  if(key<='2027-01') add(13,'PayPal Newegg',-61,'#EF9F27','35.99% APR fixed');
-  add(13,'Karen PayPal Credit',-100,'#F09595','29.64% APR — MANUAL');
-  add(13,'Claude.ai',-20,'#666660','Subscription');
-  add(15,'T-Mobile',-152,'#b4b2a9','Both phones');
-  add(15,'IRS payment #1',-68,'#EF9F27','Installment plan');
-  add(16,'IRS payment #2',-35,'#EF9F27','Installment plan');
-  add(16,'AT&T fiber',-166,'#b4b2a9','Internet');
-  add(22,'Jon PayPal Credit',-22,'#b4b2a9','0% plan — do NOT overpay');
-  if(key<='2027-12') add(22,'TN unemployment',-153,'#EF9F27','~$153/mo');
-  add(22,'Spotify',-22,'#666660','Subscription');
-  add(23,'State Farm',-190,'#b4b2a9','Auto insurance');
-  add(26,'Chase/Amazon',-26,'#b4b2a9','APR TBD');
-  if(key<='2027-03'&&!(year===2026&&month===3)) add(30,'PayPal Chinese vendor',-95,'#EF9F27','24.99% APR fixed');
-
-  // Dynamic one-time expenses from roadmap
-  EXPENSE_PHASES.forEach(phase=>{
-    if(phaseDone[phase.id]||phase.isSavings)return;
-    const m=roadmap[phase.id];
-    if(m){
-      const ed=new Date(m.date+'T12:00:00');
-      if(ed.getFullYear()===year&&ed.getMonth()===month){
-        add(ed.getDate(),phase.label.toUpperCase(),-phase.cost,'#F09595',`Calculated affordable date · budget $${phase.cost.toLocaleString()}`);
-      }
+    // --- RENDER ---
+    function render() {
+        document.getElementById('v4496').textContent = "$" + S.bal4496.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('v0725').textContent = "$" + S.bal0725.toLocaleString(undefined, {minimumFractionDigits: 2});
     }
-  });
 
-  if(year===2026&&month===3){
-    add(23,'Vehicle registration',-220,'#F09595','One-time renewal');
-    add(30,'PayPal Chinese — FIRST PMT',-95,'#F09595','Confirm autopay set');
-  }
-  evts.sort((a,b)=>a.day-b.day);
-  return evts;
-}
+    // --- SAVE ---
+    function triggerSave() {
+        if(saveTimer) clearTimeout(saveTimer);
+        document.getElementById('sync-dot').className = 'sync-dot spend';
+        document.getElementById('sync-lbl').textContent = 'saving to vault...';
+        saveTimer = setTimeout(async () => {
+            await set(stateRef, S);
+            saveTimer = null;
+            document.getElementById('sync-dot').className = 'sync-dot sok';
+            document.getElementById('sync-lbl').textContent = 'securely synced';
+        }, 1200);
+    }
 
-// ── THIS WEEK ──
-function renderWeek() {
-  document.getElementById('b4496').textContent='$'+Math.round(S.bal4496).toLocaleString();
-  document.getElementById('b6764').textContent='$'+Math.round(S.bal6764).toLocaleString();
-  document.getElementById('b0725').textContent='$'+Math.round(S.bal0725).toLocaleString();
+    // --- MODALS ---
+    let activeKey = '';
+    window.openEdit = (key, title) => {
+        activeKey = key;
+        document.getElementById('mtitle').textContent = title;
+        document.getElementById('m-amt').value = S[key] || '';
+        document.getElementById('mbg').classList.add('show');
+        setTimeout(() => document.getElementById('m-amt').focus(), 100);
+    };
+    window.closeModal = () => document.getElementById('mbg').classList.remove('show');
+    window.saveEdit = () => {
+        const val = parseFloat(document.getElementById('m-amt').value);
+        if(!isNaN(val)) {
+            S[activeKey] = val;
+            render();
+            triggerSave();
+            closeModal();
+        }
+    };
 
-  const today=now.getDate();
-  const roadmap=calcRoadmap();
-  const phaseDone=S.phaseDone||{};
-  const nextPending=EXPENSE_PHASES.find(p=>!phaseDone[p.id]);
+    window.sw = (id, el) => {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+        document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+        document.getElementById('p-'+id).classList.add('on');
+        el.classList.add('on');
+    };
 
-  document.getElementById('week-banner').innerHTML=`
-    <div style="background:var(--abg);border:1px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">
-      <div style="font-size:13px;font-weight:700;color:var(--amb);">Today — ${MONTHS[now.getMonth()]} ${today}, ${now.getFullYear()} (${DAYS[now.getDay()]})</div>
-      <div style="font-size:11px;color:var(--t2);">Tap any balance to update · All dates auto-calculated from your balances</div>
-    </div>`;
-
-  const sur=calcSurplus();
-  const safeColor=sur.safe<300?'var(--red)':sur.safe<600?'var(--amb)':'var(--grn)';
-  const phaseAction=!nextPending
-    ?'→ Transfer surplus to snowball same day'
-    :`→ Building toward ${nextPending.label} ($${nextPending.cost.toLocaleString()})`;
-
-  let html='';
-
-  // Paycheck confirmation banners
-  const todayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(today).padStart(2,'0')}`;
-  if((today===7||today===22)&&!(S.confirmed&&S.confirmed[`jon-${todayKey}`])){
-    html+=`<div class="confirm-banner">
-      <div class="cb-title">💰 Jon paycheck landed today</div>
-      <div class="cb-sub">${!nextPending?`Transfer $${Math.round(sur.safe).toLocaleString()} to snowball now`:'Surplus stays in #4496 — building for upcoming expenses'}</div>
-      <button class="btn btng btnsm" style="margin:0;" onclick="confirmAction('jon-${todayKey}')">✓ Got it</button>
-    </div>`;
-  }
-  if(now.getDay()===4&&!(S.confirmed&&S.confirmed[`karen-${todayKey}`])){
-    html+=`<div class="confirm-banner">
-      <div class="cb-title">💰 Karen paycheck expected today</div>
-      <div class="cb-sub">Enter actual amount received</div>
-      <div style="display:flex;gap:8px;margin-top:6px;">
-        <button class="btn btna btnsm" style="flex:1;margin:0;" onclick="openModal('karen-pay','Karen\\'s actual pay today')">Enter Karen's pay</button>
-        <button class="btn btno btnsm" style="flex:1;margin:0;" onclick="confirmAction('karen-${todayKey}')">✓ Confirmed</button>
-      </div>
-    </div>`;
-  }
-
-  // Surplus card
-  html+=`<div class="card" style="border-color:var(--bm)40;">
-    <div class="ct">Safe to transfer — before ${sur.npcLabel}</div>
-    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px;">
-      <div>
-        <div style="font-size:38px;font-weight:700;color:${safeColor};line-height:1;">$${Math.round(sur.safe).toLocaleString()}</div>
-        <div style="font-size:11px;color:var(--t3);margin-top:3px;">${phaseAction}</div>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:14px;font-weight:700;color:var(--red);">-$${Math.round(sur.totalDue).toLocaleString()}</div>
-        <div style="font-size:10px;color:var(--t3);">still due</div>
-      </div>
-    </div>`;
-  sur.due.forEach(e=>{
-    const ord=e.day%10===1&&e.day!==11?'st':e.day%10===2&&e.day!==12?'nd':e.day%10===3&&e.day!==13?'rd':'th';
-    html+=`<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:0.5px solid var(--br);font-size:12px;">
-      <span style="color:var(--t2);">${e.title} <span style="color:var(--t3);">~${e.day}${ord}</span></span>
-      <span style="color:var(--red);">-$${Math.abs(e.amt).toLocaleString()}</span>
-    </div>`;
-  });
-  html+=`</div>`;
-
-  // Next milestone callout
-  if(nextPending) {
-    const m=roadmap[nextPending.id];
-    const dateLabel=m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'calculating...';
-    const needed=nextPending.cost+BUFFER;
-    const progress=Math.min(100,Math.round((S.bal4496/needed)*100));
-    const progColor=progress>=100?'var(--grn)':progress>=60?'var(--amb)':'var(--red)';
-    html+=`<div class="card" style="border-color:var(--am)40;">
-      <div class="ct">Next expense — ${nextPending.label}</div>
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;">
-        <div>
-          <div style="font-size:26px;font-weight:700;color:var(--amb);">${dateLabel}</div>
-          <div style="font-size:11px;color:var(--t3);">earliest affordable date</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:14px;font-weight:700;color:var(--tx);">$${S.bal4496.toLocaleString()} / $${needed.toLocaleString()}</div>
-          <div style="font-size:10px;color:var(--t3);">current / needed</div>
-        </div>
-      </div>
-      <div class="prog"><div class="progfill" style="width:${progress}%;background:${progColor};"></div></div>
-      <div style="font-size:11px;color:var(--t3);">${progress}% there · auto-recalculates when balance changes</div>
-      <button class="btn btng btnsm" style="margin-top:10px;margin-bottom:0;" onclick="markPhaseDone('${nextPending.id}')">✓ Mark as paid — move to next phase</button>
-    </div>`;
-  } else {
-    // Snowball active -- show current target
-    const ct=SNOWBALL_TARGETS.find(t=>{
-      const b=(S.cardBals&&S.cardBals[t.id]!==undefined)?S.cardBals[t.id]:t.startBal;
-      return b>0;
+    // Emergency save on close
+    window.addEventListener('beforeunload', () => {
+        if(saveTimer && stateRef) set(stateRef, S);
     });
-    if(ct){
-      const bal=(S.cardBals&&S.cardBals[ct.id]!==undefined)?S.cardBals[ct.id]:ct.startBal;
-      const doneDate=roadmap[ct.id+'-done'];
-      const dateLabel=doneDate?new Date(doneDate.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'calculating...';
-      html+=`<div class="card" style="border-color:var(--gm)40;">
-        <div class="ct">🚀 Snowball active — current target</div>
-        <div style="font-size:18px;font-weight:700;color:var(--amb);margin-bottom:4px;">${ct.label}</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div style="font-size:26px;font-weight:700;color:var(--red);">$${bal.toLocaleString()}</div>
-          <div style="text-align:right;font-size:12px;color:var(--t3);">Paid off:<br><span style="color:var(--grn);font-weight:700;">${dateLabel}</span></div>
-        </div>
-        <button class="btn btng btnsm" style="margin-bottom:4px;" onclick="openModal('card-${ct.id}','Update ${ct.label} balance')">Update balance</button>
-        <button class="btn btno btnsm" style="margin-bottom:0;" onclick="openModal('snowball-pmt','Log extra payment')">💸 Log snowball payment</button>
-      </div>`;
-    }
-  }
-
-  // Next 7 days
-  const evts=getMonthEvents(now.getFullYear(),now.getMonth());
-  const weekEvts=evts.filter(e=>e.day>=today&&e.day<=today+7);
-  const byDay={};
-  weekEvts.forEach(e=>{if(!byDay[e.day])byDay[e.day]=[];byDay[e.day].push(e);});
-  const days=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
-  if(days.length){
-    html+=`<div class="card"><div class="ct">Next 7 days</div>`;
-    days.forEach(day=>{
-      const isToday=day===today;
-      const dow=DAYS[new Date(now.getFullYear(),now.getMonth(),day).getDay()];
-      html+=`<div style="margin-bottom:2px;"><div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:5px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
-      byDay[day].forEach(e=>{
-        const isInc=e.isIncome;
-        const ac=isInc?'var(--grn)':Math.abs(e.amt||0)>500?'var(--red)':'var(--t2)';
-        const as=typeof e.amt==='number'&&e.amt!==0?(e.amt>0?'+$'+e.amt.toLocaleString():'-$'+Math.abs(e.amt).toLocaleString()):'';
-        html+=`<div class="event" style="padding:5px 0;">
-          <div class="edot" style="background:${e.color};margin-top:4px;"></div>
-          <div class="econtent">
-            <div class="etitle" style="font-size:12px;">${e.title}</div>
-            ${e.note?`<div class="esub">${e.note}</div>`:''}
-          </div>
-          ${as?`<div class="eamt" style="color:${ac};font-size:12px;">${as}</div>`:''}
-        </div>`;
-      });
-      html+='</div>';
-    });
-    html+=`</div>`;
-  }
-
-  // Spending pool
-  const spent=S.discSpent||0;
-  const rem=Math.max(0,200-spent);
-  const pct=Math.min(100,(spent/200)*100);
-  const sc=pct>80?'var(--red)':pct>50?'var(--amb)':'var(--grn)';
-  const cw=Math.min(3,Math.floor((today-1)/7));
-  html+=`<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <div class="ct" style="margin-bottom:0;">Discretionary — ${MONTHS[now.getMonth()].substring(0,3)}</div>
-      <div style="font-size:11px;color:var(--t3);">$200/mo cap</div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4px;">
-      <div style="font-size:26px;font-weight:700;color:${sc};">$${rem.toFixed(0)} <span style="font-size:12px;color:var(--t3);font-weight:400;">left</span></div>
-      <div style="font-size:13px;color:var(--red);font-weight:700;">$${spent.toFixed(2)} used</div>
-    </div>
-    <div class="prog"><div class="progfill" style="width:${pct}%;background:${sc};"></div></div>
-    <div class="wgrid">
-      ${['Wk1','Wk2','Wk3','Wk4'].map((l,i)=>{
-        const st=(S.weeks||[])[i];
-        const cls=st==='used'?'used':i===cw?'cur':'';
-        const val=st==='used'?'-$50':'$50';
-        return `<div class="wp ${cls}" onclick="toggleWeek(${i})"><div class="wplabel">${l}</div><div class="wpval">${val}</div></div>`;
-      }).join('')}
-    </div>
-    <div style="font-size:10px;color:var(--t3);margin-bottom:6px;">Tap week to mark $50 used · Tap again to undo</div>
-    <div style="display:flex;gap:6px;">
-      <button class="btn btnr btnsm" style="flex:1;margin:0;" onclick="openModal('spend','Log spend',true)">➕ Log spend</button>
-      <button class="btn btno btnsm" style="flex:1;margin:0;" onclick="openModal('unexpected','Unexpected charge',true,true)">⚠ Unexpected</button>
-    </div>
-  </div>`;
-
-  // Randy
-  const rs=(S.randySessions||[]).filter(s=>{const d=new Date(s.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
-  const rt=rs.reduce((a,s)=>a+s.amt,0);
-  html+=`<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rs.length?'10px':'0'};">
-      <div>
-        <div class="ct" style="margin-bottom:2px;">Randy — training</div>
-        <div style="font-size:22px;font-weight:700;color:var(--grn);">$${rt} <span style="font-size:12px;color:var(--t3);font-weight:400;">${rs.length} session${rs.length!==1?'s':''}</span></div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-        <button class="btn btng btnsm" style="width:auto;margin:0;padding:10px 16px;" onclick="logRandy()">✓ $150</button>
-        ${rs.length?`<button class="btn btnr btnsm" style="width:auto;margin:0;padding:6px 12px;font-size:11px;" onclick="undoRandy()">Undo</button>`:''}
-      </div>
-    </div>
-    ${rs.length?`<div>${rs.slice(0,3).map((s,i)=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:0.5px solid var(--br);"><span style="color:var(--t2);">Session ${rs.length-i} · ${s.date}</span><span style="color:var(--grn);">$${s.amt}</span></div>`).join('')}</div>`:''}
-  </div>`;
-
-  // Karen pay
-  html+=`<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div class="ct" style="margin-bottom:2px;">Karen's last pay</div>
-        <div style="font-size:18px;font-weight:700;color:var(--amb);">$${S.karenLastPay||762}</div>
-        <div style="font-size:11px;color:var(--t3);">Update every Thursday · affects all projections</div>
-      </div>
-      <button class="btn btna btnsm" style="width:auto;margin:0;padding:10px 16px;" onclick="openModal('karen-pay','Karen\\'s actual pay')">Update</button>
-    </div>
-  </div>`;
-
-  // Unexpected
-  const unexp=S.unexpected||[];
-  if(unexp.length){
-    html+=`<div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div class="ct" style="margin-bottom:0;">Unexpected charges</div>
-        <button class="btn btno btnsm" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="clearUnexpected()">Clear</button>
-      </div>
-      ${unexp.slice(0,5).map(e=>`
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--br);font-size:12px;">
-          <div><div style="font-weight:600;color:var(--tx);">${e.label}</div><div style="color:var(--t3);">#${e.acct} · ${e.date}</div></div>
-          <div style="color:var(--red);font-weight:700;">-$${e.amt.toFixed(2)}</div>
-        </div>`).join('')}
-    </div>`;
-  }
-
-  // Spend log
-  const log=S.discLog||[];
-  if(log.length){
-    html+=`<div class="card"><div class="ct">Spend log</div>
-      ${log.slice(0,8).map(e=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--br);font-size:12px;"><span style="color:var(--t2);">${e.label} · ${e.date}</span><span style="color:var(--red);">-$${e.amt.toFixed(2)}</span></div>`).join('')}
-      <button class="btn btno btnsm" style="margin-top:8px;" onclick="resetSpend()">Reset month</button>
-    </div>`;
-  }
-
-  document.getElementById('week-content').innerHTML=html;
-}
-
-window.markPhaseDone=function(id){
-  if(!S.phaseDone)S.phaseDone={};
-  S.phaseDone[id]=true;
-  // Also mark repair buffer done automatically
-  if(id==='jon-tires') S.phaseDone['repair-buf']=true;
-  save(S);renderAll();toast('Phase complete ✓');
-};
-window.confirmAction=function(id){if(!S.confirmed)S.confirmed={};S.confirmed[id]=true;save(S);renderWeek();toast('Confirmed ✓');};
-
-// ── MONTH PLAN ──
-let vMonth=now.getMonth(),vYear=now.getFullYear();
-window.changeMonth=function(dir){vMonth+=dir;if(vMonth>11){vMonth=0;vYear++;}if(vMonth<0){vMonth=11;vYear--;}renderMonth();};
-
-function renderMonth(){
-  document.getElementById('month-title').textContent=`${MONTHS[vMonth]} ${vYear}`;
-  const evts=getMonthEvents(vYear,vMonth);
-  const startDay=(vYear===2026&&vMonth===3)?22:1;
-  const isCurrentMonth=vYear===now.getFullYear()&&vMonth===now.getMonth();
-
-  // Project starting balance by simulating all months from current to vMonth
-  let runBal = S.bal4496;
-  if(!isCurrentMonth){
-    let simYear = now.getFullYear();
-    let simMonth = now.getMonth();
-    while(simYear < vYear || (simYear === vYear && simMonth < vMonth)){
-      const simFromDay = (simYear === now.getFullYear() && simMonth === now.getMonth())
-        ? now.getDate() + 1 : 1;
-      const simDays = new Date(simYear, simMonth + 1, 0).getDate();
-      for(let day = simFromDay; day <= simDays; day++){
-        getDailyBills(simYear, simMonth, day).forEach(b => { runBal += b.amt; });
-      }
-      simMonth++;
-      if(simMonth > 11){ simMonth = 0; simYear++; }
-    }
-    // runBal is now end-of-(vMonth-1) = start of vMonth
-    // Calendar events for vMonth will apply on top from here
-  }
-
-  const totalIn=evts.filter(e=>e.isIncome&&e.day>=startDay).reduce((a,e)=>a+(e.amt||0),0);
-  const totalOut=evts.filter(e=>!e.isIncome&&e.day>=startDay&&typeof e.amt==='number'&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
-  const net=totalIn-totalOut;
-
-  let html=`<div class="card">
-    <div class="ct">Month overview</div>
-    <div class="row"><div class="rl"><div class="rlabel">Expected income</div></div><div class="rval" style="color:var(--grn);">+$${totalIn.toLocaleString()}</div></div>
-    <div class="row"><div class="rl"><div class="rlabel">Bills + spending</div></div><div class="rval" style="color:var(--red);">-$${totalOut.toLocaleString()}</div></div>
-    <div class="row"><div class="rl"><div class="rlabel">Starting #4496</div></div><div class="rval" style="color:var(--blu);">$${Math.round(runBal).toLocaleString()}</div></div>
-    <div class="row"><div class="rl"><div class="rlabel" style="font-weight:700;">Net</div></div><div class="rval" style="color:${net>=0?'var(--grn)':'var(--red)'};">${net>=0?'+':'-'}$${Math.abs(net).toLocaleString()}</div></div>
-  </div>`;
-
-  // Build events by day
-  const byDay={};
-  evts.forEach(e=>{if(e.day>=startDay){if(!byDay[e.day])byDay[e.day]=[];byDay[e.day].push(e);}});
-  const sortedDays=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
-  let weekDays=[],weeks=[];
-  sortedDays.forEach((day,i)=>{
-    weekDays.push(day);
-    if(new Date(vYear,vMonth,day).getDay()===6||i===sortedDays.length-1){weeks.push([...weekDays]);weekDays=[];}
-  });
-
-  weeks.forEach(wdays=>{
-    const wStart=wdays[0],wEnd=wdays[wdays.length-1];
-    const mn=MONTHS[vMonth].substring(0,3);
-    const allW=wdays.flatMap(d=>byDay[d]);
-    const wIn=allW.filter(e=>e.isIncome).reduce((a,e)=>a+(e.amt||0),0);
-    const wOut=allW.filter(e=>!e.isIncome&&typeof e.amt==='number'&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
-    html+=`<div class="card"><div class="wheader"><span>${mn} ${wStart}–${wEnd}</span><span>${wIn>0?`<span style="color:var(--grn);">+$${wIn.toLocaleString()}</span> `:''}${wOut>0?`<span style="color:var(--red);">-$${wOut.toLocaleString()}</span>`:''}</span></div>`;
-    wdays.forEach(day=>{
-      const isToday=isCurrentMonth&&day===now.getDate();
-      const isPast=isCurrentMonth&&day<now.getDate();
-      const dow=DAYS[new Date(vYear,vMonth,day).getDay()];
-      html+=`<div style="${isPast?'opacity:0.5;':''}margin-bottom:2px;"><div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:4px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
-      byDay[day].forEach(e=>{
-        const amtNum=typeof e.amt==='number'?e.amt:0;
-        const isInc=e.isIncome;
-        const ac=isInc?'var(--grn)':Math.abs(amtNum)>500?'var(--red)':'var(--t2)';
-        const as=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
-        // Current month: only days after today update runBal (real balance already includes today)
-        // Future months: all days update runBal (pre-sim stopped before vMonth)
-        const isFuture = !isCurrentMonth || day > now.getDate();
-        if(amtNum !== 0 && isFuture) runBal += amtNum;
-        const balWarn=runBal<300;
-        const balColor=runBal<300?'var(--red)':runBal<600?'var(--amb)':'var(--blu)';
-        html+=`<div class="event" style="padding:5px 0;">
-          <div class="edot" style="background:${e.color};margin-top:4px;"></div>
-          <div class="econtent">
-            <div class="etitle" style="font-size:13px;">${e.title}</div>
-            ${e.note?`<div class="esub">${e.note}</div>`:''}
-            ${isFuture&&amtNum!==0?`<div class="ebal"><span style="color:${balColor};font-weight:${balWarn?'700':'400'};">#4496 → $${Math.round(runBal).toLocaleString()}${balWarn?' ⚠':''}</span></div>`:''}
-          </div>
-          ${as?`<div class="eamt" style="color:${ac};">${as}</div>`:''}
-        </div>`;
-      });
-      html+='</div>';
-    });
-    html+=`</div>`;
-  });
-  document.getElementById('month-content').innerHTML=html;
-}
-
-// ── SNOWBALL ──
-function renderSnowball(){
-  const roadmap=calcRoadmap();
-  const phaseDone=S.phaseDone||{};
-  const allExpensesDone=EXPENSE_PHASES.every(p=>phaseDone[p.id]);
-
-  let html=`<div style="font-size:20px;font-weight:700;margin-bottom:2px;">Debt roadmap</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:12px;">All dates auto-calculated from your actual balances</div>`;
-
-  // Expense phases
-  html+=`<div class="card"><div class="ct">Expense phases</div>`;
-  EXPENSE_PHASES.forEach(p=>{
-    const done=phaseDone[p.id];
-    const m=roadmap[p.id];
-    const dateLabel=done?'DONE':m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'calculating...';
-    html+=`<div class="milestone">
-      <div class="ms-label">
-        <div style="font-weight:600;${done?'text-decoration:line-through;color:var(--t3);':''}">${p.label}</div>
-        <div class="ms-sub">$${p.cost.toLocaleString()} · ${done?'completed':'auto-scheduled'}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div class="ms-date ${done?'ms-done':'ms-soon'}">${dateLabel}</div>
-        ${!done?`<button class="btn btng btnsm" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="markPhaseDone('${p.id}')">✓ Done</button>`:''}
-      </div>
-    </div>`;
-  });
-  html+=`</div>`;
-
-  // Snowball targets
-  html+=`<div class="card"><div class="ct">Debt payoff order ${allExpensesDone?'🚀':''}</div>
-    ${!allExpensesDone?'<div style="font-size:12px;color:var(--amb);margin-bottom:10px;">Snowball starts after all expense phases complete</div>':''}`;
-
-  SNOWBALL_TARGETS.forEach((t,i)=>{
-    const currentBal=(S.cardBals&&S.cardBals[t.id]!==undefined)?S.cardBals[t.id]:t.startBal;
-    const done=currentBal<=0;
-    const m=roadmap[t.id+'-done'];
-    const dateLabel=done?'PAID OFF':m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...';
-    const isActive=allExpensesDone&&!done&&SNOWBALL_TARGETS.slice(0,i).every(prev=>{
-      const b=(S.cardBals&&S.cardBals[prev.id]!==undefined)?S.cardBals[prev.id]:prev.startBal;
-      return b<=0;
-    });
-    html+=`<div class="tcard ${isActive?'active':''} ${done?'tdone':''}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:700;color:${done?'var(--grn)':isActive?'var(--amb)':'var(--tx)'};">${done?'✓ ':isActive?'🎯 ':`${i+1}. `}${t.label}</div>
-          <div style="font-size:11px;color:var(--t3);margin-top:1px;">${t.apr>0?(t.apr*100).toFixed(2)+'%':'0%'} APR · $${t.minPay}/mo min</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:17px;font-weight:700;color:${done?'var(--grn)':isActive?'var(--amb)':'var(--t2)'};">${done?'$0':'$'+currentBal.toLocaleString()}</div>
-          <div style="font-size:11px;color:${done?'var(--grn)':'var(--t3)'};">${dateLabel}</div>
-        </div>
-      </div>
-      ${isActive?`<div style="display:flex;gap:6px;margin-top:10px;">
-        <button class="btn btng btnsm" style="flex:1;margin:0;" onclick="openModal('card-${t.id}','Update ${t.label} balance')">Update balance</button>
-        <button class="btn btna btnsm" style="flex:1;margin:0;" onclick="openModal('snowball-pmt','Log snowball payment')">💸 Log payment</button>
-      </div>`:''}
-    </div>`;
-  });
-  html+=`</div>`;
-
-  // Milestones summary
-  const dfDate=roadmap['debt-free'];
-  html+=`<div class="card">
-    <div class="ct">Calculated milestones</div>
-    <div class="milestone"><div class="ms-label"><div>All CCs paid off</div></div><div class="ms-date ms-soon">${roadmap['chase-done']?new Date(roadmap['chase-done'].date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...'}</div></div>
-    <div class="milestone"><div class="ms-label"><div>TN Unemployment done</div></div><div class="ms-date ms-soon">${roadmap['tn-done']?new Date(roadmap['tn-done'].date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...'}</div></div>
-    <div class="milestone"><div class="ms-label"><div style="font-weight:700;">Consumer debt free</div></div><div class="ms-date ms-future" style="font-size:15px;">${roadmap['irs-done']?new Date(roadmap['irs-done'].date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...'}</div></div>
-    <div class="milestone"><div class="ms-label"><div>Mazda payoff</div></div><div class="ms-date ms-future">Aug 2029</div></div>
-    <div class="milestone"><div class="ms-label"><div style="font-weight:700;color:var(--pur);">Totally debt free</div></div><div class="ms-date" style="color:var(--pur);font-size:15px;">Aug 2029</div></div>
-  </div>`;
-
-  // Snowball log
-  html+=`<div class="card"><div class="ct">Payment log</div>`;
-  const log=S.snowballLog||[];
-  if(!log.length) html+='<div style="font-size:13px;color:var(--t3);">No payments logged yet</div>';
-  else html+=log.slice(0,8).map(e=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--br);font-size:12px;"><span style="color:var(--t2);">${e.target} · ${e.date}</span><span style="color:var(--grn);">-$${e.amt.toFixed(2)}</span></div>`).join('');
-  html+=`</div>`;
-
-  document.getElementById('snowball-content').innerHTML=html;
-}
-
-// ── SPENDING ──
-function addSpend(amt,label){
-  S.discSpent=(S.discSpent||0)+amt;
-  S.bal4496=Math.max(0,S.bal4496-amt);
-  (S.discLog=S.discLog||[]).unshift({type:'spend',amt,date:new Date().toLocaleDateString(),label});
-  save(S);renderAll();toast(`-$${amt.toFixed(2)} logged`);
-}
-function addUnexpected(label,acct,amt){
-  if(!S.unexpected)S.unexpected=[];
-  S.unexpected.unshift({label,acct,amt,date:new Date().toLocaleDateString()});
-  if(acct==='4496')S.bal4496=Math.max(0,S.bal4496-amt);
-  if(acct==='savings')S.bal0725=Math.max(0,S.bal0725-amt);
-  if(acct==='6764')S.bal6764=Math.max(0,S.bal6764-amt);
-  save(S);renderAll();toast(`$${amt.toFixed(2)} logged — balance updated`);
-}
-window.clearUnexpected=()=>{S.unexpected=[];save(S);renderWeek();toast('Cleared');};
-window.resetSpend=()=>{if(!confirm('Reset month?'))return;S.discSpent=0;S.discLog=[];S.weeks=[null,null,null,null];save(S);renderWeek();toast('Reset');};
-window.toggleWeek=function(i){
-  if(!S.weeks)S.weeks=[null,null,null,null];
-  if(S.weeks[i]===null){S.weeks[i]='used';S.discSpent=(S.discSpent||0)+50;S.bal4496=Math.max(0,S.bal4496-50);(S.discLog=S.discLog||[]).unshift({type:'spend',amt:50,date:`Wk${i+1}`,label:`Week ${i+1} allowance`});}
-  else{S.weeks[i]=null;S.discSpent=Math.max(0,(S.discSpent||0)-50);S.bal4496+=50;if(S.discLog&&S.discLog.length)S.discLog.shift();}
-  save(S);renderWeek();
-};
-window.logRandy=function(){
-  if(!S.randySessions)S.randySessions=[];
-  S.randySessions.unshift({date:new Date().toLocaleDateString(),amt:150});
-  S.bal4496=Math.max(0,S.bal4496-150);
-  save(S);renderWeek();toast('Session logged — $150');
-};
-window.undoRandy=function(){
-  if(!S.randySessions||!S.randySessions.length)return;
-  S.bal4496+=S.randySessions[0].amt;
-  S.randySessions.shift();
-  save(S);renderWeek();toast('Removed');
-};
-function logSnowballPmt(amt){
-  if(!S.snowballLog)S.snowballLog=[];
-  const ct=SNOWBALL_TARGETS.find(t=>{const b=(S.cardBals&&S.cardBals[t.id]!==undefined)?S.cardBals[t.id]:t.startBal;return b>0;});
-  S.snowballLog.unshift({amt,target:ct?ct.label:'Unknown',date:new Date().toLocaleDateString()});
-  if(ct){
-    if(!S.cardBals)S.cardBals={};
-    S.cardBals[ct.id]=Math.max(0,((S.cardBals[ct.id]!==undefined)?S.cardBals[ct.id]:ct.startBal)-amt);
-  }
-  save(S);renderSnowball();toast(`$${amt.toFixed(2)} logged`);
-}
-
-// ── BILLS ──
-const BILLS=[
-  {id:'mazda',t:'Mazda CX-5 — $638.06',s:'#4496 · ~9th'},
-  {id:'att',t:'AT&T Fiber — $165.85',s:'#4496 · ~16th'},
-  {id:'tmobile',t:'T-Mobile — $151.85',s:'#4496 · ~15th'},
-  {id:'statefarm',t:'State Farm — ~$190',s:'#4496 · ~23rd · showing $160.27 Apr — monitor'},
-  {id:'tn',t:'TN Unemployment — ~$153',s:'#4496 · ~22nd'},
-  {id:'irs1',t:'IRS payment #1 — $68',s:'#4496 · ~15th-16th'},
-  {id:'irs2',t:'IRS payment #2 — $35',s:'#4496 · ~15th-16th'},
-  {id:'merrick',t:'Merrick Bank — $35',s:'#4496 · ~11th'},
-  {id:'affirm',t:'Affirm cluster — ~$131',s:'#4496 · ~13th · 0% APR · verify in Affirm app'},
-  {id:'newegg',t:'PayPal Newegg — $60.68',s:'#4496 · ~13th'},
-  {id:'ebay',t:'PayPal eBay — $42.69',s:'#4496 · ~4th'},
-  {id:'chinese',t:'PayPal Chinese — $94.94',s:'#4496 · 30th'},
-  {id:'jonpaypal',t:'Jon PayPal Credit — $22',s:'#4496 · 0% plan · do NOT overpay'},
-  {id:'karenpaypal',t:'Karen PayPal Credit — $100',s:'MANUAL · 29.64% APR · ~13th · hardship plan pending'},
-  {id:'usaaamex',t:'USAA Amex Karen — $63 min',s:'27.40% APR · set autopay on usaa.com'},
-  {id:'chase',t:'Chase/Amazon Prime — $26',s:'#4496 · ~26th'},
-  {id:'amazon-store',t:'Amazon Store Card — $29',s:'#4496 · ~1st'},
-  {id:'spotify',t:'Spotify — $21.53',s:'#4496 · ~22nd'},
-  {id:'claude',t:'Claude.ai — $20',s:'#4496 · ~13th'},
-  {id:'chatgpt',t:'ChatGPT — $21.94',s:'#4496 · ~4th'},
-  {id:'prime',t:'Amazon Prime — $15.17',s:'#4496 · ~2nd'},
-  {id:'realdebrid',t:'Real-Debrid — $11/quarter',s:'#4496 · 2nd of Apr/Jul/Oct/Jan'},
-];
-function renderBills(){
-  document.getElementById('bills-list').innerHTML=BILLS.map(b=>{
-    const done=S.billChecks&&S.billChecks[b.id];
-    return `<div class="ci ${done?'done':''}" onclick="toggleBill('${b.id}')">
-      <div class="cb ${done?'done':''}"><span class="ck">✓</span></div>
-      <div class="cil"><div class="cititle">${b.t}</div><div class="cisub">${b.s}</div></div>
-    </div>`;
-  }).join('');
-}
-window.toggleBill=id=>{if(!S.billChecks)S.billChecks={};S.billChecks[id]=!S.billChecks[id];save(S);renderBills();};
-window.resetBills=()=>{S.billChecks={};save(S);renderBills();toast('Bills reset');};
-
-// ── INIT ──
-// Expose for debugging
-window._debug = () => ({
-  bal: S.bal4496,
-  karenAvg: S.karenAvgPay,
-  walkMay: () => {
-    let bal = S.bal4496;
-    for(let day = now.getDate()+1; day <= 31; day++) {
-      const bills = getDailyBills(2026, 3, day);
-      bills.forEach(b => console.log(`Apr ${day}: ${b.label} ${b.amt}`));
-      bills.forEach(b => bal += b.amt);
-      console.log(`Apr ${day} end: $${Math.round(bal)}`);
-    }
-    for(let day = 1; day <= 31; day++) {
-      const bills = getDailyBills(2026, 4, day);
-      bills.forEach(b => console.log(`May ${day}: ${b.label} ${b.amt}`));
-      bills.forEach(b => bal += b.amt);
-      console.log(`May ${day} end: $${Math.round(bal)}`);
-    }
-    console.log('June 1 start should be:', Math.round(bal));
-  }
-});
-window.getDailyBills = getDailyBills;
-window.calcRoadmap = calcRoadmap;
-window.getS = () => S;
-checkAuth();
 </script>
 </body>
 </html>
