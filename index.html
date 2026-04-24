@@ -171,6 +171,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <option value="6764">#6764 (transitional)</option>
       <option value="cash">Cash / other</option>
     </select>
+    <input type="date" id="mi-date" style="display:none;">
     <input type="number" id="mi-amt" placeholder="Amount" inputmode="decimal">
     <button class="btn btng" onclick="submitModal()">Confirm</button>
     <button class="btn btno" onclick="closeModal()">Cancel</button>
@@ -182,6 +183,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="nb" onclick="sw('month',this)">Month Plan</button>
   <button class="nb" onclick="sw('snowball',this)">Snowball</button>
   <button class="nb" onclick="sw('bills',this)">Bills</button>
+  <button class="nb" onclick="sw('settings',this)">Settings</button>
 </nav>
 
 <div class="panel on" id="p-week" style="display:none;">
@@ -228,6 +230,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="bills-list"></div>
     <button class="btn btno btnsm" style="margin-top:10px;" onclick="resetBills()">Reset all</button>
   </div>
+</div>
+
+<div class="panel" id="p-settings" style="display:none;">
+  <div style="font-size:20px;font-weight:700;margin-bottom:2px;">Settings</div>
+  <div style="font-size:12px;color:var(--t3);margin-bottom:12px;">Tap any value to edit — saves instantly</div>
+  <div id="settings-content"></div>
 </div>
 
 <!-- Firebase SDK -->
@@ -278,6 +286,34 @@ function defaultState() {
     unexpected: [{label:'Vehicle registration renewal',acct:'4496',amt:220.40,date:'4/23/2026'}],
     confirmed: {},
     regLogged: true,
+    settings: {
+      expenses: [
+        { id:'jon-tires', label:"Jon's tires + oil", date:'2026-05-09', amt:1500, active:true },
+        { id:'repair-buffer', label:'Repair buffer (savings)', date:null, amt:1000, active:true, isSavings:true },
+        { id:'karen-tires', label:"Karen's tires", date:'2026-06-06', amt:1000, active:true },
+        { id:'dental', label:'Dental — Jon + Karen', date:'2026-07-01', amt:500, active:true },
+        { id:'glasses', label:'Glasses — Jon + Karen', date:'2026-07-01', amt:1000, active:true },
+      ],
+      recurring: {
+        stateFarm: 190,
+        tn: 153,
+        karenAvg: 762,
+        groceries: 200,
+      },
+      cardBalances: {
+        amazonStore: 206,
+        merrick: 926,
+        capone3186: 491,
+        karenPaypal: 1958,
+        usaaAmex: 1847,
+        capone4565: 726,
+        capone5592: 731,
+        capone7988: 843,
+        chaseAmazon: 1000,
+        tn: 3653,
+        irs: 4767,
+      }
+    }
   };
 }
 
@@ -405,15 +441,16 @@ window.sw = function(id, el) {
   if (id === 'month') renderMonth();
   if (id === 'snowball') renderSnowball();
   if (id === 'bills') renderBills();
+  if (id === 'settings') renderSettings();
 };
 function routeHash() {
   const h = location.hash.replace('#', '');
-  const map = { week: 0, month: 1, snowball: 2, bills: 3 };
+  const map = { week: 0, month: 1, snowball: 2, bills: 3, settings: 4 };
   if (h && map[h] !== undefined && appReady) window.sw(h, document.querySelectorAll('.nb')[map[h]]);
 }
 window.addEventListener('hashchange', routeHash);
 
-function renderAll() { renderWeek(); renderMonth(); renderSnowball(); renderBills(); }
+function renderAll() { renderWeek(); renderMonth(); renderSnowball(); renderBills(); renderSettings(); }
 
 // ── TOAST ──
 window.toast = function(m) {
@@ -437,17 +474,51 @@ window.openModal = function(mode, title, showLabel = false, showAcct = false) {
 window.closeModal = function() { document.getElementById('mbg').classList.remove('show'); };
 window.submitModal = function() {
   const amt = parseFloat(document.getElementById('mi-amt').value);
-  if (isNaN(amt) || amt <= 0) { toast('Enter valid amount'); return; }
+  const dateVal = document.getElementById('mi-date').value;
   const label = document.getElementById('mi-label').value || 'Expense';
   const acct = document.getElementById('mi-acct').value || '4496';
   closeModal();
-  if (modalMode === 'bal4496') { S.bal4496 = amt; save(S); renderWeek(); toast('#4496 updated'); }
-  if (modalMode === 'bal6764') { S.bal6764 = amt; save(S); renderWeek(); toast('#6764 updated'); }
-  if (modalMode === 'bal0725') { S.bal0725 = amt; save(S); renderWeek(); toast('Savings updated'); }
-  if (modalMode === 'karen-pay') { S.karenLastPay = amt; S.bal4496 += amt; save(S); renderWeek(); toast(`Karen's $${amt} added to #4496`); }
-  if (modalMode === 'spend') { addSpend(amt, label); }
-  if (modalMode === 'unexpected') { addUnexpected(label, acct, amt); }
-  if (modalMode === 'snowball') { logSnowballPmt(amt); }
+
+  if (modalMode === 'bal4496') { if(!isNaN(amt)&&amt>=0){S.bal4496=amt;save(S);renderWeek();toast('#4496 updated');} }
+  if (modalMode === 'bal6764') { if(!isNaN(amt)&&amt>=0){S.bal6764=amt;save(S);renderWeek();toast('#6764 updated');} }
+  if (modalMode === 'bal0725') { if(!isNaN(amt)&&amt>=0){S.bal0725=amt;save(S);renderWeek();toast('Savings updated');} }
+  if (modalMode === 'karen-pay') { if(!isNaN(amt)&&amt>0){S.karenLastPay=amt;S.bal4496+=amt;save(S);renderWeek();toast(`Karen's $${amt} added to #4496`);} }
+  if (modalMode === 'spend') { if(!isNaN(amt)&&amt>0) addSpend(amt, label); }
+  if (modalMode === 'unexpected') { if(!isNaN(amt)&&amt>0) addUnexpected(label, acct, amt); }
+  if (modalMode === 'snowball') { if(!isNaN(amt)&&amt>0) logSnowballPmt(amt); }
+
+  // Settings edits
+  if (modalMode.startsWith('exp-')) {
+    const id = modalMode.replace('exp-', '');
+    const cfg = S.settings || defaultState().settings;
+    const exp = cfg.expenses.find(e => e.id === id);
+    if (exp) {
+      if (!isNaN(amt) && amt > 0) exp.amt = amt;
+      if (dateVal) exp.date = dateVal;
+      save(S); renderSettings(); renderMonth(); renderWeek();
+      toast(`${exp.label} updated`);
+    }
+  }
+  if (modalMode.startsWith('rec-')) {
+    const field = modalMode.replace('rec-', '');
+    if (!isNaN(amt) && amt > 0) {
+      if (!S.settings) S.settings = defaultState().settings;
+      if (!S.settings.recurring) S.settings.recurring = {};
+      S.settings.recurring[field] = amt;
+      save(S); renderSettings(); renderMonth(); renderWeek();
+      toast('Updated');
+    }
+  }
+  if (modalMode.startsWith('card-')) {
+    const field = modalMode.replace('card-', '');
+    if (!isNaN(amt) && amt >= 0) {
+      if (!S.settings) S.settings = defaultState().settings;
+      if (!S.settings.cardBalances) S.settings.cardBalances = {};
+      S.settings.cardBalances[field] = amt;
+      save(S); renderSettings(); renderSnowball();
+      toast('Balance updated');
+    }
+  }
 };
 window.editBal = function(a) { openModal('bal' + a, `Update #${a === '0725' ? 'savings' : a} balance`); };
 
@@ -463,6 +534,13 @@ function getEvents(year, month) {
   const fromDay = (year === 2026 && month === 3) ? 22 : 1;
   const karenAmt = S.karenLastPay || KAREN_AVG;
   const phase = S.snowballPhase || 0;
+
+  // Get settings with fallbacks
+  const cfg = S.settings || defaultState().settings;
+  const rec = cfg.recurring || {};
+  const stateFarm = rec.stateFarm || 190;
+  const tn = rec.tn || 153;
+  const groceries = rec.groceries || 200;
 
   // Phase-aware paycheck note
   const pcNote = phase >= 4
@@ -482,7 +560,7 @@ function getEvents(year, month) {
 
   for (let d = fromDay; d <= dim; d++) {
     if (new Date(year, month, d).getDay() === 0)
-      add(d, 'Fresh Market', -200, '#85B7EB', '$200/wk hard limit');
+      add(d, 'Fresh Market', -groceries, '#85B7EB', `$${groceries}/wk hard limit`);
   }
 
   if (key <= '2026-05') add(1, 'Amazon Store Card', -29, '#F09595', '~29% APR');
@@ -503,21 +581,27 @@ function getEvents(year, month) {
   add(16, 'IRS payment #2', -35, '#EF9F27', 'Installment plan');
   add(16, 'AT&T fiber', -166, '#b4b2a9', 'Internet');
   add(22, 'Jon PayPal Credit', -22, '#b4b2a9', '0% Customer Assistance Plan — do NOT overpay');
-  if (key <= '2027-12') add(22, 'TN unemployment', -153, '#EF9F27', '~$153/mo');
+  if (key <= '2027-12') add(22, 'TN unemployment', -tn, '#EF9F27', `~$${tn}/mo`);
   add(22, 'Spotify', -22, '#666660', 'Subscription');
-  add(23, 'State Farm', -190, '#b4b2a9', 'Auto insurance · monitor — showing $160.27 Apr');
+  add(23, 'State Farm', -stateFarm, '#b4b2a9', `Auto insurance${stateFarm !== 190 ? ' (updated)' : ' · monitor — showing $160.27 Apr'}`);
   add(26, 'Chase/Amazon', -26, '#b4b2a9', 'APR TBD — verify');
   if (key <= '2027-03' && !(year === 2026 && month === 3)) add(30, 'PayPal Chinese vendor', -95, '#EF9F27', '24.99% APR fixed');
 
+  // One-time expenses from settings
+  const expenses = cfg.expenses || [];
+  expenses.forEach(exp => {
+    if (!exp.active || !exp.date) return;
+    const d = new Date(exp.date);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      if (exp.id === 'repair-buffer') return; // repair buffer stays in savings, not a spend event
+      add(d.getDate(), exp.label.toUpperCase(), -exp.amt, '#F09595', `Budget $${exp.amt.toLocaleString()} · tap Settings to adjust`);
+    }
+  });
+
+  // April 2026 specific
   if (year === 2026 && month === 3) {
     add(23, 'Vehicle registration', -220, '#F09595', 'One-time renewal');
     add(30, 'PayPal Chinese — FIRST PMT', -95, '#F09595', 'Confirm autopay set');
-  }
-  if (year === 2026 && month === 4) add(9, "JON'S TIRES + OIL", -1500, '#F09595', 'Mazda dealer · $1,500 max · $1,000 buffer stays in savings');
-  if (year === 2026 && month === 5) add(6, "KAREN'S TIRES", -1000, '#F09595', 'Mazda dealer · $1,000');
-  if (year === 2026 && month === 6) {
-    add(1, 'Dental — Jon + Karen', -500, '#EF9F27', 'Applied ABC insurance · ~$500 OOP');
-    add(1, 'Glasses — Jon + Karen', -1000, '#EF9F27', 'Vision insurance · ~$1,000 total');
   }
   if (year === 2026 && month === 7) add(1, '🚀 SNOWBALL LAUNCHES', 0, '#97C459', 'All expenses done. $2,800+/mo attacks debt.');
 
@@ -883,24 +967,28 @@ const PHASES = [
   { l: 'Phase 4 — Dental + glasses', d: '~$1,500 OOP. July 2026.', c: 'var(--amb)' },
   { l: 'Phase 5 — SNOWBALL ACTIVE 🚀', d: '$2,800+/mo attacking CC debt. All CCs dead by Oct 2026.', c: 'var(--grn)' },
 ];
-const TARGETS = [
-  { n: 'Amazon Store Card', b: 206, a: '~29%', m: 29, w: 'Jon', note: 'Nearly dead', dead: 'Aug 2026' },
-  { n: 'Merrick Bank', b: 926, a: '31.95%', m: 35, w: 'Jon', note: 'Highest APR', dead: 'Aug 2026' },
-  { n: 'Cap One #3186', b: 491, a: '28.24%', m: 25, w: 'Karen', note: '', dead: 'Aug 2026' },
-  { n: "Karen's PayPal Credit", b: 1958, a: '29.64%', m: 100, w: 'Karen', note: 'Hardship plan pending', dead: 'Sep 2026' },
-  { n: 'USAA Amex', b: 1847, a: '27.40%', m: 63, w: 'Karen', note: 'Set autopay on usaa.com', dead: 'Sep 2026' },
-  { n: 'Cap One #4565', b: 726, a: '~29%', m: 25, w: 'Jon', note: '', dead: 'Oct 2026' },
-  { n: 'Cap One #5592', b: 731, a: '28.99%', m: 25, w: 'Karen', note: '', dead: 'Oct 2026' },
-  { n: 'Cap One #7988', b: 843, a: '~29%', m: 30, w: 'Jon', note: 'Near limit', dead: 'Oct 2026' },
-  { n: 'Chase/Amazon', b: 1000, a: 'TBD', m: 26, w: 'Jon', note: 'Verify APR', dead: 'Oct 2026' },
-  { n: 'TN Unemployment', b: 3653, a: '0%', m: 153, w: 'Karen', note: 'After all CCs', dead: 'Dec 2026' },
-  { n: 'IRS 2024', b: 4767, a: '0%', m: 103, w: 'Jon', note: 'After TN', dead: 'Jan 2027' },
-];
+function getTargets() {
+  const cards = (S.settings && S.settings.cardBalances) || defaultState().settings.cardBalances;
+  return [
+    { n:'Amazon Store Card', b:cards.amazonStore||206, a:'~29%', m:29, w:'Jon', note:'Nearly dead', dead:'Aug 2026' },
+    { n:'Merrick Bank', b:cards.merrick||926, a:'31.95%', m:35, w:'Jon', note:'Highest APR', dead:'Aug 2026' },
+    { n:'Cap One #3186', b:cards.capone3186||491, a:'28.24%', m:25, w:'Karen', note:'', dead:'Aug 2026' },
+    { n:"Karen's PayPal Credit", b:cards.karenPaypal||1958, a:'29.64%', m:100, w:'Karen', note:'Hardship plan pending', dead:'Sep 2026' },
+    { n:'USAA Amex', b:cards.usaaAmex||1847, a:'27.40%', m:63, w:'Karen', note:'Set autopay on usaa.com', dead:'Sep 2026' },
+    { n:'Cap One #4565', b:cards.capone4565||726, a:'~29%', m:25, w:'Jon', note:'', dead:'Oct 2026' },
+    { n:'Cap One #5592', b:cards.capone5592||731, a:'28.99%', m:25, w:'Karen', note:'', dead:'Oct 2026' },
+    { n:'Cap One #7988', b:cards.capone7988||843, a:'~29%', m:30, w:'Jon', note:'Near limit', dead:'Oct 2026' },
+    { n:'Chase/Amazon', b:cards.chaseAmazon||1000, a:'TBD', m:26, w:'Jon', note:'Verify APR', dead:'Oct 2026' },
+    { n:'TN Unemployment', b:cards.tn||3653, a:'0%', m:153, w:'Karen', note:'After all CCs', dead:'Dec 2026' },
+    { n:'IRS 2024', b:cards.irs||4767, a:'0%', m:103, w:'Jon', note:'After TN', dead:'Jan 2027' },
+  ];
+}
 
 function renderSnowball() {
   const ph = S.snowballPhase || 0;
   const p = PHASES[ph];
   const ct = S.currentTarget || 0;
+  const TARGETS = getTargets();
   let html = `<div style="font-size:20px;font-weight:700;margin-bottom:2px;">Debt snowball</div>
     <div style="font-size:12px;color:var(--t3);margin-bottom:12px;">$2,800+/mo after Aug 2026 · Consumer debt free Jan 2027</div>
     <div class="card">
@@ -947,6 +1035,7 @@ window.setPhase = function(n) { S.snowballPhase = n; save(S); renderSnowball(); 
 window.advanceTarget = function() { S.currentTarget = (S.currentTarget || 0) + 1; save(S); renderSnowball(); toast('🎉 Target paid off!'); };
 function logSnowballPmt(amt) {
   if (!S.snowballLog) S.snowballLog = [];
+  const TARGETS = getTargets();
   const t = TARGETS[S.currentTarget || 0];
   S.snowballLog.unshift({ amt, target: t ? t.n : 'Unknown', date: new Date().toLocaleDateString() });
   save(S); renderSnowball(); toast(`$${amt.toFixed(2)} logged`);
@@ -989,6 +1078,117 @@ function renderBills() {
 window.toggleBill = function(id) { if (!S.billChecks) S.billChecks = {}; S.billChecks[id] = !S.billChecks[id]; save(S); renderBills(); };
 window.resetBills = function() { S.billChecks = {}; save(S); renderBills(); toast('Bills reset'); };
 window.logRandy = window.logRandy;
+
+// ── SETTINGS ──
+function openSettingsModal(mode, title, currentAmt, currentDate) {
+  modalMode = mode;
+  document.getElementById('mtitle').textContent = title;
+  document.getElementById('mi-label').style.display = 'none';
+  document.getElementById('mi-acct').style.display = 'none';
+  const dateEl = document.getElementById('mi-date');
+  const amtEl = document.getElementById('mi-amt');
+  if (currentDate) {
+    dateEl.style.display = 'block';
+    dateEl.value = currentDate || '';
+  } else {
+    dateEl.style.display = 'none';
+  }
+  amtEl.value = currentAmt || '';
+  amtEl.placeholder = 'Amount';
+  document.getElementById('mbg').classList.add('show');
+  setTimeout(() => (currentDate ? dateEl : amtEl).focus(), 120);
+}
+window.openSettingsModal = openSettingsModal;
+
+function toggleExpenseActive(id) {
+  const cfg = S.settings || defaultState().settings;
+  const exp = cfg.expenses.find(e => e.id === id);
+  if (exp) { exp.active = !exp.active; save(S); renderSettings(); renderMonth(); renderWeek(); }
+}
+window.toggleExpenseActive = toggleExpenseActive;
+
+function renderSettings() {
+  const cfg = S.settings || defaultState().settings;
+  const rec = cfg.recurring || {};
+  const cards = cfg.cardBalances || {};
+  const expenses = cfg.expenses || [];
+
+  let html = '';
+
+  // One-time expenses
+  html += `<div class="card">
+    <div class="ct">Upcoming expenses</div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:10px;">Tap date or amount to edit · Toggle to disable</div>`;
+  expenses.forEach(exp => {
+    const dateStr = exp.date ? new Date(exp.date + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'No date';
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--br);">
+      <div style="flex:1;${!exp.active?'opacity:0.4;':''}">
+        <div style="font-size:13px;font-weight:600;color:var(--tx);">${exp.label}</div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          ${exp.date?`<button class="btn btno btnsm" style="margin:0;padding:4px 10px;font-size:11px;" onclick="openSettingsModal('exp-${exp.id}','Edit date for ${exp.label}',${exp.amt},'${exp.date}')">${dateStr}</button>`:''}
+          <button class="btn btno btnsm" style="margin:0;padding:4px 10px;font-size:11px;" onclick="openSettingsModal('exp-${exp.id}','Edit amount for ${exp.label}',${exp.amt},null)">$${exp.amt.toLocaleString()}</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="font-size:11px;color:var(--t3);">${exp.active?'active':'off'}</div>
+        <div style="width:36px;height:20px;border-radius:10px;background:${exp.active?'var(--gm)':'var(--s3)'};cursor:pointer;position:relative;transition:background .2s;" onclick="toggleExpenseActive('${exp.id}')">
+          <div style="position:absolute;top:2px;left:${exp.active?'18px':'2px'};width:16px;height:16px;border-radius:50%;background:white;transition:left .2s;"></div>
+        </div>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Recurring variable bills
+  html += `<div class="card">
+    <div class="ct">Variable recurring bills</div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:10px;">Tap to update when amounts change</div>`;
+  const recFields = [
+    { key:'stateFarm', label:'State Farm', note:'Currently showing $160.27 — update when stable' },
+    { key:'tn', label:'TN Unemployment', note:'Varies month to month' },
+    { key:'groceries', label:'Fresh Market weekly budget', note:'Per week' },
+    { key:'karenAvg', label:"Karen's avg weekly pay", note:'Used for future month projections' },
+  ];
+  recFields.forEach(f => {
+    const val = rec[f.key] || 0;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--br);">
+      <div>
+        <div style="font-size:13px;color:var(--tx);">${f.label}</div>
+        <div style="font-size:11px;color:var(--t3);">${f.note}</div>
+      </div>
+      <button class="btn btno btnsm" style="margin:0;padding:6px 12px;font-size:13px;font-weight:700;" onclick="openSettingsModal('rec-${f.key}','Update ${f.label}',${val},null)">$${val.toLocaleString()}</button>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Card balances
+  html += `<div class="card">
+    <div class="ct">Debt balances</div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:10px;">Update as you pay them down — affects snowball projection</div>`;
+  const cardFields = [
+    { key:'amazonStore', label:'Amazon Store Card' },
+    { key:'merrick', label:'Merrick Bank' },
+    { key:'capone3186', label:'Cap One #3186 (Karen)' },
+    { key:'karenPaypal', label:"Karen's PayPal Credit" },
+    { key:'usaaAmex', label:'USAA Amex (Karen)' },
+    { key:'capone4565', label:'Cap One #4565 (Jon)' },
+    { key:'capone5592', label:'Cap One #5592 (Karen)' },
+    { key:'capone7988', label:'Cap One #7988 (Jon)' },
+    { key:'chaseAmazon', label:'Chase/Amazon Prime' },
+    { key:'tn', label:'TN Unemployment remaining' },
+    { key:'irs', label:'IRS balance remaining' },
+  ];
+  cardFields.forEach(f => {
+    const val = cards[f.key] || 0;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--br);">
+      <div style="font-size:13px;color:var(--tx);">${f.label}</div>
+      <button class="btn ${val===0?'btng':'btnr'} btnsm" style="margin:0;padding:6px 12px;font-size:13px;font-weight:700;" onclick="openSettingsModal('card-${f.key}','Update ${f.label}',${val},null)">${val===0?'✓ PAID':'$'+val.toLocaleString()}</button>
+    </div>`;
+  });
+  html += `</div>`;
+
+  document.getElementById('settings-content').innerHTML = html;
+}
 
 // ── INIT ──
 checkAuth();
