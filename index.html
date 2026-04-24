@@ -904,21 +904,23 @@ function renderMonth(){
   const startDay=(vYear===2026&&vMonth===3)?22:1;
   const isCurrentMonth=vYear===now.getFullYear()&&vMonth===now.getMonth();
 
-  // Project starting balance at the START of vMonth
-  // Walk from tomorrow through the last day of the month BEFORE vMonth
-  // Then calendar events for vMonth update runBal in order
+  // Project starting balance by simulating all months from current to vMonth
   let runBal = S.bal4496;
   if(!isCurrentMonth){
-    let d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    // Walk until we reach the first day of vMonth
-    const target = new Date(vYear, vMonth, 1);
-    while(d < target){
-      const bills = getDailyBills(d.getFullYear(), d.getMonth(), d.getDate());
-      bills.forEach(b => { runBal += b.amt; });
-      d.setDate(d.getDate() + 1);
+    let simYear = now.getFullYear();
+    let simMonth = now.getMonth();
+    while(simYear < vYear || (simYear === vYear && simMonth < vMonth)){
+      const simFromDay = (simYear === now.getFullYear() && simMonth === now.getMonth())
+        ? now.getDate() + 1 : 1;
+      const simDays = new Date(simYear, simMonth + 1, 0).getDate();
+      for(let day = simFromDay; day <= simDays; day++){
+        getDailyBills(simYear, simMonth, day).forEach(b => { runBal += b.amt; });
+      }
+      simMonth++;
+      if(simMonth > 11){ simMonth = 0; simYear++; }
     }
-    // runBal is now the balance at start of vMonth
-    // Calendar events for vMonth will update it from here
+    // runBal is now end-of-(vMonth-1) = start of vMonth
+    // Calendar events for vMonth will apply on top from here
   }
 
   const totalIn=evts.filter(e=>e.isIncome&&e.day>=startDay).reduce((a,e)=>a+(e.amt||0),0);
@@ -960,8 +962,8 @@ function renderMonth(){
         const isInc=e.isIncome;
         const ac=isInc?'var(--grn)':Math.abs(amtNum)>500?'var(--red)':'var(--t2)';
         const as=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
-        // Current month: only days after today update runBal (today already in real balance)
-        // Future months: all events update runBal (pre-walk stopped at month boundary)
+        // Current month: only days after today update runBal (real balance already includes today)
+        // Future months: all days update runBal (pre-sim stopped before vMonth)
         const isFuture = !isCurrentMonth || day > now.getDate();
         if(amtNum !== 0 && isFuture) runBal += amtNum;
         const balWarn=runBal<300;
