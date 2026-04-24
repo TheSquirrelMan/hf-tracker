@@ -517,21 +517,23 @@ function calcRoadmap() {
     // Check affordability every day (not just paychecks)
     if(bal > 0 && !snowballActive && pendingPhases.length > 0) {
       const nextPhase = pendingPhases[0];
-      if(!nextPhase.isSavings && bal >= nextPhase.cost + BUFFER) {
-        if(!milestones[nextPhase.id]) {
-          milestones[nextPhase.id] = { date:dateStr, bal:Math.round(bal) };
-          bal -= nextPhase.cost;
+      // Skip savings phases -- they don't drain the balance
+      if(nextPhase.isSavings) {
+        if(milestones['jon-tires']) {
+          milestones[nextPhase.id] = { date:milestones['jon-tires'].date };
           pendingPhases.shift();
-          // Auto-mark repair buffer same day as tires
-          if(nextPhase.id === 'jon-tires') {
-            const buf = pendingPhases.find(p=>p.id==='repair-buf');
-            if(buf) { milestones['repair-buf'] = { date:dateStr }; pendingPhases.splice(pendingPhases.indexOf(buf),1); }
-          }
-          if(pendingPhases.length === 0) {
-            snowballActive = true;
-            milestones['snowball-start'] = { date:dateStr };
-          }
         }
+      } else if(bal >= nextPhase.cost + BUFFER && !milestones[nextPhase.id]) {
+        milestones[nextPhase.id] = { date:dateStr, bal:Math.round(bal) };
+        bal -= nextPhase.cost;
+        pendingPhases.shift();
+        if(pendingPhases.length === 0) {
+          snowballActive = true;
+          milestones['snowball-start'] = { date:dateStr };
+        }
+        // Advance day so next phase doesn't trigger same day
+        d.setDate(d.getDate() + 1);
+        continue;
       }
     }
 
