@@ -903,14 +903,14 @@ function renderMonth(){
   const isCurrentMonth=vYear===now.getFullYear()&&vMonth===now.getMonth();
 
   // Project starting balance for this month
+  // Bills only in pre-walk -- income gets counted when calendar events render
   let runBal = S.bal4496;
   if(!isCurrentMonth){
-    // Walk day by day from tomorrow to the first day of the view month
     let d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const target = new Date(vYear, vMonth, 1);
     while(d < target){
       const bills = getDailyBills(d.getFullYear(), d.getMonth(), d.getDate());
-      bills.forEach(b => { runBal += b.amt; });
+      bills.forEach(b => { if(!b.isIncome) runBal += b.amt; });
       d.setDate(d.getDate() + 1);
     }
   }
