@@ -443,7 +443,7 @@ function getDailyBills(year, month, day) {
   if(dow===4) bills.push({label:'Karen paycheck',amt:karenAmt,isIncome:true});
 
   // Groceries every Sunday
-  if(dow===0) bills.push({label:'Fresh Market',$amt:-200});
+  if(dow===0) bills.push({label:'Fresh Market',amt:-200});
 
   // Fixed monthly
   if(day===1&&key<='2026-05') bills.push({label:'Amazon Store Card',amt:-29});
@@ -459,7 +459,7 @@ function getDailyBills(year, month, day) {
   if(day===15) bills.push({label:'T-Mobile',amt:-152},{label:'IRS #1',amt:-68});
   if(day===16) bills.push({label:'IRS #2',amt:-35},{label:'AT&T fiber',amt:-166});
   if(day===22) bills.push({label:'Jon PayPal Credit',amt:-22},{label:'Spotify',amt:-22});
-  if(day===22&&key<='2027-12') bills.push({label:'TN unemployment',amt:-(S.cardBals&&S.cardBals.tn>0?153:0)||0});
+  if(day===22&&key<='2027-12') bills.push({label:'TN unemployment',amt:-153});
   if(day===23) bills.push({label:'State Farm',amt:-190});
   if(day===26) bills.push({label:'Chase/Amazon',amt:-26});
   if(day===30&&key<='2027-03') bills.push({label:'PayPal Chinese',amt:-95});
@@ -514,31 +514,29 @@ function calcRoadmap() {
     const dayBills = getDailyBills(year, month, day);
     dayBills.forEach(b => { bal += b.amt; });
 
-    // On paycheck days, check if we can afford next pending phase
-    if((day===7||day===22||d.getDay()===4) && bal > 0) {
-      if(!snowballActive && pendingPhases.length > 0) {
-        const nextPhase = pendingPhases[0];
-        if(!nextPhase.isSavings && bal >= nextPhase.cost + BUFFER) {
-          if(!milestones[nextPhase.id]) {
-            milestones[nextPhase.id] = { date:dateStr, bal:Math.round(bal) };
-            bal -= nextPhase.cost;
-            pendingPhases.shift();
-            if(pendingPhases.length === 0) {
-              snowballActive = true;
-              milestones['snowball-start'] = { date:dateStr };
-            }
+    // Check affordability every day (not just paychecks)
+    if(bal > 0 && !snowballActive && pendingPhases.length > 0) {
+      const nextPhase = pendingPhases[0];
+      if(!nextPhase.isSavings && bal >= nextPhase.cost + BUFFER) {
+        if(!milestones[nextPhase.id]) {
+          milestones[nextPhase.id] = { date:dateStr, bal:Math.round(bal) };
+          bal -= nextPhase.cost;
+          pendingPhases.shift();
+          // Auto-mark repair buffer same day as tires
+          if(nextPhase.id === 'jon-tires') {
+            const buf = pendingPhases.find(p=>p.id==='repair-buf');
+            if(buf) { milestones['repair-buf'] = { date:dateStr }; pendingPhases.splice(pendingPhases.indexOf(buf),1); }
           }
-        } else if(nextPhase.isSavings) {
-          // Repair buffer -- just mark affordable same time as tires
-          if(milestones['jon-tires']) {
-            milestones[nextPhase.id] = { date:milestones['jon-tires'].date };
-            pendingPhases.shift();
+          if(pendingPhases.length === 0) {
+            snowballActive = true;
+            milestones['snowball-start'] = { date:dateStr };
           }
         }
       }
+    }
 
-      // Snowball payments on paycheck days
-      if(snowballActive && currentSnowTarget !== null) {
+    // Snowball payments on paycheck days
+    if((day===7||day===22||d.getDay()===4) && snowballActive && currentSnowTarget !== null) {
         const target = SNOWBALL_TARGETS[currentSnowTarget];
         // Monthly income minus all fixed bills = surplus
         const monthlyIn = JON_PAY * 2 + (S.karenAvgPay||762) * 4.33;
@@ -559,7 +557,6 @@ function calcRoadmap() {
             }
           }
         }
-      }
     }
 
     // Advance day
