@@ -9,126 +9,151 @@
 <title>HF Tracker</title>
 <style>
 :root{
-  --bg:#1a1a18;--surface:#252523;--s2:#2c2c2a;--s3:#343432;
-  --border:rgba(255,255,255,0.08);
-  --text:#f0efe9;--t2:#b4b2a9;--t3:#666660;
-  --red:#F09595;--rbg:#3d1515;--rmid:#A32D2D;
-  --amb:#EF9F27;--abg:#3d2800;--amid:#854F0B;
-  --grn:#97C459;--gbg:#1a2e08;--gmid:#3B6D11;
-  --blu:#85B7EB;--bbg:#0c2240;--bmid:#185FA5;
+  --bg:#1a1a18;--sf:#252523;--s2:#2c2c2a;--s3:#343432;
+  --br:rgba(255,255,255,0.08);
+  --tx:#f0efe9;--t2:#b4b2a9;--t3:#666660;
+  --red:#F09595;--rbg:#3d1515;--rm:#A32D2D;
+  --amb:#EF9F27;--abg:#3d2800;--am:#854F0B;
+  --grn:#97C459;--gbg:#1a2e08;--gm:#3B6D11;
+  --blu:#85B7EB;--bbg:#0c2240;--bm:#185FA5;
+  --pur:#C4B5FD;--pbg:#1e1a3d;--pm:#5B4FBF;
   --r:14px;--rs:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;overflow-x:hidden;}
-.nav{display:flex;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;scrollbar-width:none;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);font-size:15px;line-height:1.5;overflow-x:hidden;}
+
+/* PIN */
+.pin-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;}
+.pin-screen.hidden{display:none;}
+.pin-logo{font-size:36px;margin-bottom:8px;}
+.pin-title{font-size:22px;font-weight:700;margin-bottom:4px;}
+.pin-sub{font-size:13px;color:var(--t3);margin-bottom:32px;}
+.pin-dots{display:flex;gap:14px;margin-bottom:32px;}
+.pin-dot{width:16px;height:16px;border-radius:50%;background:var(--s3);border:2px solid var(--br);transition:all .15s;}
+.pin-dot.filled{background:var(--blu);border-color:var(--bm);}
+.pin-dot.error{background:var(--red);border-color:var(--rm);}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px;}
+.pin-key{background:var(--sf);border:0.5px solid var(--br);border-radius:var(--r);padding:18px;font-size:22px;font-weight:600;color:var(--tx);cursor:pointer;text-align:center;transition:opacity .1s,transform .1s;user-select:none;}
+.pin-key:active{opacity:.7;transform:scale(.95);}
+.pin-key.del{font-size:18px;color:var(--t2);}
+.pin-key.empty{background:transparent;border-color:transparent;pointer-events:none;}
+.pin-error{font-size:13px;color:var(--red);margin-top:16px;height:18px;}
+
+/* NAV */
+.nav{display:flex;overflow-x:auto;background:var(--sf);border-bottom:1px solid var(--br);position:sticky;top:0;z-index:100;scrollbar-width:none;}
 .nav::-webkit-scrollbar{display:none;}
 .nb{flex-shrink:0;padding:13px 15px;font-size:12px;font-weight:600;color:var(--t3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;letter-spacing:.03em;text-transform:uppercase;}
 .nb.on{color:var(--blu);border-bottom-color:var(--blu);}
-.panel{display:none;padding:14px 14px 100px;max-width:600px;margin:0 auto;}
+
+/* PANELS */
+.panel{display:none;padding:12px 12px 100px;max-width:600px;margin:0 auto;}
 .panel.on{display:block;}
-.pgtitle{font-size:20px;font-weight:700;margin-bottom:2px;}
-.pgsub{font-size:12px;color:var(--t3);margin-bottom:14px;}
-.card{background:var(--surface);border-radius:var(--r);border:0.5px solid var(--border);padding:14px;margin-bottom:12px;}
-.ct{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;}
-.big{font-size:42px;font-weight:700;line-height:1;}
-.biglabel{font-size:11px;color:var(--t3);margin-top:3px;}
-.prog{height:7px;border-radius:4px;background:var(--s2);margin:10px 0;overflow:hidden;}
-.progfill{height:100%;border-radius:4px;transition:width .4s;}
-.btn{display:block;width:100%;padding:14px;border-radius:var(--rs);border:none;font-size:15px;font-weight:700;cursor:pointer;text-align:center;margin-bottom:8px;transition:opacity .15s,transform .1s;}
+
+/* CARDS */
+.card{background:var(--sf);border-radius:var(--r);border:0.5px solid var(--br);padding:14px;margin-bottom:10px;}
+.ct{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;}
+
+/* BALANCE STRIP */
+.bstrip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;}
+.bitem{background:var(--sf);border-radius:var(--rs);padding:8px 6px;border:0.5px solid var(--br);text-align:center;cursor:pointer;}
+.bitem:active{opacity:.7;}
+.bacct{font-size:9px;color:var(--t3);letter-spacing:.04em;text-transform:uppercase;}
+.bnum{font-size:15px;font-weight:700;margin-top:1px;}
+
+/* BUTTONS */
+.btn{display:block;width:100%;padding:13px;border-radius:var(--rs);border:none;font-size:15px;font-weight:700;cursor:pointer;text-align:center;margin-bottom:8px;transition:opacity .15s,transform .1s;}
 .btn:active{opacity:.8;transform:scale(.98);}
-.btng{background:var(--gbg);color:var(--grn);border:1px solid var(--gmid);}
-.btnr{background:var(--rbg);color:var(--red);border:1px solid var(--rmid);}
-.btna{background:var(--abg);color:var(--amb);border:1px solid var(--amid);}
-.btnb{background:var(--bbg);color:var(--blu);border:1px solid var(--bmid);}
-.btno{background:var(--s2);color:var(--t2);border:0.5px solid var(--border);}
+.btng{background:var(--gbg);color:var(--grn);border:1px solid var(--gm);}
+.btnr{background:var(--rbg);color:var(--red);border:1px solid var(--rm);}
+.btna{background:var(--abg);color:var(--amb);border:1px solid var(--am);}
+.btnb{background:var(--bbg);color:var(--blu);border:1px solid var(--bm);}
+.btno{background:var(--s2);color:var(--t2);border:0.5px solid var(--br);}
 .btnsm{padding:9px 14px;font-size:13px;margin-bottom:6px;}
-.row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--border);gap:8px;}
+
+/* ROWS */
+.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--br);gap:8px;}
 .row:last-child{border-bottom:none;}
 .rl{flex:1;}
-.rlabel{font-size:14px;color:var(--text);}
+.rlabel{font-size:14px;color:var(--tx);}
 .rsub{font-size:11px;color:var(--t3);margin-top:1px;}
 .rval{font-size:14px;font-weight:700;flex-shrink:0;}
-.ci{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:0.5px solid var(--border);cursor:pointer;}
+
+/* CHECK ITEMS */
+.ci{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--br);cursor:pointer;}
 .ci:last-child{border-bottom:none;}
-.cb{width:24px;height:24px;border-radius:6px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px;}
-.cb.done{background:var(--gbg);border-color:var(--gmid);}
+.cb{width:24px;height:24px;border-radius:6px;border:2px solid var(--br);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px;}
+.cb.done{background:var(--gbg);border-color:var(--gm);}
 .ck{font-size:13px;opacity:0;transition:opacity .2s;color:var(--grn);}
 .cb.done .ck{opacity:1;}
 .cil{flex:1;}
-.cititle{font-size:14px;color:var(--text);transition:color .2s;}
+.cititle{font-size:14px;color:var(--tx);transition:color .2s;}
 .ci.done .cititle{color:var(--t3);text-decoration:line-through;}
 .cisub{font-size:11px;color:var(--t3);margin-top:1px;}
 .ciamt{font-size:13px;font-weight:700;color:var(--t2);flex-shrink:0;}
-.wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0;}
-.wp{border-radius:var(--rs);padding:11px 6px;text-align:center;cursor:pointer;border:1px solid var(--border);background:var(--s2);transition:all .2s;}
-.wp.used{background:var(--rbg);border-color:var(--rmid);}
-.wp.saved{background:var(--gbg);border-color:var(--gmid);}
+
+/* WEEK PILLS */
+.wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0;}
+.wp{border-radius:var(--rs);padding:10px 4px;text-align:center;cursor:pointer;border:1px solid var(--br);background:var(--s2);transition:all .2s;}
+.wp.used{background:var(--rbg);border-color:var(--rm);}
+.wp.saved{background:var(--gbg);border-color:var(--gm);}
 .wp.cur{border-color:var(--amb);border-width:2px;}
 .wplabel{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;}
 .wp.used .wplabel{color:var(--red);}
 .wp.saved .wplabel{color:var(--grn);}
 .wp.cur .wplabel{color:var(--amb);}
-.wpval{font-size:15px;font-weight:700;margin-top:2px;color:var(--t2);}
+.wpval{font-size:14px;font-weight:700;margin-top:2px;color:var(--t2);}
 .wp.used .wpval{color:var(--red);}
 .wp.saved .wpval{color:var(--grn);}
 .wp.cur .wpval{color:var(--amb);}
-.mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+
+/* PROGRESS */
+.prog{height:6px;border-radius:3px;background:var(--s2);margin:8px 0;overflow:hidden;}
+.progfill{height:100%;border-radius:3px;transition:width .4s;}
+
+/* MONTH NAV */
+.mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
 .mnavtitle{font-size:17px;font-weight:700;}
-.mnavbtn{background:var(--s2);border:0.5px solid var(--border);border-radius:var(--rs);padding:8px 14px;font-size:14px;color:var(--text);cursor:pointer;}
-.event{display:flex;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border);}
+.mnavbtn{background:var(--s2);border:0.5px solid var(--br);border-radius:var(--rs);padding:8px 14px;font-size:14px;color:var(--tx);cursor:pointer;}
+
+/* EVENTS */
+.event{display:flex;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--br);}
 .event:last-child{border-bottom:none;}
 .edot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
-.econtent{flex:1;}
-.etitle{font-size:13px;font-weight:600;color:var(--text);}
+.econtent{flex:1;min-width:0;}
+.etitle{font-size:13px;font-weight:600;color:var(--tx);}
 .esub{font-size:11px;color:var(--t3);margin-top:1px;}
-.eacct{font-size:10px;color:var(--t3);}
-.eamt{font-size:13px;font-weight:700;flex-shrink:0;min-width:56px;text-align:right;}
-.wheader{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:4px;display:flex;justify-content:space-between;}
-.bstrip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
-.bitem{background:var(--surface);border-radius:var(--rs);padding:10px;border:0.5px solid var(--border);text-align:center;cursor:pointer;}
-.bitem:active{opacity:.7;}
-.bacct{font-size:10px;color:var(--t3);letter-spacing:.04em;text-transform:uppercase;}
-.bnum{font-size:16px;font-weight:700;margin-top:2px;}
-.today-banner{background:var(--abg);border:1px solid var(--amid);border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;}
-.today-banner p{font-size:12px;color:var(--amb);line-height:1.5;}
-.today-banner p.bold{font-weight:700;font-size:13px;margin-bottom:2px;}
-.unexpected-item{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:12px;}
-.unexpected-item:last-child{border-bottom:none;}
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--s3);color:var(--text);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;border:0.5px solid var(--border);}
-.toast.show{opacity:1;}
+.ebal{font-size:10px;margin-top:2px;}
+.eamt{font-size:13px;font-weight:700;flex-shrink:0;text-align:right;min-width:52px;}
+.wheader{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;padding:8px 0 5px;border-bottom:1px solid var(--br);margin-bottom:4px;display:flex;justify-content:space-between;}
+
+/* SNOWBALL */
+.tcard{background:var(--s2);border-radius:var(--rs);padding:13px;margin-bottom:8px;border:1px solid var(--br);}
+.tcard.active{border-color:var(--am);background:var(--abg);}
+.tcard.tdone{opacity:0.35;}
+
+/* MODAL */
 .mbg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:flex-end;justify-content:center;}
 .mbg.show{display:flex;}
-.modal{background:var(--surface);border-radius:var(--r) var(--r) 0 0;padding:20px;width:100%;max-width:600px;}
+.modal{background:var(--sf);border-radius:var(--r) var(--r) 0 0;padding:20px;width:100%;max-width:600px;}
 .mtitle{font-size:17px;font-weight:700;margin-bottom:14px;}
-.modal input,.modal select{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;font-size:16px;color:var(--text);margin-bottom:10px;}
+.modal input,.modal select{width:100%;background:var(--s2);border:1px solid var(--br);border-radius:var(--rs);padding:12px 14px;font-size:16px;color:var(--tx);margin-bottom:10px;}
 .modal input::placeholder{color:var(--t3);}
 .modal select option{background:var(--s2);}
-.phasebox{border-radius:var(--rs);padding:14px;margin-bottom:10px;border:1px solid;}
-.tcard{background:var(--s2);border-radius:var(--rs);padding:14px;margin-bottom:8px;border:1px solid var(--border);}
-.tcard.active{border-color:var(--amid);background:var(--abg);}
-.tcard.tdone{opacity:0.35;}
-/* PIN SCREEN */
-.pin-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;}
-.pin-screen.hidden{display:none;}
-.pin-logo{font-size:36px;margin-bottom:8px;}
-.pin-title{font-size:22px;font-weight:700;margin-bottom:4px;text-align:center;}
-.pin-sub{font-size:13px;color:var(--t3);margin-bottom:32px;text-align:center;}
-.pin-dots{display:flex;gap:14px;margin-bottom:32px;}
-.pin-dot{width:16px;height:16px;border-radius:50%;background:var(--s3);border:2px solid var(--border);transition:all .15s;}
-.pin-dot.filled{background:var(--blu);border-color:var(--bmid);}
-.pin-dot.error{background:var(--red);border-color:var(--rmid);}
-.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px;}
-.pin-key{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r);padding:18px;font-size:22px;font-weight:600;color:var(--text);cursor:pointer;text-align:center;transition:opacity .1s,transform .1s;user-select:none;}
-.pin-key:active{opacity:.7;transform:scale(.95);}
-.pin-key.del{font-size:18px;color:var(--t2);}
-.pin-key.empty{background:transparent;border-color:transparent;pointer-events:none;}
-.pin-error{font-size:13px;color:var(--red);margin-top:16px;height:18px;text-align:center;}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--s3);color:var(--tx);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;border:0.5px solid var(--br);}
+.toast.show{opacity:1;}
+
+/* CONFIRM BANNER */
+.confirm-banner{background:var(--abg);border:1px solid var(--am);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;}
+.confirm-banner .cb-title{font-size:14px;font-weight:700;color:var(--amb);margin-bottom:4px;}
+.confirm-banner .cb-sub{font-size:12px;color:var(--t2);margin-bottom:10px;}
 </style>
 </head>
 <body>
 
-<!-- PIN SCREEN -->
+<!-- PIN -->
 <div class="pin-screen" id="pin-screen">
   <div class="pin-logo">💰</div>
   <div class="pin-title">HF Tracker</div>
@@ -155,18 +180,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
   <div class="pin-error" id="pin-error"></div>
 </div>
+
 <div class="toast" id="toast"></div>
+
+<!-- MODAL -->
 <div class="mbg" id="mbg" onclick="closeModal()">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="mtitle" id="mtitle"></div>
-    <input type="text" id="minput-label" placeholder="Description (e.g. Vehicle registration)" style="display:none;">
-    <select id="minput-acct" style="display:none;">
-      <option value="#4496">#4496 Jon checking</option>
-      <option value="#6764">#6764 Karen checking</option>
+    <input type="text" id="mi-label" placeholder="Description" style="display:none;">
+    <select id="mi-acct" style="display:none;">
+      <option value="4496">#4496 checking</option>
       <option value="savings">Savings #0725</option>
+      <option value="6764">#6764 (transitional)</option>
       <option value="cash">Cash / other</option>
     </select>
-    <input type="number" id="minput-amt" placeholder="Amount" inputmode="decimal">
+    <input type="number" id="mi-amt" placeholder="Amount" inputmode="decimal">
     <button class="btn btng" onclick="submitModal()">Confirm</button>
     <button class="btn btno" onclick="closeModal()">Cancel</button>
   </div>
@@ -175,7 +203,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <nav class="nav">
   <button class="nb on" onclick="sw('week',this)">This Week</button>
   <button class="nb" onclick="sw('month',this)">Month Plan</button>
-  <button class="nb" onclick="sw('spending',this)">Spending</button>
   <button class="nb" onclick="sw('snowball',this)">Snowball</button>
   <button class="nb" onclick="sw('bills',this)">Bills</button>
 </nav>
@@ -183,8 +210,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <!-- THIS WEEK -->
 <div class="panel on" id="p-week">
   <div id="week-banner"></div>
-
-  <!-- BALANCE STRIP - compact 3 col -->
   <div class="bstrip">
     <div class="bitem" onclick="editBal('4496')">
       <div class="bacct">#4496</div>
@@ -196,12 +221,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div class="bitem" onclick="editBal('0725')">
       <div class="bacct">Savings</div>
-      <div class="bnum" id="b0725" style="color:var(--grn);">$654</div>
+      <div class="bnum" id="b0725" style="color:var(--pur);">$654</div>
     </div>
   </div>
-  <div style="font-size:10px;color:var(--t3);margin:-6px 0 12px;text-align:center;">Tap any balance to update</div>
-
-  <!-- DYNAMIC CONTENT: surplus + week events + spending + randy + unexpected -->
+  <div style="font-size:10px;color:var(--t3);text-align:center;margin-bottom:10px;">Tap any balance to update</div>
   <div id="week-content"></div>
 </div>
 
@@ -215,132 +238,47 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="month-content"></div>
 </div>
 
-<!-- SPENDING -->
-<div class="panel" id="p-spending">
-  <div class="pgtitle">Monthly spending</div>
-  <div class="pgsub" id="spend-sub"></div>
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-      <div><div class="big" id="spend-rem" style="color:var(--grn);">$200</div><div class="biglabel">remaining</div></div>
-      <div style="text-align:right;"><div style="font-size:22px;font-weight:700;" id="spend-used">$0</div><div style="font-size:11px;color:var(--t3);">used</div></div>
-    </div>
-    <div class="prog"><div class="progfill" id="spend-bar" style="width:0%;background:var(--grn);"></div></div>
-    <div style="font-size:11px;color:var(--t3);">$200/mo cap · resets 1st of each month</div>
-  </div>
-  <div class="card">
-    <div class="ct">Weekly $50 allowance</div>
-    <div class="wgrid" id="wpills"></div>
-    <div style="font-size:11px;color:var(--t3);margin-top:4px;">Tap → Used · Tap again → Saved · Tap again → Clear</div>
-  </div>
-  <div class="card">
-    <div class="ct">Log spending</div>
-    <button class="btn btnr" onclick="openSpend()">➕ Add discretionary spend</button>
-    <button class="btn btno btnsm" onclick="openRefund()">↩ Log refund / return</button>
-  </div>
-  <div class="card">
-    <div class="ct">Personal training — Randy · $150/session</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div><div style="font-size:28px;font-weight:700;color:var(--grn);" id="randy-total">$0</div><div style="font-size:11px;color:var(--t3);" id="randy-label">0 sessions this month</div></div>
-      <div style="text-align:right;font-size:12px;color:var(--t3);">Biweekly<br>$150 each</div>
-    </div>
-    <div id="randy-list" style="margin-bottom:10px;"></div>
-    <button class="btn btng btnsm" onclick="logRandy()">✓ Mark session paid — $150</button>
-    <button class="btn btno btnsm" onclick="resetRandy()">Reset Randy</button>
-  </div>
-  <div class="card">
-    <div class="ct">Spend log</div>
-    <div id="spend-log" style="font-size:13px;color:var(--t3);">No entries</div>
-  </div>
-  <button class="btn btno btnsm" onclick="resetSpend()">Reset month (use on 1st)</button>
-</div>
-
 <!-- SNOWBALL -->
 <div class="panel" id="p-snowball">
-  <div class="pgtitle">Debt snowball</div>
-  <div class="pgsub">$1,901/mo after expenses cleared</div>
-  <div class="card"><div class="ct">Current phase</div><div id="phase-display"></div></div>
-  <div class="card"><div class="ct">Payoff order</div><div id="targets-list"></div></div>
-  <div class="card">
-    <div class="ct">Log extra payment</div>
-    <button class="btn btna" onclick="openSnowball()">💸 Log snowball payment</button>
-    <div id="snowball-log" style="font-size:13px;color:var(--t3);margin-top:8px;">No payments logged</div>
-  </div>
+  <div id="snowball-content"></div>
 </div>
 
 <!-- BILLS -->
 <div class="panel" id="p-bills">
-  <div class="pgtitle">Monthly bill verify</div>
-  <div class="pgsub">All autopay — tap to confirm processed</div>
-  <div class="card">
-    <div id="bills-list"></div>
+  <div style="font-size:20px;font-weight:700;margin-bottom:2px;">Monthly bills</div>
+  <div style="font-size:12px;color:var(--t3);margin-bottom:12px;">All autopay — tap to verify processed</div>
+  <div class="card"><div id="bills-list"></div>
     <button class="btn btno btnsm" style="margin-top:10px;" onclick="resetBills()">Reset all</button>
   </div>
 </div>
 
 <script>
-// ── PIN AUTH ──
-const PIN='0628'; // Change this to your preferred PIN
-const PIN_SESSION_KEY='hft_auth';
+// ── PIN ──
+const PIN='2609';
+const PKEY='hft_auth';
 let pinEntry='';
-
-function checkAuth(){
-  if(sessionStorage.getItem(PIN_SESSION_KEY)==='ok'){
-    document.getElementById('pin-screen').classList.add('hidden');
-  }
-}
-function pinKey(k){
-  if(pinEntry.length>=4)return;
-  pinEntry+=k;
-  updateDots();
-  if(pinEntry.length===4)setTimeout(checkPin,120);
-}
-function pinDel(){
-  pinEntry=pinEntry.slice(0,-1);
-  document.getElementById('pin-error').textContent='';
-  updateDots(false);
-}
-function updateDots(err=false){
-  for(let i=0;i<4;i++){
-    const d=document.getElementById('pd'+i);
-    d.classList.toggle('filled',i<pinEntry.length&&!err);
-    d.classList.toggle('error',err&&i<4);
-  }
-}
-function checkPin(){
-  if(pinEntry===PIN){
-    sessionStorage.setItem(PIN_SESSION_KEY,'ok');
-    document.getElementById('pin-screen').classList.add('hidden');
-  } else {
-    updateDots(true);
-    document.getElementById('pin-error').textContent='Incorrect PIN';
-    setTimeout(()=>{pinEntry='';updateDots(false);document.getElementById('pin-error').textContent='';},900);
-  }
-}
-// Support keyboard entry too
-document.addEventListener('keydown',e=>{
-  if(document.getElementById('pin-screen').classList.contains('hidden'))return;
-  if(e.key>='0'&&e.key<='9')pinKey(e.key);
-  if(e.key==='Backspace')pinDel();
-});
+function checkAuth(){if(sessionStorage.getItem(PKEY)==='ok')document.getElementById('pin-screen').classList.add('hidden');}
+function pinKey(k){if(pinEntry.length>=4)return;pinEntry+=k;updateDots();if(pinEntry.length===4)setTimeout(checkPin,120);}
+function pinDel(){pinEntry=pinEntry.slice(0,-1);document.getElementById('pin-error').textContent='';updateDots(false);}
+function updateDots(err=false){for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);d.classList.toggle('filled',i<pinEntry.length&&!err);d.classList.toggle('error',err&&i<4);}}
+function checkPin(){if(pinEntry===PIN){sessionStorage.setItem(PKEY,'ok');document.getElementById('pin-screen').classList.add('hidden');}else{updateDots(true);document.getElementById('pin-error').textContent='Incorrect PIN';setTimeout(()=>{pinEntry='';updateDots(false);document.getElementById('pin-error').textContent='';},900);}}
+document.addEventListener('keydown',e=>{if(document.getElementById('pin-screen').classList.contains('hidden'))return;if(e.key>='0'&&e.key<='9')pinKey(e.key);if(e.key==='Backspace')pinDel();});
 checkAuth();
 
+// ── CONSTANTS ──
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const KEY='hft_v4';
+const JON_PAY=1641;
+const KAREN_AVG=762;
+const KEY='hft_v5';
 const now=new Date();
 const mKey=`${now.getFullYear()}-${now.getMonth()}`;
 
+// ── STATE ──
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||{};}catch{return{};}}
 function save(s){localStorage.setItem(KEY,JSON.stringify(s));}
 let S=load();
-
-// Reset monthly state if new month
-if(S.mKey!==mKey){
-  S.mKey=mKey;S.discSpent=0;S.discLog=[];
-  S.weeks=[null,null,null,null];S.randySessions=[];
-  S.billChecks={};S.pcChecks={};
-  save(S);
-}
+if(S.mKey!==mKey){S.mKey=mKey;S.discSpent=0;S.discLog=[];S.weeks=[null,null,null,null];S.randySessions=[];S.billChecks={};S.pcChecks={};save(S);}
 if(!S.bal4496)S.bal4496=1258;
 if(!S.bal6764)S.bal6764=19;
 if(!S.bal0725)S.bal0725=654;
@@ -348,29 +286,24 @@ if(!S.snowballPhase)S.snowballPhase=0;
 if(!S.currentTarget)S.currentTarget=0;
 if(!S.snowballLog)S.snowballLog=[];
 if(!S.unexpected)S.unexpected=[];
+if(!S.confirmed)S.confirmed={};
 
-// Log today's vehicle registration as unexpected charge
-if(!S.regLogged){
-  S.unexpected.unshift({label:'Vehicle registration renewal',acct:'#4496',amt:220.40,date:'4/23/2026'});
-  S.regLogged=true;
-  save(S);
-}
+// Pre-log vehicle registration
+if(!S.regLogged){S.unexpected.unshift({label:'Vehicle registration renewal',acct:'4496',amt:220.40,date:'4/23/2026'});S.regLogged=true;save(S);}
 
-// ── NAV ──
+// ── ROUTING ──
 function sw(id,el){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
   document.getElementById('p-'+id).classList.add('on');
   el.classList.add('on');
   window.scrollTo(0,0);
-  const renders={week:renderWeek,month:renderMonth,spending:renderSpend,snowball:renderSnowball,bills:renderBills};
-  if(renders[id])renders[id]();
+  if(id==='week')renderWeek();
+  if(id==='month')renderMonth();
+  if(id==='snowball')renderSnowball();
+  if(id==='bills')renderBills();
 }
-function routeHash(){
-  const h=location.hash.replace('#','');
-  const map={week:0,month:1,spending:2,snowball:3,bills:4};
-  if(h&&map[h]!==undefined)sw(h,document.querySelectorAll('.nb')[map[h]]);
-}
+function routeHash(){const h=location.hash.replace('#','');const map={week:0,month:1,snowball:2,bills:3};if(h&&map[h]!==undefined)sw(h,document.querySelectorAll('.nb')[map[h]]);}
 window.addEventListener('hashchange',routeHash);
 
 // ── TOAST ──
@@ -378,205 +311,206 @@ function toast(m){const t=document.getElementById('toast');t.textContent=m;t.cla
 
 // ── MODAL ──
 let modalMode='';
-function openModal(mode,title,showLabel,showAcct){
+function openModal(mode,title,showLabel=false,showAcct=false){
   modalMode=mode;
   document.getElementById('mtitle').textContent=title;
-  document.getElementById('minput-label').style.display=showLabel?'block':'none';
-  document.getElementById('minput-acct').style.display=showAcct?'block':'none';
-  document.getElementById('minput-amt').value='';
-  document.getElementById('minput-label').value='';
+  document.getElementById('mi-label').style.display=showLabel?'block':'none';
+  document.getElementById('mi-acct').style.display=showAcct?'block':'none';
+  document.getElementById('mi-amt').value='';
+  document.getElementById('mi-label').value='';
   document.getElementById('mbg').classList.add('show');
-  setTimeout(()=>document.getElementById('minput-amt').focus(),120);
+  setTimeout(()=>document.getElementById('mi-amt').focus(),120);
 }
 function closeModal(){document.getElementById('mbg').classList.remove('show');}
 function submitModal(){
-  const amt=parseFloat(document.getElementById('minput-amt').value);
+  const amt=parseFloat(document.getElementById('mi-amt').value);
   if(isNaN(amt)||amt<=0){toast('Enter valid amount');return;}
-  const label=document.getElementById('minput-label').value||'Expense';
-  const acct=document.getElementById('minput-acct').value;
+  const label=document.getElementById('mi-label').value||'Expense';
+  const acct=document.getElementById('mi-acct').value||'4496';
   closeModal();
   if(modalMode==='bal4496'){S.bal4496=amt;save(S);renderWeek();toast('#4496 updated');}
   if(modalMode==='bal6764'){S.bal6764=amt;save(S);renderWeek();toast('#6764 updated');}
   if(modalMode==='bal0725'){S.bal0725=amt;save(S);renderWeek();toast('Savings updated');}
-  if(modalMode==='karen-pay'){S.karenPay=amt;S.bal6764=(S.bal6764||0)+amt;save(S);renderWeek();toast(`Karen pay $${amt} logged — #6764 updated`);}
+  if(modalMode==='karen-pay'){
+    const prev=S.karenLastPay||0;
+    S.karenLastPay=amt;
+    S.bal4496+=amt; // Karen's pay now goes direct to #4496
+    save(S);renderWeek();toast(`Karen's pay $${amt} added to #4496`);
+  }
   if(modalMode==='spend'){addSpend(amt,label);}
-  if(modalMode==='refund'){addRefund(amt,label);}
   if(modalMode==='unexpected'){addUnexpected(label,acct,amt);}
   if(modalMode==='snowball'){logSnowballPmt(amt);}
 }
-function editBal(acct){openModal('bal'+acct,`Update #${acct} balance`,false,false);}
-function openSpend(){openModal('spend','Log discretionary spend',true,false);}
-function openRefund(){openModal('refund','Log refund / return',true,false);}
-function openUnexpected(){openModal('unexpected','Log unexpected charge',true,true);}
-function openSnowball(){openModal('snowball','Log snowball payment',false,false);}
-
-// ── UNEXPECTED CHARGES ──
-function addUnexpected(label,acct,amt){
-  if(!S.unexpected)S.unexpected=[];
-  S.unexpected.unshift({label,acct,amt,date:new Date().toLocaleDateString()});
-  // Auto-deduct from relevant balance
-  if(acct==='#4496')S.bal4496=Math.max(0,S.bal4496-amt);
-  if(acct==='#6764')S.bal6764=Math.max(0,S.bal6764-amt);
-  if(acct==='savings')S.bal0725=Math.max(0,S.bal0725-amt);
-  save(S);
-  renderWeek();
-  toast(`$${amt.toFixed(2)} logged — balance updated`);
+function editBal(a){
+  const titles={'4496':'Update #4496 balance','6764':'Update #6764 balance','0725':'Update savings balance'};
+  openModal('bal'+a,titles[a]);
 }
-function clearUnexpected(){S.unexpected=[];save(S);renderWeek();toast('Cleared');}
 
-// ── MONTH EVENTS ENGINE ──
+// ── BILL SCHEDULE ENGINE ──
+// Returns events for year/month sorted by day
 function getEvents(year,month){
   const evts=[];
-  const add=(day,title,amt,acct,color,note,isIncome=false)=>evts.push({day,title,amt,acct,color,note,isIncome});
+  const add=(day,title,amt,color,note,isIncome=false,isSavings=false)=>{
+    if(day>=1&&day<=new Date(year,month+1,0).getDate())
+      evts.push({day,title,amt,color,note,isIncome,isSavings});
+  };
+  const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const daysInMonth=new Date(year,month+1,0).getDate();
 
-  // Karen paychecks every Thursday
-  for(let d=1;d<=daysInMonth;d++){
-    if(new Date(year,month,d).getDay()===4)
-      add(d,'Karen paycheck — Copans',720,'#6764','#97C459','Transfer remainder to #4496 same day',true);
-  }
-  // Jon paychecks 7th + 22nd
-  add(7,'Jon paycheck — Applied ABC',1641,'#4496','#97C459','→ Transfer $200 to savings · make expense/snowball payment same day',true);
-  add(22,'Jon paycheck — Applied ABC',1641,'#4496','#97C459','→ Transfer $200 to savings · make expense/snowball payment same day',true);
-  // Fresh Market every Sunday
-  for(let d=1;d<=daysInMonth;d++){
-    if(new Date(year,month,d).getDay()===0)
-      add(d,'Fresh Market — $150 limit',-150,'#4496 PayPal','#85B7EB','HARD CAP — check cart before submitting');
-  }
-  // Fixed bills
-  add(1,'Amazon Store Card autopay',-29,'#4496','#F09595','~29% APR');
-  add(2,'Amazon Prime membership',-15,'#4496','#666660','Subscription');
-  add(2,'Real-Debrid',-11,'#4496','#666660','Subscription');
-  add(4,'PayPal eBay autopay',-43,'#4496','#EF9F27','35.99% APR — done Aug 2027');
-  add(4,'ChatGPT subscription',-22,'#4496','#666660','Karen — subscription');
-  add(4,'Zelle Randy — training',-150,'#4496','#97C459','Biweekly · $150/session');
-  add(9,'Mazda CX-5 payment',-638,'#6764','#EF9F27','12.72% APR · 40 payments · Aug 2029');
-  add(11,'Merrick Bank autopay',-35,'#4496','#F09595','31.95% APR — snowball target #2');
-  add(13,'Affirm cluster',-131,'#4496','#b4b2a9','0% APR — verify in Affirm app');
-  add(13,'PayPal Newegg autopay',-61,'#4496','#EF9F27','35.99% APR — done Jan 2027');
-  add(13,'Karen PayPal Credit',-100,'#4496','#F09595','29.64% APR — MANUAL PAYMENT');
-  add(13,'Claude.ai subscription',-20,'#4496','#666660','Subscription');
-  add(15,'T-Mobile autopay',-152,'#4496','#b4b2a9','Both phones');
-  add(16,'AT&T fiber autopay',-166,'#6764','#b4b2a9','Internet');
-  add(18,'Zelle Randy — training',-150,'#4496','#97C459','Biweekly · $150/session');
-  add(22,'Jon PayPal Credit autopay',-22,'#4496','#b4b2a9','0% Customer Assistance Plan — do NOT overpay');
-  add(22,'TN unemployment',-153,'#6764','#EF9F27','~$153/mo · $3,653 remaining');
-  add(22,'IRS installments',-100,'#6764','#EF9F27','2 plans · $4,767 balance');
-  add(22,'Spotify',-22,'#4496','#666660','Subscription');
-  add(23,'State Farm autopay',-190,'#6764','#b4b2a9','Auto insurance');
-  add(26,'Chase/Amazon Prime autopay',-26,'#4496','#b4b2a9','APR unknown — verify when logged in');
-  add(30,'PayPal Chinese vendor',-95,'#4496','#EF9F27','24.99% APR — done Mar 2027');
-  add(1,'Steam subscription',-6,'#4496','#666660','Subscription');
+  // Income
+  const fromDay=(year===2026&&month===3)?22:1;
+  if(new Date(year,month,7).getDate()&&7>=fromDay) add(7,'Jon paycheck',JON_PAY,'#97C459','→ Transfer surplus to savings/snowball same day',true);
+  if(22>=fromDay) add(22,'Jon paycheck',JON_PAY,'#97C459','→ Transfer surplus to savings/snowball same day',true);
 
-  // Special one-time events
-  if(year===2026&&month===3){ // April 2026
-    add(22,'GROUP TRAINING SESSION',-140,'#4496','#97C459','Extra session · from $200 discretionary');
-    add(23,'Vehicle registration renewal',-220,'#4496','#F09595','One-time · $220.40');
-    add(23,'State Farm (pending)',-160,'#6764','#b4b2a9','Showing $160.27 this month — monitoring');
-    add(23,'TN payment (pending)',-153,'#6764','#EF9F27','This month $153 · monitoring for future amount');
-    add(30,'PayPal Chinese vendor — FIRST PAYMENT',-95,'#4496','#F09595','First of 12 payments — confirm autopay set');
+  // Karen paychecks every Thursday
+  for(let d=fromDay;d<=daysInMonth;d++){
+    if(new Date(year,month,d).getDay()===4)
+      add(d,'Karen paycheck — Copans',KAREN_AVG,'#97C459','→ Transfer full amount to #4496 same day',true);
   }
-  if(year===2026&&month===4){ // May 2026
-    add(9,"JON'S TIRES + OIL",-1500,'#4496','#F09595','Mazda dealer · budget $1,500 max · $1,000 repair buffer stays in savings');
+
+  // Fresh Market every Sunday
+  for(let d=fromDay;d<=daysInMonth;d++){
+    if(new Date(year,month,d).getDay()===0)
+      add(d,'Fresh Market',-200,'#85B7EB','$200/wk hard limit');
   }
-  if(year===2026&&month===5){ // June 2026
-    add(6,"KAREN'S TIRES",-1000,'#4496','#F09595','Mazda dealer · budget $1,000');
+
+  // Fixed monthly bills
+  if(key<='2026-05') add(1,'Amazon Store Card',-29,'#F09595','~29% APR — TARGET #1');
+  add(2,'Amazon Prime',-15,'#666660','Subscription');
+  add(2,'Real-Debrid',-4,'#666660','~$11/quarter avg');
+  add(4,'PayPal eBay',-43,'#EF9F27',key<='2027-08'?'35.99% APR fixed':'DONE');
+  add(4,'ChatGPT',-22,'#666660','Karen subscription');
+  // Randy biweekly -- 4th and 18th as baseline
+  add(4,'Zelle Randy',-150,'#97C459','Personal training biweekly');
+  add(18,'Zelle Randy',-150,'#97C459','Personal training biweekly');
+  add(9,'Mazda CX-5',-638,'#EF9F27','12.72% APR · payoff Aug 2029');
+  add(11,'Merrick Bank',-35,'#F09595','31.95% APR');
+  if(key<='2026-10') add(13,'Affirm cluster',-131,'#b4b2a9','0% APR — verify in Affirm app');
+  if(key<='2027-01') add(13,'PayPal Newegg',-61,'#EF9F27','35.99% APR fixed');
+  add(13,'Karen PayPal Credit',-100,'#F09595','29.64% APR — MANUAL');
+  add(13,'Claude.ai',-20,'#666660','Subscription');
+  add(15,'T-Mobile',-152,'#b4b2a9','Both phones');
+  add(15,'IRS payment #1',-68,'#EF9F27','Installment plan');
+  add(16,'IRS payment #2',-35,'#EF9F27','Installment plan');
+  add(16,'AT&T fiber',-166,'#b4b2a9','Internet');
+  add(22,'Jon PayPal Credit',-22,'#b4b2a9','0% Customer Assistance Plan — do NOT overpay');
+  if(key<='2027-12') add(22,'TN unemployment',-153,'#EF9F27','~$153/mo');
+  add(22,'Spotify',-22,'#666660','Subscription');
+  add(23,'State Farm',-190,'#b4b2a9','Auto insurance');
+  add(26,'Chase/Amazon',-26,'#b4b2a9','APR TBD');
+  if(key<='2027-03') add(30,'PayPal Chinese vendor',-95,'#EF9F27','24.99% APR fixed');
+  add(15,'Amazon Prime membership',-15,'#666660','Subscription');
+
+  // One-time events
+  if(year===2026&&month===3){
+    add(23,'Vehicle registration',-220,'#F09595','One-time renewal');
+    add(30,'PayPal Chinese — FIRST PMT',-95,'#F09595','Confirm autopay set');
   }
-  if(year===2026&&month===6){ // July 2026
-    add(1,'Dental — Jon + Karen',-500,'OOP','#EF9F27','~$500 OOP with Applied ABC insurance');
-    add(1,'Glasses — Jon + Karen',-1000,'OOP','#EF9F27','~$1,000 with vision insurance');
+  if(year===2026&&month===4) add(9,"JON'S TIRES + OIL",-1500,'#F09595','Mazda dealer · $1,500 max · $1,000 buffer stays in savings');
+  if(year===2026&&month===5) add(6,"KAREN'S TIRES",-1000,'#F09595','Mazda dealer · $1,000');
+  if(year===2026&&month===6){
+    add(1,'Dental — Jon + Karen',-500,'#EF9F27','Applied ABC insurance · ~$500 OOP');
+    add(1,'Glasses — Jon + Karen',-1000,'#EF9F27','Vision insurance · ~$1,000 total');
   }
-  if(year===2026&&month===7){ // August 2026
-    add(1,'🚀 SNOWBALL LAUNCHES',0,'','#97C459','All expenses done. $1,901/mo attacks Merrick Bank.');
-  }
+  if(year===2026&&month===7) add(1,'🚀 SNOWBALL LAUNCHES',0,'#97C459','All expenses done. $2,800+/mo attacks debt.');
 
   evts.sort((a,b)=>a.day-b.day);
   return evts;
 }
 
-// ── SURPLUS CALCULATOR (single account #4496) ──
-function nextPaycheck(fromDay){ if(fromDay<7)return 7; if(fromDay<22)return 22; return 7; }
-function nextPaycheckMonth(fromDay){ if(fromDay>=22){const m=now.getMonth()+1;return m>11?0:m;} return now.getMonth(); }
+// ── SURPLUS CALC ──
+function nextPC(day){return day<7?7:day<22?22:7;}
+function nextPCMonth(day){return day>=22?(now.getMonth()+1>11?0:now.getMonth()+1):now.getMonth();}
 
 function calcSurplus(){
   const today=now.getDate();
-  const nextPC=nextPaycheck(today);
-  const nextPCMonth=nextPaycheckMonth(today);
-  const allEvts=getEvents(now.getFullYear(),now.getMonth());
-  const isSameMonth=nextPCMonth===now.getMonth();
-  const endDay=isSameMonth?nextPC:32;
-
-  // All autopay bills from #4496 due between today+1 and next paycheck
-  const due=allEvts.filter(e=>{
-    if(e.isIncome||!e.amt||e.amt>=0)return false;
-    if(!e.acct)return false;
-    const a=e.acct.toLowerCase();
-    if(!a.includes('4496')&&!a.includes('paypal'))return false;
-    return e.day>today&&e.day<endDay;
-  });
-
-  // IRS still on #6764 temporarily -- note separately
-  const irsStillOn6764=allEvts.filter(e=>e.title.toLowerCase().includes('irs')&&e.day>today&&e.day<endDay);
-
+  const npc=nextPC(today);
+  const npcm=nextPCMonth(today);
+  const evts=getEvents(now.getFullYear(),now.getMonth());
+  const isSame=npcm===now.getMonth();
+  const endDay=isSame?npc:32;
+  const due=evts.filter(e=>!e.isIncome&&typeof e.amt==='number'&&e.amt<0&&e.day>today&&e.day<endDay);
   const totalDue=due.reduce((a,e)=>a+Math.abs(e.amt),0);
   const safe=Math.max(0,S.bal4496-totalDue);
-  const nextPCLabel=`${MONTHS[nextPCMonth].substring(0,3)} ${nextPC}`;
-  return {due,irsStillOn6764,totalDue,safe,nextPCLabel};
+  const npcLabel=`${MONTHS[npcm].substring(0,3)} ${npc}`;
+  return {due,totalDue,safe,npcLabel};
 }
 
+// ── THIS WEEK RENDER ──
 function renderWeek(){
-  // Update balance display
   document.getElementById('b4496').textContent='$'+Math.round(S.bal4496).toLocaleString();
   document.getElementById('b6764').textContent='$'+Math.round(S.bal6764).toLocaleString();
   document.getElementById('b0725').textContent='$'+Math.round(S.bal0725).toLocaleString();
 
   const today=now.getDate();
   document.getElementById('week-banner').innerHTML=`
-    <div class="today-banner">
-      <p class="bold">Today — ${MONTHS[now.getMonth()]} ${today}, ${now.getFullYear()} (${DAYS[now.getDay()]})</p>
-      <p>Tap any balance above to update · Unexpected charges auto-deduct</p>
+    <div style="background:var(--abg);border:1px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">
+      <div style="font-size:13px;font-weight:700;color:var(--amb);">Today — ${MONTHS[now.getMonth()]} ${today}, ${now.getFullYear()} (${DAYS[now.getDay()]})</div>
+      <div style="font-size:11px;color:var(--t2);">Tap any balance to update · Unexpected charges auto-deduct</div>
     </div>`;
 
   const sur=calcSurplus();
-  const safeColor=sur.safe<300?'var(--red)':sur.safe<600?'var(--amb)':'var(--grn)';
   const phase=S.snowballPhase||0;
-  const phaseAction=phase<4?'Transfer to savings #0725 — tire/expense fund':'Pay extra to current snowball target';
+  const safeColor=sur.safe<300?'var(--red)':sur.safe<600?'var(--amb)':'var(--grn)';
+  const phaseAction=phase<4?'→ Transfer to savings (tire/expense fund)':'→ Extra payment to snowball target';
 
   let html='';
 
+  // ── CONFIRMATION BANNERS for paycheck actions ──
+  const todayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(today).padStart(2,'0')}`;
+  const isPayday=(today===7||today===22);
+  const isThursday=now.getDay()===4;
+
+  if(isPayday&&!S.confirmed[`jon-${todayKey}`]){
+    html+=`<div class="confirm-banner">
+      <div class="cb-title">💰 Jon paycheck landed today — action required</div>
+      <div class="cb-sub">Transfer $${Math.round(sur.safe).toLocaleString()} from #4496 now. ${phaseAction}</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btng btnsm" style="flex:1;margin:0;" onclick="confirmAction('jon-${todayKey}','Transferred $${Math.round(sur.safe).toLocaleString()} to ${phase<4?'savings':'snowball target'}')">✓ Done — transferred</button>
+        <button class="btn btno btnsm" style="flex:1;margin:0;" onclick="confirmAction('jon-skip-${todayKey}','Skipped Jon transfer')">Do later</button>
+      </div>
+    </div>`;
+  }
+
+  if(isThursday&&!S.confirmed[`karen-${todayKey}`]){
+    html+=`<div class="confirm-banner">
+      <div class="cb-title">💰 Karen paycheck expected today</div>
+      <div class="cb-sub">Enter actual amount received and confirm transfer to #4496</div>
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <button class="btn btna btnsm" style="flex:1;margin:0;" onclick="openModal('karen-pay','Karen\\'s actual pay today','Enter amount received')">Enter Karen's pay</button>
+        <button class="btn btno btnsm" style="flex:1;margin:0;" onclick="confirmAction('karen-${todayKey}','Karen transfer confirmed')">✓ Transferred</button>
+      </div>
+    </div>`;
+  }
+
   // ── SURPLUS CARD ──
-  html+=`<div class="card" style="border-color:var(--bmid)40;">
-    <div class="ct">Safe to transfer before ${sur.nextPCLabel}</div>
-    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:6px;">
+  html+=`<div class="card" style="border-color:var(--bm)40;">
+    <div class="ct">Safe to transfer — before ${sur.npcLabel}</div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px;">
       <div>
         <div style="font-size:38px;font-weight:700;color:${safeColor};line-height:1;">$${Math.round(sur.safe).toLocaleString()}</div>
         <div style="font-size:11px;color:var(--t3);margin-top:3px;">${phaseAction}</div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:13px;font-weight:700;color:var(--red);">-$${Math.round(sur.totalDue).toLocaleString()}</div>
+        <div style="font-size:14px;font-weight:700;color:var(--red);">-$${Math.round(sur.totalDue).toLocaleString()}</div>
         <div style="font-size:10px;color:var(--t3);">still due</div>
       </div>
     </div>`;
 
   if(sur.due.length){
     sur.due.forEach(e=>{
-      const ord=['th','st','nd','rd'];
-      const v=e.day%100;
-      const suffix=ord[(v-20)%10]||ord[v]||ord[0];
-      html+=`<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:0.5px solid var(--border);font-size:12px;">
-        <span style="color:var(--t2);">${e.title} <span style="color:var(--t3);">~${e.day}${suffix}</span></span>
+      const ord=e.day%10===1&&e.day!==11?'st':e.day%10===2&&e.day!==12?'nd':e.day%10===3&&e.day!==13?'rd':'th';
+      html+=`<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:0.5px solid var(--br);font-size:12px;">
+        <span style="color:var(--t2);">${e.title} <span style="color:var(--t3);">~${e.day}${ord}</span></span>
         <span style="color:var(--red);">-$${Math.abs(e.amt).toLocaleString()}</span>
       </div>`;
     });
   }
-  if(sur.irsStillOn6764.length){
-    html+=`<div style="font-size:11px;color:var(--amb);padding:6px 0;border-top:0.5px solid var(--border);">⚠ IRS payments still on #6764 — update when portal allows</div>`;
-  }
   html+=`</div>`;
 
-  // ── THIS WEEK EVENTS ──
-  const allEvts=getEvents(now.getFullYear(),now.getMonth());
-  const weekEvts=allEvts.filter(e=>e.day>=today&&e.day<=today+7);
+  // ── NEXT 7 DAYS ──
+  const evts=getEvents(now.getFullYear(),now.getMonth());
+  const weekEvts=evts.filter(e=>e.day>=today&&e.day<=today+7);
   const byDay={};
   weekEvts.forEach(e=>{if(!byDay[e.day])byDay[e.day]=[];byDay[e.day].push(e);});
   const days=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
@@ -586,20 +520,18 @@ function renderWeek(){
     days.forEach(day=>{
       const isToday=day===today;
       const dow=DAYS[new Date(now.getFullYear(),now.getMonth(),day).getDay()];
-      html+=`<div style="margin-bottom:2px;">
-        <div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:5px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
+      html+=`<div style="margin-bottom:2px;"><div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:5px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
       byDay[day].forEach(e=>{
-        const isInc=e.isIncome||e.amt>0;
-        const ac=isInc?'var(--grn)':(Math.abs(e.amt)>500?'var(--red)':'var(--t2)');
+        const isInc=e.isIncome;
+        const ac=isInc?'var(--grn)':Math.abs(e.amt||0)>500?'var(--red)':'var(--t2)';
         const as=typeof e.amt==='number'&&e.amt!==0?(e.amt>0?'+$'+e.amt.toLocaleString():'-$'+Math.abs(e.amt).toLocaleString()):'';
         html+=`<div class="event" style="padding:5px 0;">
           <div class="edot" style="background:${e.color};margin-top:4px;"></div>
           <div class="econtent">
-            <div class="etitle" style="font-size:13px;">${e.title}</div>
+            <div class="etitle" style="font-size:12px;">${e.title}</div>
             ${e.note?`<div class="esub">${e.note}</div>`:''}
-            <div class="eacct">${e.acct||''}</div>
           </div>
-          ${as?`<div class="eamt" style="color:${ac};font-size:13px;">${as}</div>`:''}
+          ${as?`<div class="eamt" style="color:${ac};font-size:12px;">${as}</div>`:''}
         </div>`;
       });
       html+='</div>';
@@ -607,99 +539,101 @@ function renderWeek(){
     html+=`</div>`;
   }
 
-  // ── SPENDING POOL (compact) ──
+  // ── SPENDING POOL ──
   const spent=S.discSpent||0;
   const rem=Math.max(0,200-spent);
   const pct=Math.min(100,(spent/200)*100);
   const sc=pct>80?'var(--red)':pct>50?'var(--amb)':'var(--grn)';
   const cw=Math.min(3,Math.floor((today-1)/7));
-  const wLabels=['Wk 1','Wk 2','Wk 3','Wk 4'];
 
   html+=`<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div class="ct" style="margin-bottom:0;">Discretionary — April</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div class="ct" style="margin-bottom:0;">Discretionary — ${MONTHS[now.getMonth()].substring(0,3)}</div>
       <div style="font-size:11px;color:var(--t3);">$200/mo cap</div>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;">
-      <div style="font-size:28px;font-weight:700;color:${sc};">$${rem.toFixed(0)} <span style="font-size:13px;color:var(--t3);font-weight:400;">left</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4px;">
+      <div style="font-size:26px;font-weight:700;color:${sc};">$${rem.toFixed(0)} <span style="font-size:12px;color:var(--t3);font-weight:400;">left</span></div>
       <div style="font-size:13px;color:var(--red);font-weight:700;">$${spent.toFixed(2)} used</div>
     </div>
-    <div class="prog" style="margin:0 0 8px;"><div class="progfill" style="width:${pct}%;background:${sc};"></div></div>
-    <div class="wgrid" style="margin-bottom:8px;">
-      ${wLabels.map((l,i)=>{
-        const st=S.weeks&&S.weeks[i];
+    <div class="prog"><div class="progfill" style="width:${pct}%;background:${sc};"></div></div>
+    <div class="wgrid">
+      ${['Wk1','Wk2','Wk3','Wk4'].map((l,i)=>{
+        const st=(S.weeks||[])[i];
         const cls=st==='used'?'used':st==='saved'?'saved':i===cw?'cur':'';
         const val=st==='used'?'-$50':st==='saved'?'saved':'$50';
         return `<div class="wp ${cls}" onclick="toggleWeek(${i})"><div class="wplabel">${l}</div><div class="wpval">${val}</div></div>`;
       }).join('')}
     </div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn btnr btnsm" style="flex:1;margin:0;" onclick="openSpend()">➕ Log spend</button>
-      <button class="btn btno btnsm" style="flex:1;margin:0;" onclick="openUnexpected()">⚠ Unexpected</button>
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <button class="btn btnr btnsm" style="flex:1;margin:0;" onclick="openModal('spend','Log discretionary spend',true)">➕ Log spend</button>
+      <button class="btn btno btnsm" style="flex:1;margin:0;" onclick="openModal('unexpected','Log unexpected charge',true,true)">⚠ Unexpected</button>
     </div>
   </div>`;
 
-  // ── RANDY (compact) ──
-  const randySessions=(S.randySessions||[]).filter(s=>{const d=new Date(s.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
-  const randyTotal=randySessions.reduce((a,s)=>a+s.amt,0);
+  // ── RANDY ──
+  const rs=(S.randySessions||[]).filter(s=>{const d=new Date(s.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+  const rt=rs.reduce((a,s)=>a+s.amt,0);
   html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <div class="ct" style="margin-bottom:2px;">Personal training — Randy</div>
-        <div style="font-size:22px;font-weight:700;color:var(--grn);">$${randyTotal} <span style="font-size:12px;color:var(--t3);font-weight:400;">${randySessions.length} session${randySessions.length!==1?'s':''} this month</span></div>
+        <div class="ct" style="margin-bottom:2px;">Randy — training</div>
+        <div style="font-size:22px;font-weight:700;color:var(--grn);">$${rt} <span style="font-size:12px;color:var(--t3);font-weight:400;">${rs.length} session${rs.length!==1?'s':''} this month</span></div>
       </div>
       <button class="btn btng btnsm" style="width:auto;margin:0;padding:10px 16px;" onclick="logRandy()">✓ $150</button>
     </div>
-    ${randySessions.length?`<div style="margin-top:8px;">${randySessions.slice(0,3).map((s,i)=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:0.5px solid var(--border);"><span style="color:var(--t2);">Session ${randySessions.length-i} · ${s.date}</span><span style="color:var(--grn);">-$${s.amt}</span></div>`).join('')}</div>`:''}
+    ${rs.length?`<div style="margin-top:8px;">${rs.slice(0,3).map((s,i)=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:0.5px solid var(--br);"><span style="color:var(--t2);">Session ${rs.length-i} · ${s.date}</span><span style="color:var(--grn);">$${s.amt}</span></div>`).join('')}</div>`:''}
   </div>`;
 
-  // ── UNEXPECTED LOG (compact) ──
+  // ── KAREN PAY UPDATE ──
+  html+=`<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div class="ct" style="margin-bottom:2px;">Karen's last pay</div>
+        <div style="font-size:18px;font-weight:700;color:var(--amb);">$${S.karenLastPay||762}</div>
+        <div style="font-size:11px;color:var(--t3);">Update every Thursday</div>
+      </div>
+      <button class="btn btna btnsm" style="width:auto;margin:0;padding:10px 16px;" onclick="openModal('karen-pay','Karen\\'s actual pay')">Update</button>
+    </div>
+  </div>`;
+
+  // ── UNEXPECTED CHARGES ──
   const unexp=S.unexpected||[];
   if(unexp.length){
     html+=`<div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div class="ct" style="margin-bottom:0;">Unexpected charges</div>
         <button class="btn btno btnsm" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="clearUnexpected()">Clear</button>
-      </div>`;
-    unexp.slice(0,5).forEach(e=>{
-      html+=`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px;">
-        <div><div style="font-weight:600;color:var(--text);">${e.label}</div><div style="color:var(--t3);">${e.acct} · ${e.date}</div></div>
-        <div style="color:var(--red);font-weight:700;flex-shrink:0;">-$${e.amt.toFixed(2)}</div>
-      </div>`;
-    });
-    html+=`</div>`;
+      </div>
+      ${unexp.slice(0,5).map(e=>`
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:0.5px solid var(--br);font-size:12px;">
+          <div><div style="font-weight:600;color:var(--tx);">${e.label}</div><div style="color:var(--t3);">#${e.acct} · ${e.date}</div></div>
+          <div style="color:var(--red);font-weight:700;">-$${e.amt.toFixed(2)}</div>
+        </div>`).join('')}
+    </div>`;
   }
 
-  // ── PAYCHECK ACTIONS ──
-  html+=`<div class="card">
-    <div class="ct">Paycheck actions</div>
-    <div class="ci" onclick="togglePC('transfer')">
-      <div class="cb ${S.pcChecks&&S.pcChecks.transfer?'done':''}"><span class="ck">✓</span></div>
-      <div class="cil">
-        <div class="cititle">Transfer $${Math.round(sur.safe).toLocaleString()} from #4496</div>
-        <div class="cisub">${phaseAction}</div>
-      </div>
-      <div class="ciamt" style="color:${safeColor};">$${Math.round(sur.safe).toLocaleString()}</div>
-    </div>
-    <div class="ci" onclick="togglePC('karen')">
-      <div class="cb ${S.pcChecks&&S.pcChecks.karen?'done':''}"><span class="ck">✓</span></div>
-      <div class="cil">
-        <div class="cititle">Karen transfers full Copans check to #4496</div>
-        <div class="cisub">Same day it lands — update Karen's pay below</div>
-      </div>
-    </div>
-    <div class="ci" onclick="togglePC('fresh')">
-      <div class="cb ${S.pcChecks&&S.pcChecks.fresh?'done':''}"><span class="ck">✓</span></div>
-      <div class="cil"><div class="cititle">Sunday Fresh Market — $150 HARD LIMIT</div><div class="cisub">Check cart before submitting</div></div>
-      <div class="ciamt">$150</div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:10px;">
-      <button class="btn btna btnsm" style="flex:1;margin:0;" onclick="openModal('karen-pay','Karen\\'s actual pay this week','Amount she received')">Update Karen's pay</button>
-      <button class="btn btno btnsm" style="flex:1;margin:0;" onclick="resetPC()">Reset</button>
-    </div>
-  </div>`;
+  // ── SPEND LOG ──
+  const log=S.discLog||[];
+  if(log.length){
+    html+=`<div class="card"><div class="ct">Spend log</div>
+      ${log.slice(0,8).map(e=>`
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--br);font-size:12px;">
+          <span style="color:var(--t2);">${e.label} · ${e.date}</span>
+          <span style="color:var(--red);">-$${e.amt.toFixed(2)}</span>
+        </div>`).join('')}
+      <button class="btn btno btnsm" style="margin-top:8px;" onclick="resetSpend()">Reset month</button>
+    </div>`;
+  }
 
   document.getElementById('week-content').innerHTML=html;
+}
+
+function confirmAction(id,label){
+  if(!S.confirmed)S.confirmed={};
+  S.confirmed[id]=true;
+  save(S);
+  renderWeek();
+  toast(label||'Confirmed ✓');
 }
 
 // ── MONTH PLAN ──
@@ -710,267 +644,248 @@ function changeMonth(dir){
   if(vMonth<0){vMonth=11;vYear--;}
   renderMonth();
 }
+
+// Chain projection forward from starting balances
+function projectBalances(toYear,toMonth){
+  let b4=S.bal4496;
+  let bSav=S.bal0725;
+  const startM=now.getMonth(),startY=now.getFullYear();
+  // Step through months from current to target
+  let y=startY,m=startM;
+  while(y<toYear||(y===toYear&&m<toMonth)){
+    const evts=getEvents(y,m);
+    const fromDay=(y===2026&&m===3)?22:1;
+    evts.forEach(e=>{
+      if(e.day<fromDay)return;
+      if(typeof e.amt!=='number'||e.amt===0)return;
+      if(e.isSavings){bSav+=e.amt;}
+      else{b4+=e.amt;}
+    });
+    // Advance month
+    m++;if(m>11){m=0;y++;}
+  }
+  return{b4,bSav};
+}
+
 function renderMonth(){
   document.getElementById('month-title').textContent=`${MONTHS[vMonth]} ${vYear}`;
   const evts=getEvents(vYear,vMonth);
   const daysInMonth=new Date(vYear,vMonth+1,0).getDate();
   const startDay=(vYear===2026&&vMonth===3)?22:1;
   const isCurrentMonth=vYear===now.getFullYear()&&vMonth===now.getMonth();
+  const key=`${vYear}-${String(vMonth+1).padStart(2,'0')}`;
 
-  // Running balances -- start from actual if current month, otherwise project from start of month
-  // Account map: #4496, #6764, savings, other
-  function acctKey(acct){
-    if(!acct)return null;
-    if(acct.includes('4496'))return '4496';
-    if(acct.includes('6764'))return '6764';
-    if(acct.includes('savings')||acct.includes('0725'))return '0725';
-    return null;
-  }
-  // For current month start from today's known balance; for future months project from end-of-prior estimates
-  let runBal={
-    '4496': isCurrentMonth ? S.bal4496 : 800,
-    '6764': isCurrentMonth ? S.bal6764 : 400,
-    '0725': isCurrentMonth ? S.bal0725 : 454,
-  };
-  const acctColor={'4496':'var(--blu)','6764':'var(--amb)','0725':'var(--grn)'};
-  const acctLabel={'4496':'#4496','6764':'#6764','0725':'Savings'};
+  // Get starting balances for this month
+  let runBal=isCurrentMonth?S.bal4496:projectBalances(vYear,vMonth).b4;
+  let runSav=isCurrentMonth?S.bal0725:projectBalances(vYear,vMonth).bSav;
 
-  // Total income and outgoing for overview (all events in month)
-  const totalIn=evts.filter(e=>e.isIncome&&typeof e.amt==='number').reduce((a,e)=>a+e.amt,0);
-  const totalOut=evts.filter(e=>!e.isIncome&&typeof e.amt==='number'&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
+  // Month income/outgoing totals
+  const totalIn=evts.filter(e=>e.isIncome&&e.day>=startDay).reduce((a,e)=>a+(e.amt||0),0);
+  const totalOut=evts.filter(e=>!e.isIncome&&e.day>=startDay&&typeof e.amt==='number'&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
   const net=totalIn-totalOut;
 
   let html=`<div class="card">
     <div class="ct">Month overview</div>
     <div class="row"><div class="rl"><div class="rlabel">Expected income</div></div><div class="rval" style="color:var(--grn);">+$${totalIn.toLocaleString()}</div></div>
     <div class="row"><div class="rl"><div class="rlabel">Bills + spending</div></div><div class="rval" style="color:var(--red);">-$${totalOut.toLocaleString()}</div></div>
-    <div class="row"><div class="rl"><div class="rlabel" style="font-weight:700;">Net</div></div><div class="rval" style="color:${net>=0?'var(--grn)':'var(--red)'};">${net>=0?'+':'-'}$${Math.abs(net).toLocaleString()}</div></div>
+    <div class="row"><div class="rl"><div class="rlabel">Starting #4496</div></div><div class="rval" style="color:var(--blu);">$${Math.round(runBal).toLocaleString()}</div></div>
+    <div class="row"><div class="rl"><div class="rlabel" style="font-weight:700;">Net this month</div></div><div class="rval" style="color:${net>=0?'var(--grn)':'var(--red)'};">${net>=0?'+':'-'}$${Math.abs(net).toLocaleString()}</div></div>
   </div>`;
 
-  // Balance legend
-  html+=`<div style="display:flex;gap:8px;margin-bottom:12px;font-size:11px;color:var(--t3);">
-    <span>Projected balance after each event:</span>
-    <span style="color:var(--blu);">■ #4496</span>
-    <span style="color:var(--amb);">■ #6764</span>
-    <span style="color:var(--grn);">■ Savings</span>
-  </div>`;
-
-  // Phase note
+  // Phase banner
   const phases={
-    '2026-3':{l:'Phase 1 — Tire fund',n:"Aggressive budget starts Apr 22. $150/wk groceries. No dining out. No Starbucks. Building $1,500 for Jon's tires.",c:'var(--amb)'},
-    '2026-4':{l:"Phase 1 complete — Jon's tires done",n:"Jon's tires May 8-9 at Mazda dealer. $1,000 repair buffer in savings. Rolls to snowball if nothing found.",c:'var(--amb)'},
-    '2026-5':{l:"Phase 3 — Karen's tires",n:"Karen's tires early June at Mazda dealer. $1,000 budget.",c:'var(--amb)'},
-    '2026-6':{l:'Phase 4 — Dental + glasses',n:'Jon + Karen dental (~$500 OOP) and glasses (~$1,000) with Applied ABC insurance.',c:'var(--amb)'},
-    '2026-7':{l:'Phase 5 — SNOWBALL ACTIVE 🚀',n:'All expenses done. $1,901/mo attacks Merrick Bank at 31.95% APR.',c:'var(--grn)'},
+    '2026-04':{l:'Phase 1 — Tire fund',n:"Aggressive budget starts Apr 22. $200/wk groceries. No dining out. No Starbucks. Building $1,500 for Jon's tires.",c:'var(--amb)'},
+    '2026-05':{l:"Phase 2 — Jon's tires + repair buffer",n:"Tires May 8-9 at Mazda dealer. $1,000 repair buffer stays in savings — rolls to snowball if nothing found.",c:'var(--amb)'},
+    '2026-06':{l:"Phase 3 — Karen's tires",n:"Karen's tires early June. $1,000 budget.",c:'var(--amb)'},
+    '2026-07':{l:'Phase 4 — Dental + glasses',n:'Jon + Karen dental (~$500) and glasses (~$1,000) with Applied ABC insurance.',c:'var(--amb)'},
+    '2026-08':{l:'Phase 5 — SNOWBALL ACTIVE 🚀',n:'All expenses done. $2,700+/mo attacks debt. Amazon, Merrick, Cap One #3186 all dead this month.',c:'var(--grn)'},
+    '2026-09':{l:'Snowball rolling 🔥',n:"Karen's PayPal Credit + USAA Amex dead this month.",c:'var(--grn)'},
+    '2026-10':{l:'ALL CREDIT CARDS DEAD 🎉',n:'Cap One #4565, #5592, #7988, Chase all wiped out. Only installments + Mazda remain.',c:'var(--grn)'},
+    '2026-12':{l:'TN Unemployment dead',n:'Consumer debt almost gone. IRS next.',c:'var(--grn)'},
+    '2027-01':{l:'🏆 CONSUMER DEBT FREE',n:'IRS paid off. Only Mazda remains at $638/mo. Aug 2029 payoff.',c:'var(--pur)'},
   };
-  const pk=`${vYear}-${vMonth}`;
-  if(phases[pk]){
-    const p=phases[pk];
+  if(phases[key]){
+    const p=phases[key];
     html+=`<div class="card" style="border-color:${p.c}40;">
       <div style="font-size:13px;font-weight:700;color:${p.c};margin-bottom:4px;">${p.l}</div>
       <div style="font-size:12px;color:var(--t2);">${p.n}</div>
     </div>`;
   }
 
-  // Build day map starting from startDay
+  // Build events by day
   const byDay={};
-  evts.forEach(e=>{
-    if(e.day>=startDay){
-      if(!byDay[e.day])byDay[e.day]=[];
-      byDay[e.day].push(e);
-    }
-  });
+  evts.forEach(e=>{if(e.day>=startDay){if(!byDay[e.day])byDay[e.day]=[];byDay[e.day].push(e);}});
   const sortedDays=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
 
-  // Group into weeks (break on Saturday or end of month)
+  // Group into weeks
   let weekDays=[],weeks=[];
   sortedDays.forEach((day,i)=>{
     weekDays.push(day);
     const dow=new Date(vYear,vMonth,day).getDay();
-    const isLast=i===sortedDays.length-1;
-    if(dow===6||isLast){weeks.push([...weekDays]);weekDays=[];}
+    if(dow===6||i===sortedDays.length-1){weeks.push([...weekDays]);weekDays=[];}
   });
 
   weeks.forEach(wdays=>{
     const wStart=wdays[0],wEnd=wdays[wdays.length-1];
-    const allWEvts=wdays.flatMap(d=>byDay[d]);
-    const wIn=allWEvts.filter(e=>e.isIncome&&typeof e.amt==='number').reduce((a,e)=>a+e.amt,0);
-    const wOut=allWEvts.filter(e=>!e.isIncome&&typeof e.amt==='number'&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
     const mn=MONTHS[vMonth].substring(0,3);
-    html+=`<div class="card"><div class="wheader"><span>${mn} ${wStart}–${wEnd}</span><span>${wIn>0?`<span style="color:var(--grn);">+$${wIn.toLocaleString()}</span> `:''}${wOut>0?`<span style="color:var(--red);">-$${wOut.toLocaleString()}</span>`:''}</span></div>`;
+    const allW=wdays.flatMap(d=>byDay[d]);
+    const wIn=allW.filter(e=>e.isIncome).reduce((a,e)=>a+(e.amt||0),0);
+    const wOut=allW.filter(e=>!e.isIncome&&typeof e.amt==='number'&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
+
+    html+=`<div class="card"><div class="wheader">
+      <span>${mn} ${wStart}–${wEnd}</span>
+      <span>${wIn>0?`<span style="color:var(--grn);">+$${wIn.toLocaleString()}</span> `:''}${wOut>0?`<span style="color:var(--red);">-$${wOut.toLocaleString()}</span>`:''}</span>
+    </div>`;
 
     wdays.forEach(day=>{
       const isToday=isCurrentMonth&&day===now.getDate();
       const isPast=isCurrentMonth&&day<now.getDate();
       const dow=DAYS[new Date(vYear,vMonth,day).getDay()];
-      html+=`<div style="margin-bottom:2px;${isPast?'opacity:0.55;':''}">
-        <div style="font-size:11px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:600;padding:4px 0 2px;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
+      html+=`<div style="${isPast?'opacity:0.5;':''}margin-bottom:2px;">
+        <div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:4px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
 
       byDay[day].forEach(e=>{
-        const isInc=e.isIncome||e.amt>0;
+        const isInc=e.isIncome;
         const amtNum=typeof e.amt==='number'?e.amt:0;
-        const amtColor=isInc?'var(--grn)':(Math.abs(amtNum)>500?'var(--red)':'var(--t2)');
-        const amtStr=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
+        const ac=isInc?'var(--grn)':Math.abs(amtNum)>500?'var(--red)':'var(--t2)';
+        const as=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
 
         // Update running balance
-        const ak=acctKey(e.acct);
-        if(ak&&amtNum!==0) runBal[ak]=(runBal[ak]||0)+amtNum;
-        const balAfter=ak?runBal[ak]:null;
-        const balColor=ak?acctColor[ak]:'var(--t3)';
-        const balLabel=ak?acctLabel[ak]:'';
-        const balWarn=balAfter!==null&&balAfter<200;
+        if(amtNum!==0) runBal+=amtNum;
+        const balWarn=runBal<300;
+        const balColor=runBal<300?'var(--red)':runBal<600?'var(--amb)':'var(--blu)';
 
-        html+=`<div class="event" style="padding:6px 0;">
+        html+=`<div class="event" style="padding:5px 0;">
           <div class="edot" style="background:${e.color};margin-top:4px;"></div>
           <div class="econtent">
             <div class="etitle" style="font-size:13px;">${e.title}</div>
             ${e.note?`<div class="esub">${e.note}</div>`:''}
-            <div style="font-size:10px;margin-top:2px;">
-              <span style="color:var(--t3);">${e.acct||''}</span>
-              ${balAfter!==null?`<span style="color:${balWarn?'var(--red)':balColor};font-weight:${balWarn?'700':'400'};margin-left:6px;">→ ${balLabel} $${Math.round(balAfter).toLocaleString()}${balWarn?' ⚠':''}` :''}
+            <div class="ebal">
+              <span style="color:${balColor};font-weight:${balWarn?'700':'400'};">#4496 → $${Math.round(runBal).toLocaleString()}${balWarn?' ⚠':''}</span>
+              ${e.isSavings?`<span style="color:var(--pur);margin-left:8px;">Savings → $${Math.round(runSav).toLocaleString()}</span>`:''}
             </div>
           </div>
-          ${amtStr?`<div class="eamt" style="color:${amtColor};font-size:13px;">${amtStr}</div>`:''}
+          ${as?`<div class="eamt" style="color:${ac};">${as}</div>`:''}
         </div>`;
       });
       html+='</div>';
     });
-    html+='</div>';
+    html+=`</div>`;
   });
 
   document.getElementById('month-content').innerHTML=html;
 }
 
 // ── SPENDING ──
-const BUDGET=200;
 function addSpend(amt,label){
   S.discSpent=(S.discSpent||0)+amt;
+  S.discLog=(S.discLog||[]);
   S.discLog.unshift({type:'spend',amt,date:new Date().toLocaleDateString(),label:label||'Spend'});
-  save(S);renderSpend();toast(`-$${amt.toFixed(2)} logged`);
+  save(S);renderWeek();toast(`-$${amt.toFixed(2)} logged`);
 }
-function addRefund(amt,label){
-  S.discSpent=Math.max(0,(S.discSpent||0)-amt);
-  S.discLog.unshift({type:'refund',amt,date:new Date().toLocaleDateString(),label:label||'Refund'});
-  save(S);renderSpend();toast(`+$${amt.toFixed(2)} refund`);
+function addUnexpected(label,acct,amt){
+  if(!S.unexpected)S.unexpected=[];
+  S.unexpected.unshift({label,acct,amt,date:new Date().toLocaleDateString()});
+  if(acct==='4496')S.bal4496=Math.max(0,S.bal4496-amt);
+  if(acct==='savings')S.bal0725=Math.max(0,S.bal0725-amt);
+  if(acct==='6764')S.bal6764=Math.max(0,S.bal6764-amt);
+  save(S);renderWeek();toast(`$${amt.toFixed(2)} logged — balance updated`);
 }
-function resetSpend(){if(!confirm('Reset month spending?'))return;S.discSpent=0;S.discLog=[];S.weeks=[null,null,null,null];save(S);renderSpend();toast('Month reset');}
+function clearUnexpected(){S.unexpected=[];save(S);renderWeek();toast('Cleared');}
+function resetSpend(){if(!confirm('Reset month?'))return;S.discSpent=0;S.discLog=[];S.weeks=[null,null,null,null];save(S);renderWeek();toast('Reset');}
 function toggleWeek(i){
   if(!S.weeks)S.weeks=[null,null,null,null];
   const cur=S.weeks[i];
-  if(cur===null){S.weeks[i]='used';S.discSpent=(S.discSpent||0)+50;S.discLog.unshift({type:'spend',amt:50,date:`Wk${i+1}`,label:`Week ${i+1} $50 allowance`});}
-  else if(cur==='used'){S.weeks[i]='saved';S.discSpent=Math.max(0,(S.discSpent||0)-50);if(S.discLog.length)S.discLog.shift();}
-  else{S.weeks[i]=null;}
-  save(S);renderSpend();
-}
-function getCurWeek(){return Math.min(3,Math.floor((now.getDate()-1)/7));}
-function renderSpend(){
-  const spent=S.discSpent||0;
-  const rem=Math.max(0,BUDGET-spent);
-  const pct=Math.min(100,(spent/BUDGET)*100);
-  const c=pct>80?'var(--red)':pct>50?'var(--amb)':'var(--grn)';
-  document.getElementById('spend-rem').textContent='$'+rem.toFixed(0);
-  document.getElementById('spend-rem').style.color=c;
-  document.getElementById('spend-used').textContent='$'+spent.toFixed(2);
-  document.getElementById('spend-bar').style.width=pct+'%';
-  document.getElementById('spend-bar').style.background=c;
-  document.getElementById('spend-sub').textContent=`${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
-  const cw=getCurWeek();
-  document.getElementById('wpills').innerHTML=['Wk 1','Wk 2','Wk 3','Wk 4'].map((l,i)=>{
-    const st=S.weeks[i];
-    const cls=st==='used'?'used':st==='saved'?'saved':i===cw?'cur':'';
-    const val=st==='used'?'-$50':st==='saved'?'saved':'$50';
-    return `<div class="wp ${cls}" onclick="toggleWeek(${i})"><div class="wplabel">${l}</div><div class="wpval">${val}</div></div>`;
-  }).join('');
-  const log=S.discLog||[];
-  const le=document.getElementById('spend-log');
-  if(!log.length){le.textContent='No entries';return;}
-  le.innerHTML=log.slice(0,12).map(e=>`
-    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px;">
-      <span style="color:var(--t2);">${e.label} · ${e.date}</span>
-      <span style="color:${e.type==='spend'?'var(--red)':'var(--grn)'};">${e.type==='spend'?'-':'+'}$${e.amt.toFixed(2)}</span>
-    </div>`).join('');
-  renderRandy();
+  if(cur===null){S.weeks[i]='used';S.discSpent=(S.discSpent||0)+50;(S.discLog=S.discLog||[]).unshift({type:'spend',amt:50,date:`Wk${i+1}`,label:`Week ${i+1} allowance`});}
+  else if(cur==='used'){S.weeks[i]='saved';S.discSpent=Math.max(0,(S.discSpent||0)-50);if(S.discLog&&S.discLog.length)S.discLog.shift();}
+  else S.weeks[i]=null;
+  save(S);renderWeek();
 }
 
 // ── RANDY ──
-function logRandy(){
-  if(!S.randySessions)S.randySessions=[];
-  S.randySessions.unshift({date:new Date().toLocaleDateString(),amt:150});
-  save(S);renderRandy();toast('Session logged — $150');
-}
-function resetRandy(){S.randySessions=[];save(S);renderRandy();toast('Randy reset');}
-function renderRandy(){
-  const sessions=(S.randySessions||[]).filter(s=>{const d=new Date(s.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
-  const total=sessions.reduce((a,s)=>a+s.amt,0);
-  document.getElementById('randy-total').textContent='$'+total;
-  document.getElementById('randy-label').textContent=`${sessions.length} session${sessions.length!==1?'s':''} this month`;
-  const le=document.getElementById('randy-list');
-  if(!sessions.length){le.innerHTML='<div style="font-size:12px;color:var(--t3);padding:4px 0;">No sessions logged</div>';return;}
-  le.innerHTML=sessions.map((s,i)=>`
-    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:13px;">
-      <span style="color:var(--t2);">Session ${sessions.length-i} · ${s.date}</span>
-      <span style="color:var(--grn);font-weight:700;">-$${s.amt}</span>
-    </div>`).join('');
-}
+function logRandy(){if(!S.randySessions)S.randySessions=[];S.randySessions.unshift({date:new Date().toLocaleDateString(),amt:150});save(S);renderWeek();toast('Session logged — $150');}
 
 // ── SNOWBALL ──
 const PHASES=[
-  {l:'Phase 1 — Tire fund',d:"Building $1,500 for Jon's tires. May 8-9.",c:'var(--amb)'},
+  {l:'Phase 1 — Tire fund',d:"Saving $1,500 for Jon's tires. May 8-9.",c:'var(--amb)'},
   {l:'Phase 2 — Repair buffer',d:'$1,000 in savings. Rolls to snowball if nothing found.',c:'var(--amb)'},
   {l:"Phase 3 — Karen's tires",d:'$1,000 at Mazda dealer. June 2026.',c:'var(--amb)'},
-  {l:'Phase 4 — Dental + glasses',d:'~$1,500 OOP for Jon + Karen. July 2026.',c:'var(--amb)'},
-  {l:'Phase 5 — SNOWBALL ACTIVE 🚀',d:'All expenses done. $1,901/mo attacks CC debt.',c:'var(--grn)'},
+  {l:'Phase 4 — Dental + glasses',d:'~$1,500 OOP. July 2026.',c:'var(--amb)'},
+  {l:'Phase 5 — SNOWBALL ACTIVE 🚀',d:'$2,800+/mo attacking CC debt. All CCs dead by Oct 2026.',c:'var(--grn)'},
 ];
 const TARGETS=[
-  {n:'Amazon Store Card',b:206,a:'~29%',m:29,w:'Jon',note:'MAXED — nearly dead'},
-  {n:'Merrick Bank',b:926,a:'31.95%',m:35,w:'Jon',note:'Highest APR'},
-  {n:'Cap One #3186',b:491,a:'28.24%',m:25,w:'Karen',note:'Quick win'},
-  {n:"Karen's PayPal Credit",b:1958,a:'29.64%',m:100,w:'Karen',note:'Hardship plan pending'},
-  {n:'USAA Amex (Karen)',b:1847,a:'27.40%',m:63,w:'Karen',note:'Set autopay on usaa.com'},
-  {n:'Cap One #4565',b:726,a:'~29%',m:25,w:'Jon',note:''},
-  {n:'Cap One #5592',b:731,a:'28.99%',m:25,w:'Karen',note:''},
-  {n:'Cap One #7988',b:843,a:'~29%',m:30,w:'Jon',note:'Near limit'},
-  {n:'Chase/Amazon Prime',b:1000,a:'TBD',m:26,w:'Jon',note:'Verify APR'},
-  {n:'TN Unemployment',b:3653,a:'0%',m:153,w:'Karen',note:'After all CCs dead'},
-  {n:'IRS 2024',b:4767,a:'0%',m:100,w:'Jon',note:'After TN cleared'},
+  {n:'Amazon Store Card',b:206,a:'~29%',m:29,w:'Jon',note:'Nearly dead',dead:'Aug 2026'},
+  {n:'Merrick Bank',b:926,a:'31.95%',m:35,w:'Jon',note:'Highest APR',dead:'Aug 2026'},
+  {n:'Cap One #3186',b:491,a:'28.24%',m:25,w:'Karen',note:'',dead:'Aug 2026'},
+  {n:"Karen's PayPal Credit",b:1958,a:'29.64%',m:100,w:'Karen',note:'Hardship plan pending',dead:'Sep 2026'},
+  {n:'USAA Amex',b:1847,a:'27.40%',m:63,w:'Karen',note:'Set autopay',dead:'Sep 2026'},
+  {n:'Cap One #4565',b:726,a:'~29%',m:25,w:'Jon',note:'',dead:'Oct 2026'},
+  {n:'Cap One #5592',b:731,a:'28.99%',m:25,w:'Karen',note:'',dead:'Oct 2026'},
+  {n:'Cap One #7988',b:843,a:'~29%',m:30,w:'Jon',note:'Near limit',dead:'Oct 2026'},
+  {n:'Chase/Amazon',b:1000,a:'TBD',m:26,w:'Jon',note:'Verify APR',dead:'Oct 2026'},
+  {n:'TN Unemployment',b:3653,a:'0%',m:153,w:'Karen',note:'After all CCs',dead:'Dec 2026'},
+  {n:'IRS 2024',b:4767,a:'0%',m:103,w:'Jon',note:'After TN',dead:'Jan 2027'},
 ];
+
 function renderSnowball(){
   const ph=S.snowballPhase||0;
   const p=PHASES[ph];
-  document.getElementById('phase-display').innerHTML=`
-    <div class="phasebox" style="background:${p.c}15;border-color:${p.c}40;">
-      <div style="font-size:15px;font-weight:700;color:${p.c};">${p.l}</div>
-      <div style="font-size:12px;color:var(--t2);margin-top:4px;">${p.d}</div>
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        ${ph>0?`<button class="btn btno btnsm" style="flex:1;margin:0;" onclick="setPhase(${ph-1})">← Back</button>`:''}
-        ${ph<PHASES.length-1?`<button class="btn btna btnsm" style="flex:1;margin:0;" onclick="setPhase(${ph+1})">Complete → next phase</button>`:'<div style="font-size:12px;color:var(--grn);padding:6px 0;">Snowball is rolling! 🎉</div>'}
-      </div>
-    </div>`;
   const ct=S.currentTarget||0;
-  document.getElementById('targets-list').innerHTML=TARGETS.map((t,i)=>{
+  let html=`<div style="font-size:20px;font-weight:700;margin-bottom:2px;">Debt snowball</div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:12px;">$2,800+/mo after Aug 2026 · Consumer debt free Jan 2027</div>`;
+
+  // Milestones
+  html+=`<div class="card">
+    <div class="ct">Roadmap milestones</div>
+    <div class="row"><div class="rlabel">All CCs paid off</div><div class="rval" style="color:var(--grn);">Oct 2026</div></div>
+    <div class="row"><div class="rlabel">TN Unemployment dead</div><div class="rval" style="color:var(--grn);">Dec 2026</div></div>
+    <div class="row"><div class="rlabel">IRS dead — consumer debt free</div><div class="rval" style="color:var(--pur);">Jan 2027</div></div>
+    <div class="row"><div class="rlabel">Mazda payoff</div><div class="rval" style="color:var(--blu);">Aug 2029</div></div>
+    <div class="row"><div class="rlabel" style="font-weight:700;">Totally debt free</div><div class="rval" style="color:var(--grn);font-size:17px;">Aug 2029</div></div>
+  </div>`;
+
+  // Phase
+  html+=`<div class="card" style="border-color:${p.c}40;background:${p.c}10;">
+    <div style="font-size:15px;font-weight:700;color:${p.c};margin-bottom:4px;">${p.l}</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:12px;">${p.d}</div>
+    <div style="display:flex;gap:8px;">
+      ${ph>0?`<button class="btn btno btnsm" style="flex:1;margin:0;" onclick="setPhase(${ph-1})">← Back</button>`:''}
+      ${ph<PHASES.length-1?`<button class="btn btna btnsm" style="flex:1;margin:0;" onclick="setPhase(${ph+1})">Complete → next phase</button>`:`<div style="font-size:12px;color:var(--grn);padding:6px 0;">Snowball is rolling! 🎉</div>`}
+    </div>
+  </div>`;
+
+  // Targets
+  html+=`<div class="card"><div class="ct">Payoff order</div>`;
+  TARGETS.forEach((t,i)=>{
     const act=i===ct,done=i<ct;
-    return `<div class="tcard ${act?'active':''} ${done?'tdone':''}">
+    html+=`<div class="tcard ${act?'active':''} ${done?'tdone':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div>
-          <div style="font-size:14px;font-weight:700;color:${done?'var(--grn)':act?'var(--amb)':'var(--text)'};">${done?'✓ ':act?'🎯 ':`${i+1}. `}${t.n}</div>
-          <div style="font-size:11px;color:var(--t3);margin-top:2px;">${t.w} · ${t.a} APR · $${t.m}/mo min${t.note?' · '+t.note:''}</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:700;color:${done?'var(--grn)':act?'var(--amb)':'var(--tx)'};">${done?'✓ ':act?'🎯 ':`${i+1}. `}${t.n}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:1px;">${t.w} · ${t.a} APR · $${t.m}/mo min${t.note?' · '+t.note:''}</div>
+          <div style="font-size:10px;color:${act?'var(--amb)':'var(--t3)'};margin-top:1px;">Target dead: ${t.dead}</div>
         </div>
         <div style="font-size:17px;font-weight:700;color:${done?'var(--grn)':act?'var(--amb)':'var(--t2)'};">$${t.b.toLocaleString()}</div>
       </div>
-      ${act?`<button class="btn btng btnsm" style="margin-top:10px;margin-bottom:0;" onclick="advanceTarget()">Mark paid off → next</button>`:''}
+      ${act?`<button class="btn btng btnsm" style="margin-top:10px;margin-bottom:0;" onclick="advanceTarget()">Mark paid off → next target</button>`:''}
     </div>`;
-  }).join('');
+  });
+  html+=`</div>`;
+
+  // Payment log
+  html+=`<div class="card">
+    <div class="ct">Log extra payment</div>
+    <button class="btn btna" onclick="openModal('snowball','Log snowball payment')">💸 Log payment</button>
+    <div id="snowball-log" style="font-size:13px;color:var(--t3);">`;
   const log=S.snowballLog||[];
-  const le=document.getElementById('snowball-log');
-  if(!log.length){le.textContent='No payments logged';return;}
-  le.innerHTML=log.slice(0,8).map(e=>`
-    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:12px;">
-      <span style="color:var(--t2);">${e.target} · ${e.date}</span>
-      <span style="color:var(--grn);">-$${e.amt.toFixed(2)}</span>
-    </div>`).join('');
+  if(!log.length){html+='No payments logged yet';}
+  else{html+=log.slice(0,8).map(e=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--br);font-size:12px;"><span style="color:var(--t2);">${e.target} · ${e.date}</span><span style="color:var(--grn);">-$${e.amt.toFixed(2)}</span></div>`).join('');}
+  html+=`</div></div>`;
+
+  document.getElementById('snowball-content').innerHTML=html;
 }
 function setPhase(n){S.snowballPhase=n;save(S);renderSnowball();toast('Phase updated');}
-function advanceTarget(){S.currentTarget=(S.currentTarget||0)+1;save(S);renderSnowball();toast('🎉 Paid off! Next target loaded.');}
+function advanceTarget(){S.currentTarget=(S.currentTarget||0)+1;save(S);renderSnowball();toast('🎉 Target paid off!');}
 function logSnowballPmt(amt){
   if(!S.snowballLog)S.snowballLog=[];
   const t=TARGETS[S.currentTarget||0];
@@ -980,12 +895,13 @@ function logSnowballPmt(amt){
 
 // ── BILLS ──
 const BILLS=[
-  {id:'mazda',t:'Mazda CX-5 — $638.06',s:'#6764 · ~9th · 12.72% APR'},
-  {id:'att',t:'AT&T Fiber — $165.85',s:'#6764 · ~16th'},
+  {id:'mazda',t:'Mazda CX-5 — $638.06',s:'#4496 · ~9th · 12.72% APR'},
+  {id:'att',t:'AT&T Fiber — $165.85',s:'#4496 · ~16th'},
   {id:'tmobile',t:'T-Mobile — $151.85',s:'#4496 · ~15th'},
-  {id:'statefarm',t:'State Farm — ~$190',s:'#6764 · ~23rd · $160.27 this month — monitoring'},
-  {id:'tn',t:'TN Unemployment — ~$153',s:'#6764 · ~22nd-24th · $3,653 remaining'},
-  {id:'irs',t:'IRS installments — ~$100',s:'2 plans · $4,767 balance'},
+  {id:'statefarm',t:'State Farm — ~$190',s:'#4496 · ~23rd'},
+  {id:'tn',t:'TN Unemployment — ~$153',s:'#4496 · ~22nd-24th'},
+  {id:'irs1',t:'IRS payment #1 — $68',s:'#4496 · ~15th-16th'},
+  {id:'irs2',t:'IRS payment #2 — $35',s:'#4496 · ~15th-16th'},
   {id:'merrick',t:'Merrick Bank — $35',s:'#4496 · ~11th · 31.95% APR'},
   {id:'affirm',t:'Affirm cluster — ~$131',s:'#4496 · ~13th · 0% APR · verify in Affirm app'},
   {id:'newegg',t:'PayPal Newegg — $60.68',s:'#4496 · ~13th · 35.99% APR · done Jan 2027'},
@@ -994,14 +910,13 @@ const BILLS=[
   {id:'jonpaypal',t:'Jon PayPal Credit — $22',s:'#4496 · 0% Customer Assistance Plan · do NOT overpay'},
   {id:'karenpaypal',t:'Karen PayPal Credit — $100',s:'MANUAL · 29.64% APR · due ~13th'},
   {id:'usaaamex',t:'USAA Amex Karen — $63 min',s:'27.40% APR · set autopay on usaa.com'},
-  {id:'chase',t:'Chase/Amazon Prime — $26',s:'#4496 · ~26th · APR unknown'},
+  {id:'chase',t:'Chase/Amazon Prime — $26',s:'#4496 · ~26th · APR TBD'},
   {id:'amazon-store',t:'Amazon Store Card — $29',s:'#4496 · ~1st · ~29% APR'},
   {id:'spotify',t:'Spotify — $21.53',s:'#4496 · ~22nd'},
   {id:'claude',t:'Claude.ai — $20',s:'#4496 · ~13th'},
-  {id:'chatgpt',t:'ChatGPT — $21.94',s:'#4496 · ~4th · Karen'},
+  {id:'chatgpt',t:'ChatGPT — $21.94',s:'#4496 · ~4th'},
   {id:'prime',t:'Amazon Prime — $15.17',s:'#4496 · ~2nd'},
-  {id:'steam',t:'Steam — $5.99',s:'#4496 · ~1st'},
-  {id:'realdebrid',t:'Real-Debrid — $10.51',s:'#4496 · ~2nd'},
+  {id:'realdebrid',t:'Real-Debrid — ~$4/mo ($11/quarter)',s:'#4496 · ~2nd'},
 ];
 function renderBills(){
   document.getElementById('bills-list').innerHTML=BILLS.map(b=>{
@@ -1017,7 +932,7 @@ function resetBills(){S.billChecks={};save(S);renderBills();toast('Bills reset')
 
 // ── INIT ──
 vMonth=now.getMonth();vYear=now.getFullYear();
-renderWeek();renderMonth();renderSpend();renderSnowball();renderBills();
+renderWeek();renderMonth();renderSnowball();renderBills();
 routeHash();
 </script>
 </body>
