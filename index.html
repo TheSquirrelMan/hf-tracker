@@ -559,6 +559,7 @@ function calcRoadmap(){
   if(snowIdx===-1)snowIdx=null;
 
   const d=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  let minBalSoFar=balance; // track lowest balance seen since last phase reset
 
   for(let i=0;i<1500;i++){
     const yr=d.getFullYear(),mo=d.getMonth(),dy=d.getDate();
@@ -570,6 +571,7 @@ function calcRoadmap(){
     S.cardBals=origCB;
 
     dayBills.forEach(b=>{balance+=b.amt;});
+    minBalSoFar=Math.min(minBalSoFar,balance); // track running minimum
 
     // Mark repair buffer after tires done
     if(milestones['jon-tires']&&!phaseDone['repair-buf']&&!milestones['repair-buf']){
@@ -583,7 +585,8 @@ function calcRoadmap(){
       const gap=lastPhaseDate?Math.floor((d-lastPhaseDate)/86400000):999;
       if(!milestones[phase.id]&&gap>=14){
         const needed=phase.cost+800+repairHeld;
-        if(balance>=needed){
+        // Only trigger if balance is sufficient AND no day in path went negative
+        if(balance>=needed&&minBalSoFar>=0){
           milestones[phase.id]={date:dateStr,bal:Math.round(balance)};
           balance-=phase.cost;
           lastPhaseDate=new Date(d);
@@ -593,6 +596,7 @@ function calcRoadmap(){
             snowballActive=true;
             milestones['snowball-start']={date:dateStr};
           }
+          minBalSoFar=balance; // reset minimum after phase triggers
           balLog[dateStr]=Math.round(balance);
           d.setDate(dy+1);continue;
         }
