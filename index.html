@@ -437,7 +437,7 @@ function getDailyBills(year, month, day) {
   if(dow===4) bills.push({label:'Karen paycheck',amt:karenAmt,isIncome:true});
 
   if(dow===0) bills.push({label:'Fresh Market',amt:-200});
-  if(dow===5) bills.push({label:'Discretionary',amt:-50});
+  // if(dow===5) bills.push({label:'Discretionary',amt:-50}); //
 
   if(day===1) bills.push({label:'SunPass',amt:-20});
   if(day===1||day===15) bills.push({label:'Gas',amt:-60});
