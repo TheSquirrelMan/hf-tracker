@@ -445,9 +445,6 @@ function getDailyBills(year, month, day) {
   // Groceries every Sunday
   if(dow===0) bills.push({label:'Fresh Market',amt:-200});
 
-  // Discretionary $200/mo -- $50 every Friday
-  if(dow===5) bills.push({label:'Discretionary',amt:-50});
-
   // Transport -- gas $60 twice a month, carwash $11 biweekly, SunPass $20/mo
   if(day===1) bills.push({label:'SunPass',amt:-20});
   if(day===1||day===15) bills.push({label:'Gas',amt:-60});
