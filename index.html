@@ -5,142 +5,178 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1a1a18">
+<meta name="theme-color" content="#111110">
 <title>HF Tracker</title>
 <style>
 :root{
-  --bg:#1a1a18;--sf:#252523;--s2:#2c2c2a;--s3:#343432;
-  --br:rgba(255,255,255,0.08);
-  --tx:#f0efe9;--t2:#b4b2a9;--t3:#666660;
-  --red:#F09595;--rbg:#3d1515;--rm:#A32D2D;
-  --amb:#EF9F27;--abg:#3d2800;--am:#854F0B;
-  --grn:#97C459;--gbg:#1a2e08;--gm:#3B6D11;
-  --blu:#85B7EB;--bbg:#0c2240;--bm:#185FA5;
-  --pur:#C4B5FD;--pbg:#1e1a3d;--pm:#5B4FBF;
-  --r:14px;--rs:8px;
+  --bg:#111110;--sf:#1c1c1a;--s2:#242422;--s3:#2e2e2c;--s4:#383836;
+  --br:rgba(255,255,255,0.07);--br2:rgba(255,255,255,0.12);
+  --tx:#f0efe9;--t2:#a8a69f;--t3:#5c5c58;--t4:#3a3a38;
+  --red:#e8836e;--rbg:#2d1208;--rm:#8a3010;
+  --amb:#d4922a;--abg:#281a00;--am:#7a5200;
+  --grn:#7aad4e;--gbg:#0e1e06;--gm:#3a6818;
+  --blu:#6b9fd4;--bbg:#071624;--bm:#1a4a7a;
+  --pur:#9b82e8;--pbg:#160e2c;--pm:#4a2ea0;
+  --r:12px;--rs:8px;--rx:16px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);font-size:15px;line-height:1.5;overflow-x:hidden;}
-.pin-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;}
-.pin-screen.hidden{display:none;}
-.pin-logo{font-size:36px;margin-bottom:8px;}
-.pin-title{font-size:22px;font-weight:700;margin-bottom:4px;}
-.pin-sub{font-size:13px;color:var(--t3);margin-bottom:32px;}
-.pin-dots{display:flex;gap:14px;margin-bottom:32px;}
-.pin-dot{width:16px;height:16px;border-radius:50%;background:var(--s3);border:2px solid var(--br);transition:all .15s;}
+html,body{height:100%;overscroll-behavior:none;}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--tx);font-size:15px;line-height:1.5;overflow-x:hidden;}
+
+/* ── LOADING / PIN ── */
+.overlay{position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);padding:40px 24px;}
+.overlay.hidden{display:none;}
+.pin-logo{font-size:40px;margin-bottom:10px;}
+.pin-title{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:4px;}
+.pin-sub{font-size:13px;color:var(--t3);margin-bottom:36px;}
+.pin-dots{display:flex;gap:16px;margin-bottom:36px;}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--s4);border:1.5px solid var(--br2);transition:all .15s;}
 .pin-dot.filled{background:var(--blu);border-color:var(--bm);}
 .pin-dot.error{background:var(--red);border-color:var(--rm);}
-.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px;}
-.pin-key{background:var(--sf);border:0.5px solid var(--br);border-radius:var(--r);padding:18px;font-size:22px;font-weight:600;color:var(--tx);cursor:pointer;text-align:center;transition:opacity .1s,transform .1s;user-select:none;}
-.pin-key:active{opacity:.7;transform:scale(.95);}
-.pin-key.del{font-size:18px;color:var(--t2);}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:264px;}
+.pin-key{background:var(--s2);border:0.5px solid var(--br);border-radius:var(--r);padding:17px;font-size:22px;font-weight:600;color:var(--tx);cursor:pointer;text-align:center;transition:opacity .1s,transform .08s;user-select:none;}
+.pin-key:active{opacity:.6;transform:scale(.94);}
+.pin-key.del{font-size:17px;color:var(--t2);}
 .pin-key.empty{background:transparent;border-color:transparent;pointer-events:none;}
-.pin-error{font-size:13px;color:var(--red);margin-top:16px;height:18px;}
-.loading-screen{position:fixed;inset:0;background:var(--bg);z-index:998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
-.loading-screen.hidden{display:none;}
-.spinner{width:32px;height:32px;border:3px solid var(--br);border-top-color:var(--blu);border-radius:50%;animation:spin .8s linear infinite;}
+.pin-error{font-size:12px;color:var(--red);margin-top:14px;height:16px;text-align:center;}
+.spinner{width:28px;height:28px;border:2.5px solid var(--br2);border-top-color:var(--blu);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-.nav{display:flex;overflow-x:auto;background:var(--sf);border-bottom:1px solid var(--br);position:sticky;top:0;z-index:100;scrollbar-width:none;}
+
+/* ── NAV ── */
+.nav{display:flex;background:var(--sf);border-bottom:1px solid var(--br);position:sticky;top:0;z-index:100;overflow-x:auto;scrollbar-width:none;}
 .nav::-webkit-scrollbar{display:none;}
-.nb{flex-shrink:0;padding:13px 15px;font-size:12px;font-weight:600;color:var(--t3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;letter-spacing:.03em;text-transform:uppercase;}
+.nb{flex-shrink:0;padding:12px 14px;font-size:11px;font-weight:600;color:var(--t3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;letter-spacing:.06em;text-transform:uppercase;}
 .nb.on{color:var(--blu);border-bottom-color:var(--blu);}
-.panel{display:none;padding:12px 12px 100px;max-width:600px;margin:0 auto;}
+
+/* ── LAYOUT ── */
+.panel{display:none;padding:10px 10px 90px;max-width:580px;margin:0 auto;}
 .panel.on{display:block;}
-.card{background:var(--sf);border-radius:var(--r);border:0.5px solid var(--br);padding:14px;margin-bottom:10px;}
-.ct{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;}
+
+/* ── CARDS ── */
+.card{background:var(--sf);border-radius:var(--r);border:0.5px solid var(--br);padding:14px;margin-bottom:8px;}
+.card-title{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;}
+
+/* ── BALANCE STRIP ── */
 .bstrip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;}
-.bitem{background:var(--sf);border-radius:var(--rs);padding:8px 6px;border:0.5px solid var(--br);text-align:center;cursor:pointer;}
-.bitem:active{opacity:.7;}
-.bacct{font-size:9px;color:var(--t3);letter-spacing:.04em;text-transform:uppercase;}
-.bnum{font-size:15px;font-weight:700;margin-top:1px;}
-.btn{display:block;width:100%;padding:13px;border-radius:var(--rs);border:none;font-size:15px;font-weight:700;cursor:pointer;text-align:center;margin-bottom:8px;transition:opacity .15s,transform .1s;}
-.btn:active{opacity:.8;transform:scale(.98);}
+.bitem{background:var(--sf);border-radius:var(--rs);padding:8px 6px;border:0.5px solid var(--br);text-align:center;cursor:pointer;transition:opacity .15s;}
+.bitem:active{opacity:.6;}
+.bacct{font-size:9px;color:var(--t3);letter-spacing:.05em;text-transform:uppercase;}
+.bnum{font-size:16px;font-weight:700;margin-top:2px;letter-spacing:-.3px;}
+.sync-row{font-size:10px;color:var(--t3);text-align:center;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:5px;}
+.sync-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.sdok{background:var(--grn);}
+.sderr{background:var(--red);}
+.sdpend{background:var(--amb);}
+
+/* ── BUTTONS ── */
+.btn{display:block;width:100%;padding:12px;border-radius:var(--rs);border:none;font-size:14px;font-weight:700;cursor:pointer;text-align:center;margin-bottom:8px;transition:opacity .12s,transform .08s;letter-spacing:.01em;}
+.btn:active{opacity:.7;transform:scale(.98);}
 .btng{background:var(--gbg);color:var(--grn);border:1px solid var(--gm);}
 .btnr{background:var(--rbg);color:var(--red);border:1px solid var(--rm);}
 .btna{background:var(--abg);color:var(--amb);border:1px solid var(--am);}
 .btnb{background:var(--bbg);color:var(--blu);border:1px solid var(--bm);}
+.btnp{background:var(--pbg);color:var(--pur);border:1px solid var(--pm);}
 .btno{background:var(--s2);color:var(--t2);border:0.5px solid var(--br);}
-.btnsm{padding:9px 14px;font-size:13px;margin-bottom:6px;}
+.btnsm{padding:8px 12px;font-size:12px;margin-bottom:0;}
+
+/* ── ROWS ── */
 .row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--br);gap:8px;}
 .row:last-child{border-bottom:none;}
 .rl{flex:1;}
-.rlabel{font-size:14px;color:var(--tx);}
+.rlabel{font-size:14px;}
 .rsub{font-size:11px;color:var(--t3);margin-top:1px;}
 .rval{font-size:14px;font-weight:700;flex-shrink:0;}
-.ci{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--br);cursor:pointer;}
+
+/* ── CHECK ITEMS ── */
+.ci{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--br);cursor:pointer;}
 .ci:last-child{border-bottom:none;}
-.cb{width:24px;height:24px;border-radius:6px;border:2px solid var(--br);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px;}
-.cb.done{background:var(--gbg);border-color:var(--gm);}
-.ck{font-size:13px;opacity:0;transition:opacity .2s;color:var(--grn);}
-.cb.done .ck{opacity:1;}
-.cil{flex:1;}
-.cititle{font-size:14px;color:var(--tx);transition:color .2s;}
-.ci.done .cititle{color:var(--t3);text-decoration:line-through;}
+.cbox{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--br2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px;}
+.cbox.on{background:var(--gbg);border-color:var(--gm);}
+.ck{font-size:11px;opacity:0;color:var(--grn);}
+.cbox.on .ck{opacity:1;}
+.cilabel{flex:1;}
+.cititle{font-size:13px;transition:color .2s;}
+.ci.on .cititle{color:var(--t3);text-decoration:line-through;}
 .cisub{font-size:11px;color:var(--t3);margin-top:1px;}
-.wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0;}
-.wp{border-radius:var(--rs);padding:10px 4px;text-align:center;cursor:pointer;border:1px solid var(--br);background:var(--s2);transition:all .2s;}
-.wp.used{background:var(--rbg);border-color:var(--rm);}
-.wp.cur{border-color:var(--amb);border-width:2px;}
-.wplabel{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;}
-.wp.used .wplabel{color:var(--red);}
-.wp.cur .wplabel{color:var(--amb);}
-.wpval{font-size:14px;font-weight:700;margin-top:2px;color:var(--t2);}
-.wp.used .wpval{color:var(--red);}
-.wp.cur .wpval{color:var(--amb);}
-.prog{height:6px;border-radius:3px;background:var(--s2);margin:8px 0;overflow:hidden;}
-.progfill{height:100%;border-radius:3px;transition:width .4s;}
-.mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.mnavtitle{font-size:17px;font-weight:700;}
-.mnavbtn{background:var(--s2);border:0.5px solid var(--br);border-radius:var(--rs);padding:8px 14px;font-size:14px;color:var(--tx);cursor:pointer;}
-.event{display:flex;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--br);}
-.event:last-child{border-bottom:none;}
-.edot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
-.econtent{flex:1;min-width:0;}
-.etitle{font-size:13px;font-weight:600;color:var(--tx);}
-.esub{font-size:11px;color:var(--t3);margin-top:1px;}
-.eamt{font-size:13px;font-weight:700;flex-shrink:0;text-align:right;min-width:52px;}
-.wheader{font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;padding:8px 0 5px;border-bottom:1px solid var(--br);margin-bottom:4px;display:flex;justify-content:space-between;}
-.tcard{background:var(--s2);border-radius:var(--rs);padding:13px;margin-bottom:8px;border:1px solid var(--br);}
-.tcard.active{border-color:var(--am);background:var(--abg);}
-.tcard.tdone{opacity:0.35;}
-.mbg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:flex-end;justify-content:center;}
-.mbg.show{display:flex;}
-.modal{background:var(--sf);border-radius:var(--r) var(--r) 0 0;padding:20px;width:100%;max-width:600px;}
-.mtitle{font-size:17px;font-weight:700;margin-bottom:14px;}
-.modal input,.modal select{width:100%;background:var(--s2);border:1px solid var(--br);border-radius:var(--rs);padding:12px 14px;font-size:16px;color:var(--tx);margin-bottom:10px;}
-.modal input::placeholder{color:var(--t3);}
-.modal select option{background:var(--s2);}
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--s3);color:var(--tx);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;border:0.5px solid var(--br);}
+
+/* ── PROGRESS ── */
+.prog{height:5px;border-radius:3px;background:var(--s3);margin:8px 0;overflow:hidden;}
+.progbar{height:100%;border-radius:3px;transition:width .4s;}
+
+/* ── EVENTS ── */
+.evlist{}
+.ev{display:flex;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--br);}
+.ev:last-child{border-bottom:none;}
+.evdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.evcontent{flex:1;min-width:0;}
+.evtitle{font-size:13px;font-weight:500;}
+.evsub{font-size:11px;color:var(--t3);margin-top:1px;}
+.evamt{font-size:13px;font-weight:700;flex-shrink:0;text-align:right;}
+.ev.feat{border-left:2px solid;padding-left:8px;margin-left:-8px;}
+.ev.feat .evdot{display:none;}
+.ev.feat .evtitle{font-weight:700;}
+.wheader{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.07em;text-transform:uppercase;padding:8px 0 4px;border-bottom:1px solid var(--br);margin-bottom:2px;display:flex;justify-content:space-between;}
+
+/* ── SNOWBALL CARDS ── */
+.scard{background:var(--s2);border-radius:var(--rs);padding:12px;margin-bottom:6px;border:0.5px solid var(--br);}
+.scard.active{border-color:var(--am);background:var(--abg);}
+.scard.done{opacity:.3;}
+
+/* ── MODAL ── */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+.mbg.open{display:flex;}
+.mbox{background:var(--sf);border-radius:var(--rx) var(--rx) 0 0;padding:20px;width:100%;max-width:580px;padding-bottom:max(20px,env(safe-area-inset-bottom));}
+.mtitle{font-size:17px;font-weight:700;margin-bottom:14px;letter-spacing:-.3px;}
+.minput{width:100%;background:var(--s2);border:1px solid var(--br2);border-radius:var(--rs);padding:12px 14px;font-size:16px;color:var(--tx);margin-bottom:10px;outline:none;}
+.minput::placeholder{color:var(--t3);}
+.minput:focus{border-color:var(--blu);}
+select.minput option{background:var(--s2);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:var(--s4);color:var(--tx);padding:9px 18px;border-radius:18px;font-size:13px;font-weight:600;opacity:0;transition:opacity .25s;pointer-events:none;z-index:999;white-space:nowrap;border:0.5px solid var(--br2);}
 .toast.show{opacity:1;}
-.sync-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-left:6px;vertical-align:middle;}
-.sok{background:var(--grn);}
-.serr{background:var(--red);}
-.spend{background:var(--amb);}
-.confirm-banner{background:var(--abg);border:1px solid var(--am);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;}
-.cb-title{font-size:14px;font-weight:700;color:var(--amb);margin-bottom:4px;}
-.cb-sub{font-size:12px;color:var(--t2);margin-bottom:10px;}
-.milestone{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--br);}
-.milestone:last-child{border-bottom:none;}
-.ms-label{font-size:13px;color:var(--tx);flex:1;}
+
+/* ── BANNER ── */
+.banner{background:var(--abg);border:1px solid var(--am);border-radius:var(--rs);padding:12px 13px;margin-bottom:8px;}
+.banner-title{font-size:13px;font-weight:700;color:var(--amb);margin-bottom:3px;}
+.banner-sub{font-size:12px;color:var(--t2);margin-bottom:10px;}
+
+/* ── MILESTONE ── */
+.ms{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--br);}
+.ms:last-child{border-bottom:none;}
+.ms-info{flex:1;}
+.ms-label{font-size:13px;}
 .ms-sub{font-size:11px;color:var(--t3);margin-top:1px;}
-.ms-date{font-size:13px;font-weight:700;flex-shrink:0;text-align:right;}
-.ms-done{color:var(--grn);}
-.ms-soon{color:var(--amb);}
-.ms-future{color:var(--t2);}
+.ms-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.ms-date{font-size:13px;font-weight:700;}
+
+/* ── SPEND LOG ── */
+.slog-entry{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--br);font-size:12px;}
+.slog-entry:last-child{border-bottom:none;}
+.slog-left{flex:1;}
+.slog-label{color:var(--tx);font-weight:500;}
+.slog-meta{color:var(--t3);margin-top:1px;font-size:11px;}
+.slog-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.slog-amt{color:var(--red);font-weight:700;}
+.slog-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;}
+.slog-del:active{color:var(--red);}
+
+/* ── MONTH NAV ── */
+.mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.mnavtitle{font-size:17px;font-weight:700;letter-spacing:-.3px;}
+.mnavbtn{background:var(--s2);border:0.5px solid var(--br);border-radius:var(--rs);padding:7px 12px;font-size:13px;color:var(--tx);cursor:pointer;}
 </style>
 </head>
 <body>
 
-<div class="pin-screen" id="pin-screen">
+<!-- PIN -->
+<div class="overlay" id="pin-screen">
   <div class="pin-logo">💰</div>
   <div class="pin-title">HF Tracker</div>
   <div class="pin-sub">Enter PIN to continue</div>
   <div class="pin-dots">
-    <div class="pin-dot" id="pd0"></div>
-    <div class="pin-dot" id="pd1"></div>
-    <div class="pin-dot" id="pd2"></div>
-    <div class="pin-dot" id="pd3"></div>
+    <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
   </div>
   <div class="pin-grid">
     <div class="pin-key" onclick="pinKey('1')">1</div>
@@ -159,29 +195,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="pin-error" id="pin-error"></div>
 </div>
 
-<div class="loading-screen hidden" id="loading-screen">
+<!-- LOADING -->
+<div class="overlay hidden" id="load-screen">
   <div class="spinner"></div>
-  <div style="font-size:13px;color:var(--t3);">Loading...</div>
+  <div style="font-size:13px;color:var(--t3);margin-top:14px;">Loading...</div>
 </div>
 
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- MODAL -->
 <div class="mbg" id="mbg" onclick="closeModal()">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="mbox" onclick="event.stopPropagation()">
     <div class="mtitle" id="mtitle"></div>
-    <input type="text" id="mi-label" placeholder="Description" style="display:none;">
-    <select id="mi-acct" style="display:none;">
+    <input class="minput" type="text" id="mi-label" placeholder="Description" style="display:none;">
+    <select class="minput" id="mi-acct" style="display:none;">
       <option value="4496">#4496 checking</option>
-      <option value="savings">Savings #0725</option>
-      <option value="6764">#6764 (transitional)</option>
-      <option value="cash">Cash / other</option>
+      <option value="0725">Savings #0725</option>
+      <option value="6764">#6764 transitional</option>
     </select>
-    <input type="number" id="mi-amt" placeholder="Amount" inputmode="decimal">
+    <input class="minput" type="number" id="mi-amt" placeholder="Amount" inputmode="decimal">
     <button class="btn btng" onclick="submitModal()">Confirm</button>
     <button class="btn btno" onclick="closeModal()">Cancel</button>
   </div>
 </div>
 
+<!-- NAV -->
 <nav class="nav" style="display:none;" id="main-nav">
   <button class="nb on" onclick="sw('week',this)">This Week</button>
   <button class="nb" onclick="sw('month',this)">Month Plan</button>
@@ -189,8 +228,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="nb" onclick="sw('bills',this)">Bills</button>
 </nav>
 
+<!-- THIS WEEK -->
 <div class="panel on" id="p-week" style="display:none;">
-  <div id="week-banner"></div>
   <div class="bstrip">
     <div class="bitem" onclick="editBal('4496')">
       <div class="bacct">#4496</div>
@@ -205,14 +244,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="bnum" id="b0725" style="color:var(--pur);">--</div>
     </div>
   </div>
-  <div style="font-size:10px;color:var(--t3);text-align:center;margin-bottom:10px;">
-    Tap any balance to update
-    <span class="sync-dot spend" id="sync-dot"></span>
-    <span id="sync-label" style="font-size:10px;color:var(--t3);">connecting...</span>
+  <div class="sync-row">
+    <span class="sync-dot sdpend" id="sync-dot"></span>
+    <span id="sync-label">connecting...</span>
+    <span style="color:var(--t4);">·</span>
+    <span style="color:var(--t3);">Tap balance to update manually</span>
   </div>
   <div id="week-content"></div>
 </div>
 
+<!-- MONTH PLAN -->
 <div class="panel" id="p-month" style="display:none;">
   <div class="mnav">
     <button class="mnavbtn" onclick="changeMonth(-1)">← Prev</button>
@@ -222,13 +263,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="month-content"></div>
 </div>
 
+<!-- SNOWBALL -->
 <div class="panel" id="p-snowball" style="display:none;">
   <div id="snowball-content"></div>
 </div>
 
+<!-- BILLS -->
 <div class="panel" id="p-bills" style="display:none;">
-  <div style="font-size:20px;font-weight:700;margin-bottom:2px;">Monthly bills</div>
-  <div style="font-size:12px;color:var(--t3);margin-bottom:12px;">All autopay — tap to verify processed</div>
+  <div style="font-size:18px;font-weight:700;margin-bottom:2px;letter-spacing:-.3px;">Monthly bills</div>
+  <div style="font-size:12px;color:var(--t3);margin-bottom:10px;">Tap to mark processed · resets monthly</div>
   <div class="card">
     <div id="bills-list"></div>
     <button class="btn btno btnsm" style="margin-top:10px;" onclick="resetBills()">Reset all</button>
@@ -236,295 +279,313 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue, set, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import{getDatabase,ref,onValue,set,get}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDsd7Pr0AEQ3j6n-bKXv7n06vYf9Hvew7Y",
-  authDomain: "hf-tracker-81e76.firebaseapp.com",
-  databaseURL: "https://hf-tracker-81e76-default-rtdb.firebaseio.com",
-  projectId: "hf-tracker-81e76",
-  storageBucket: "hf-tracker-81e76.firebasestorage.app",
-  messagingSenderId: "810272700127",
-  appId: "1:810272700127:web:f72c67e2a9d839a8049b6a"
-};
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const SECRET = '1e4ce42d793ba967a33d1bb54dbc6faaed0aab5c115f0671e2ef77db1d66203e';
-const stateRef = ref(db, `hft/${SECRET}/state`);
+// ══ FIREBASE ══
+const FB=initializeApp({apiKey:"AIzaSyDsd7Pr0AEQ3j6n-bKXv7n06vYf9Hvew7Y",authDomain:"hf-tracker-81e76.firebaseapp.com",databaseURL:"https://hf-tracker-81e76-default-rtdb.firebaseio.com",projectId:"hf-tracker-81e76",storageBucket:"hf-tracker-81e76.firebasestorage.app",messagingSenderId:"810272700127",appId:"1:810272700127:web:f72c67e2a9d839a8049b6a"});
+const db=getDatabase(FB);
+const SECRET='1e4ce42d793ba967a33d1bb54dbc6faaed0aab5c115f0671e2ef77db1d66203e';
+const STATE=ref(db,`hft/${SECRET}/state`);
 
-// ── CONSTANTS ──
-const PIN = '0628';
-const PKEY = 'hft_auth';
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const JON_PAY = 1641;
-const now = new Date();
-const mKey = `${now.getFullYear()}-${now.getMonth()}`;
+// ══ CONSTANTS ══
+const PIN='0628';
+const PKEY='hft_auth';
+const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const JON_PAY=1641;
+const now=new Date();
+const mKey=`${now.getFullYear()}-${now.getMonth()}`;
 
-const EXPENSE_PHASES = [
-  { id:'jon-tires',   label:"Jon's tires + oil",     cost:1500, isSavings:false },
-  { id:'repair-buf',  label:'Repair buffer (savings)',cost:1000, isSavings:true  },
-  { id:'karen-tires', label:"Karen's tires",          cost:1000, isSavings:false },
-  { id:'dental',      label:'Dental — Jon + Karen',   cost:500,  isSavings:false },
-  { id:'glasses',     label:'Glasses — Jon + Karen',  cost:1000, isSavings:false },
+// ══ EXPENSE PHASES ══
+const PHASES=[
+  {id:'jon-tires',  label:"Jon's tires + oil",    cost:1500},
+  {id:'repair-buf', label:'Repair buffer (savings)',cost:1000,isSavings:true},
+  {id:'karen-tires',label:"Karen's tires",         cost:1000},
+  {id:'dental',     label:'Dental — Jon + Karen',  cost:500},
+  {id:'glasses',    label:'Glasses — Jon + Karen', cost:1000},
 ];
 
-const SNOWBALL_TARGETS = [
-  { id:'amazon',   label:'Amazon Store Card',     startBal:206,   minPay:29,  apr:0.29   },
-  { id:'merrick',  label:'Merrick Bank',          startBal:926,   minPay:35,  apr:0.3195 },
-  { id:'cap3186',  label:'Cap One #3186 (Karen)', startBal:491,   minPay:25,  apr:0.2824 },
-  { id:'kpaypal',  label:"Karen's PayPal Credit", startBal:1958,  minPay:100, apr:0.2964 },
-  { id:'usaaAmex', label:'USAA Amex (Karen)',     startBal:1847,  minPay:63,  apr:0.274  },
-  { id:'cap4565',  label:'Cap One #4565 (Jon)',   startBal:726,   minPay:25,  apr:0.29   },
-  { id:'cap5592',  label:'Cap One #5592 (Karen)', startBal:731,   minPay:25,  apr:0.2899 },
-  { id:'cap7988',  label:'Cap One #7988 (Jon)',   startBal:843,   minPay:30,  apr:0.29   },
-  { id:'chase',    label:'Chase/Amazon Prime',    startBal:1000,  minPay:26,  apr:0.24   },
-  { id:'tn',       label:'TN Unemployment',       startBal:3653,  minPay:153, apr:0      },
-  { id:'irs',      label:'IRS 2024',              startBal:4767,  minPay:103, apr:0      },
-  { id:'mazda',    label:'Mazda CX-5',            startBal:20693, minPay:638, apr:0.1272 },
+// ══ SNOWBALL TARGETS ══  (amazon updated to $76 after $130 payment)
+const TARGETS=[
+  {id:'amazon',  label:'Amazon Store Card',    startBal:76,   minPay:29,  apr:0.29},
+  {id:'merrick', label:'Merrick Bank',         startBal:926,  minPay:35,  apr:0.3195},
+  {id:'cap3186', label:'Cap One #3186 (Karen)',startBal:491,  minPay:25,  apr:0.2824},
+  {id:'kpaypal', label:"Karen's PayPal Credit",startBal:1958, minPay:100, apr:0.2964},
+  {id:'usaaAmex',label:'USAA Amex (Karen)',    startBal:1847, minPay:63,  apr:0.2740},
+  {id:'cap4565', label:'Cap One #4565 (Jon)',  startBal:726,  minPay:25,  apr:0.29},
+  {id:'cap5592', label:'Cap One #5592 (Karen)',startBal:731,  minPay:25,  apr:0.2899},
+  {id:'cap7988', label:'Cap One #7988 (Jon)',  startBal:843,  minPay:30,  apr:0.29},
+  {id:'chase',   label:'Chase/Amazon',         startBal:1000, minPay:26,  apr:0.24},
+  {id:'tn',      label:'TN Unemployment',      startBal:3653, minPay:153, apr:0},
+  {id:'irs',     label:'IRS 2024',             startBal:4767, minPay:103, apr:0},
+  {id:'mazda',   label:'Mazda CX-5',           startBal:20693,minPay:638, apr:0.1272},
 ];
 
-// ── STATE ──
-let S = {};
-let saveTimer = null;
-let appReady = false;
+// ══ STATE ══
+let S={};
+let saveTimer=null;
+let fbListener=null;
+let appReady=false;
 
-function defaultState() {
-  return {
+function defaultState(){
+  return{
     mKey,
-    bal4496:1258, bal6764:19, bal0725:654,
-    karenLastPay:810.79, karenAvgPay:762,
-    discSpent:0, discLog:[],
+    bal4496:1015.68,bal6764:19,bal0725:654,
+    karenLastPay:810.79,karenAvgPay:762,
+    discSpent:0,discLog:[],
     weeks:[null,null,null,null],
     randySessions:[],
-    billChecks:{}, pcChecks:{},
-    snowballPhase:0,
+    billChecks:{},
     phaseDone:{},
     cardBals:{},
     snowballLog:[],
-    unexpected:[{label:'Vehicle registration renewal',acct:'4496',amt:220.40,date:'4/23/2026'}],
     confirmed:{},
-    regLogged:true,
     notified:{},
   };
 }
 
-function resetMonthly(s) {
-  s.mKey=mKey; s.discSpent=0; s.discLog=[];
-  s.weeks=[null,null,null,null]; s.randySessions=[];
-  s.billChecks={}; s.pcChecks={};
+function resetMonthly(s){
+  s.mKey=mKey;s.discSpent=0;s.discLog=[];
+  s.weeks=[null,null,null,null];s.randySessions=[];
+  s.billChecks={};
   return s;
 }
 
-// ── SYNC ──
-function setSyncStatus(st) {
+// ══ SYNC ══
+function setSS(status){
   const dot=document.getElementById('sync-dot');
   const lbl=document.getElementById('sync-label');
   if(!dot||!lbl)return;
-  dot.className='sync-dot '+(st==='ok'?'sok':st==='err'?'serr':'spend');
-  lbl.textContent=st==='ok'?'synced':st==='err'?'sync error':'saving...';
+  dot.className='sync-dot '+(status==='ok'?'sdok':status==='err'?'sderr':'sdpend');
+  lbl.textContent=status==='ok'?'synced':status==='err'?'sync error':'saving...';
 }
-function save(s) {
-  S=s; setSyncStatus('spend');
+
+function save(s){
+  S=s;setSS('pend');
   if(saveTimer)clearTimeout(saveTimer);
   saveTimer=setTimeout(async()=>{
-    try{ await set(stateRef,S); setSyncStatus('ok'); }
-    catch(e){ setSyncStatus('err'); }
-  },800);
+    try{await set(STATE,S);setSS('ok');}
+    catch(e){console.warn('save fail',e);setSS('err');}
+  },600);
 }
-async function loadFromFirebase() {
-  document.getElementById('loading-screen').classList.remove('hidden');
-  try {
-    const snap=await get(stateRef);
+
+async function loadFB(){
+  document.getElementById('load-screen').classList.remove('hidden');
+  try{
+    const snap=await get(STATE);
     S=snap.exists()?{...defaultState(),...snap.val()}:defaultState();
-    if(!snap.exists())await set(stateRef,S);
     if(S.mKey!==mKey)S=resetMonthly(S);
-    setSyncStatus('ok');
-  } catch(e) { S=defaultState(); setSyncStatus('err'); }
-  document.getElementById('loading-screen').classList.add('hidden');
+    setSS('ok');
+  }catch(e){
+    console.warn('load fail',e);
+    S=defaultState();setSS('err');
+  }
+  document.getElementById('load-screen').classList.add('hidden');
   document.getElementById('main-nav').style.display='flex';
   document.querySelectorAll('.panel').forEach(p=>p.style.display='');
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   document.getElementById('p-week').classList.add('on');
   appReady=true;
   renderAll();
-  onValue(stateRef,snap=>{
+  // Real-time listener -- only apply if no pending local save
+  fbListener=onValue(STATE,snap=>{
     if(!snap.exists()||saveTimer)return;
-    S={...defaultState(),...snap.val()};
+    const remote=snap.val();
+    S={...defaultState(),...remote};
     if(S.mKey!==mKey)S=resetMonthly(S);
-    renderAll(); setSyncStatus('ok');
+    setSS('ok');
+    renderAll();
   });
 }
 
-// ── PIN ──
-let pinEntry='';
-function checkAuth(){if(sessionStorage.getItem(PKEY)==='ok'){document.getElementById('pin-screen').classList.add('hidden');loadFromFirebase();}}
-window.pinKey=k=>{if(pinEntry.length>=4)return;pinEntry+=k;updateDots();if(pinEntry.length===4)setTimeout(checkPin,120);};
-window.pinDel=()=>{pinEntry=pinEntry.slice(0,-1);document.getElementById('pin-error').textContent='';updateDots(false);};
-function updateDots(err=false){for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);d.classList.toggle('filled',i<pinEntry.length&&!err);d.classList.toggle('error',err&&i<4);}}
+// ══ PIN ══
+let pinBuf='';
+function checkAuth(){if(sessionStorage.getItem(PKEY)==='ok'){document.getElementById('pin-screen').classList.add('hidden');loadFB();}}
+window.pinKey=k=>{
+  if(pinBuf.length>=4)return;
+  pinBuf+=k;updatePinDots();
+  if(pinBuf.length===4)setTimeout(checkPin,110);
+};
+window.pinDel=()=>{pinBuf=pinBuf.slice(0,-1);document.getElementById('pin-error').textContent='';updatePinDots(false);};
+function updatePinDots(err=false){for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);d.classList.toggle('filled',i<pinBuf.length&&!err);d.classList.toggle('error',err);}}
 function checkPin(){
-  if(pinEntry===PIN){sessionStorage.setItem(PKEY,'ok');document.getElementById('pin-screen').classList.add('hidden');loadFromFirebase();}
-  else{updateDots(true);document.getElementById('pin-error').textContent='Incorrect PIN';setTimeout(()=>{pinEntry='';updateDots(false);document.getElementById('pin-error').textContent='';},900);}
+  if(pinBuf===PIN){sessionStorage.setItem(PKEY,'ok');document.getElementById('pin-screen').classList.add('hidden');loadFB();}
+  else{updatePinDots(true);document.getElementById('pin-error').textContent='Incorrect PIN';setTimeout(()=>{pinBuf='';updatePinDots(false);document.getElementById('pin-error').textContent='';},900);}
 }
-document.addEventListener('keydown',e=>{if(document.getElementById('pin-screen').classList.contains('hidden'))return;if(e.key>='0'&&e.key<='9')window.pinKey(e.key);if(e.key==='Backspace')window.pinDel();});
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('pin-screen').classList.contains('hidden'))return;
+  if(e.key>='0'&&e.key<='9')window.pinKey(e.key);
+  if(e.key==='Backspace')window.pinDel();
+});
 
-// ── ROUTING ──
+// ══ ROUTING ══
 window.sw=function(id,el){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
   document.getElementById('p-'+id).classList.add('on');
-  el.classList.add('on');
-  window.scrollTo(0,0);
+  el.classList.add('on');window.scrollTo(0,0);
   if(id==='week')renderWeek();
   if(id==='month')renderMonth();
   if(id==='snowball')renderSnowball();
   if(id==='bills')renderBills();
 };
-function routeHash(){const h=location.hash.replace('#','');const map={week:0,month:1,snowball:2,bills:3};if(h&&map[h]!==undefined&&appReady)window.sw(h,document.querySelectorAll('.nb')[map[h]]);}
-window.addEventListener('hashchange',routeHash);
 function renderAll(){renderWeek();renderMonth();renderSnowball();renderBills();}
 
-window.toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);};
+// ══ TOAST ══
+window.toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);};
 
-// ── MODAL ──
-let modalMode='';
+// ══ MODAL ══
+let mMode='';
 window.openModal=function(mode,title,showLabel=false,showAcct=false){
-  modalMode=mode;
+  mMode=mode;
   document.getElementById('mtitle').textContent=title;
   document.getElementById('mi-label').style.display=showLabel?'block':'none';
   document.getElementById('mi-acct').style.display=showAcct?'block':'none';
   document.getElementById('mi-amt').value='';
   document.getElementById('mi-label').value='';
-  document.getElementById('mbg').classList.add('show');
-  setTimeout(()=>document.getElementById('mi-amt').focus(),120);
+  document.getElementById('mbg').classList.add('open');
+  setTimeout(()=>document.getElementById('mi-amt').focus(),140);
 };
-window.closeModal=()=>document.getElementById('mbg').classList.remove('show');
+window.closeModal=()=>document.getElementById('mbg').classList.remove('open');
 window.submitModal=function(){
   const amt=parseFloat(document.getElementById('mi-amt').value);
-  if(isNaN(amt)||amt<0){toast('Enter valid amount');return;}
+  if(isNaN(amt)||amt<=0){toast('Enter valid amount');return;}
   const label=document.getElementById('mi-label').value||'Expense';
   const acct=document.getElementById('mi-acct').value||'4496';
   closeModal();
-  if(modalMode==='bal4496'){S.bal4496=amt;save(S);renderAll();toast('#4496 updated');}
-  if(modalMode==='bal6764'){S.bal6764=amt;save(S);renderWeek();toast('#6764 updated');}
-  if(modalMode==='bal0725'){S.bal0725=amt;save(S);renderAll();toast('Savings updated');}
-  if(modalMode==='karen-pay'){S.karenLastPay=amt;S.karenAvgPay=amt;S.bal4496+=amt;save(S);renderAll();toast(`Karen's $${amt} added`);}
-  if(modalMode==='spend'){addSpend(amt,label);}
-  if(modalMode==='unexpected'){addUnexpected(label,acct,amt);}
-  if(modalMode==='snowball-pmt'){logSnowballPmt(amt);}
-  if(modalMode.startsWith('card-')){
-    const id=modalMode.replace('card-','');
+  if(mMode==='bal4496'){S.bal4496=amt;save(S);renderWeek();toast('#4496 updated');}
+  if(mMode==='bal6764'){S.bal6764=amt;save(S);renderWeek();toast('#6764 updated');}
+  if(mMode==='bal0725'){S.bal0725=amt;save(S);renderWeek();toast('Savings updated');}
+  if(mMode==='karen-pay'){S.karenLastPay=amt;S.karenAvgPay=amt;save(S);renderWeek();toast(`Karen pay $${amt} saved`);}
+  if(mMode==='spend'){addSpend(amt,label);}
+  if(mMode==='snowball-pmt'){logSnowballPmt(amt);}
+  if(mMode.startsWith('card-')){
+    const id=mMode.replace('card-','');
     if(!S.cardBals)S.cardBals={};
     S.cardBals[id]=amt;
     save(S);renderSnowball();toast('Balance updated');
   }
 };
-window.editBal=a=>openModal('bal'+a,`Update #${a==='0725'?'savings':a} balance`);
+window.editBal=a=>openModal('bal'+a,`Update ${a==='0725'?'savings':('#'+a)} balance`);
 
-// ── DAILY CASHFLOW ──
-function getDailyBills(year, month, day) {
+// ══ DAILY BILLS ENGINE ══
+// Returns array of {label, amt, isIncome} for a given date
+// Uses S.cardBals (or override) for paid-off suppression
+function getDailyBills(year,month,day,cardBalOverride){
   const bills=[];
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dow=new Date(year,month,day).getDay();
   const karenAmt=S.karenLastPay||S.karenAvgPay||762;
-  const cb=S.cardBals||{};
+  const cb=cardBalOverride||(S.cardBals||{});
+
+  const push=(label,amt,isIncome=false)=>bills.push({label,amt,isIncome});
 
   // Income
-  if(day===7||day===22) bills.push({label:'Jon paycheck',amt:JON_PAY,isIncome:true});
-  if(dow===4) bills.push({label:'Karen paycheck',amt:karenAmt,isIncome:true});
+  if(day===7||day===22)push('Jon paycheck',JON_PAY,true);
+  if(dow===4)push('Karen paycheck',karenAmt,true);
 
-  // Groceries
-  if(dow===0) bills.push({label:'Fresh Market',amt:-200});
+  // Groceries (Sunday)
+  if(dow===0)push('Fresh Market',-200);
 
   // Transport
-  if(day===1) bills.push({label:'SunPass',amt:-20},{label:'Gas',amt:-60});
-  if(day===15) bills.push({label:'Gas',amt:-60});
-  if(day===7||day===21) bills.push({label:'Car wash',amt:-11});
+  if(day===1){push('SunPass',-20);push('Gas',-60);}
+  if(day===15)push('Gas',-60);
+  if(day===7||day===21)push('Car wash',-11);
 
-  // Fixed bills -- stop when paid off
-  if(day===1&&key<='2026-05'&&(cb.amazon===undefined||cb.amazon>0)) bills.push({label:'Amazon Store Card',amt:-29});
-  if(day===2) bills.push({label:'Amazon Prime',amt:-15});
-  if(day===2&&[0,3,6,9].includes(month)) bills.push({label:'Real-Debrid',amt:-11});
-  if(day===4) bills.push({label:'PayPal eBay',amt:-43},{label:'ChatGPT',amt:-22});
-  if(day===4||day===18) bills.push({label:'Randy training',amt:-150});
-  if(day===9&&(cb.mazda===undefined||cb.mazda>0)) bills.push({label:'Mazda CX-5',amt:-638});
-  if(day===11&&(cb.merrick===undefined||cb.merrick>0)) bills.push({label:'Merrick Bank',amt:-35});
-  if(day===11&&(cb.cap3186===undefined||cb.cap3186>0)) bills.push({label:'Cap One #3186',amt:-25});
-  if(day===15&&(cb.usaaAmex===undefined||cb.usaaAmex>0)) bills.push({label:'USAA Amex',amt:-63});
-  if(day===21&&(cb.cap4565===undefined||cb.cap4565>0)) bills.push({label:'Cap One #4565',amt:-25});
-  if(day===21&&(cb.cap5592===undefined||cb.cap5592>0)) bills.push({label:'Cap One #5592',amt:-25});
-  if(day===21&&(cb.cap7988===undefined||cb.cap7988>0)) bills.push({label:'Cap One #7988',amt:-30});
-  if(day===13&&key<='2026-10') bills.push({label:'Affirm cluster',amt:-131});
-  if(day===13&&key<='2027-01') bills.push({label:'PayPal Newegg',amt:-61});
-  if(day===13&&(cb.kpaypal===undefined||cb.kpaypal>0)) bills.push({label:'Karen PayPal Credit',amt:-100});
-  if(day===13) bills.push({label:'Claude.ai',amt:-20});
-  if(day===15) bills.push({label:'T-Mobile',amt:-152});
-  if(day===15&&(cb.irs===undefined||cb.irs>0)) bills.push({label:'IRS #1',amt:-68});
-  if(day===16&&(cb.irs===undefined||cb.irs>0)) bills.push({label:'IRS #2',amt:-35});
-  if(day===16) bills.push({label:'AT&T fiber',amt:-166});
-  if(day===22) bills.push({label:'Jon PayPal Credit',amt:-22},{label:'Spotify',amt:-22});
-  if(day===22&&key<='2027-12'&&(cb.tn===undefined||cb.tn>0)) bills.push({label:'TN unemployment',amt:-153});
-  if(day===23) bills.push({label:'State Farm',amt:-190});
-  if(day===26&&(cb.chase===undefined||cb.chase>0)) bills.push({label:'Chase/Amazon',amt:-26});
-  if(day===30&&key<='2027-03'&&!(year===2026&&month===3)) bills.push({label:'PayPal Chinese',amt:-95});
+  // Fixed bills with payoff suppression
+  if(day===1&&key<='2026-05'&&bal(cb,'amazon')>0)push('Amazon Store Card',-29);
+  if(day===2)push('Amazon Prime',-15);
+  if(day===2&&[0,3,6,9].includes(month))push('Real-Debrid',-11);
+  if(day===4&&key<='2027-08')push('PayPal eBay',-43);
+  if(day===4)push('ChatGPT',-22);
+  if(day===4||day===18)push('Randy training',-150);
+  if(day===9&&bal(cb,'mazda')>0)push('Mazda CX-5',-638);
+  if(day===11&&bal(cb,'merrick')>0)push('Merrick Bank',-35);
+  if(day===11&&bal(cb,'cap3186')>0)push('Cap One #3186',-25);
+  if(day===13&&key<='2026-10')push('Affirm cluster',-131);
+  if(day===13&&key<='2027-01')push('PayPal Newegg',-61);
+  if(day===13&&bal(cb,'kpaypal')>0)push('Karen PayPal Credit',-100);
+  if(day===13)push('Claude.ai',-20);
+  if(day===15)push('T-Mobile',-152);
+  if(day===15&&bal(cb,'usaaAmex')>0)push('USAA Amex',-63);
+  if(day===15&&bal(cb,'irs')>0)push('IRS #1',-68);
+  if(day===16&&bal(cb,'irs')>0)push('IRS #2',-35);
+  if(day===16)push('AT&T fiber',-166);
+  if(day===21&&bal(cb,'cap4565')>0)push('Cap One #4565',-25);
+  if(day===21&&bal(cb,'cap5592')>0)push('Cap One #5592',-25);
+  if(day===21&&bal(cb,'cap7988')>0)push('Cap One #7988',-30);
+  if(day===22)push('Jon PayPal Credit',-22);
+  if(day===22)push('Spotify',-22);
+  if(day===22&&key<='2027-12'&&bal(cb,'tn')>0)push('TN unemployment',-153);
+  if(day===23)push('State Farm',-190);
+  if(day===26&&bal(cb,'chase')>0)push('Chase/Amazon',-26);
+  if(day===30&&key<='2027-03'&&!(year===2026&&month===3))push('PayPal Chinese',-95);
 
-  // April 2026 one-time
-  if(year===2026&&month===3&&day===23) bills.push({label:'Vehicle registration',amt:-220});
-  if(year===2026&&month===3&&day===30) bills.push({label:'PayPal Chinese — FIRST PMT',amt:-95});
+  // One-time
+  if(year===2026&&month===3&&day===23)push('Vehicle registration',-220);
+  if(year===2026&&month===3&&day===30)push('PayPal Chinese — FIRST PMT',-95);
 
   return bills.filter(b=>b.amt!==0);
 }
 
-// ── ROADMAP ENGINE ──
-function calcRoadmap() {
-  let bal=S.bal4496||0;
-  const _origCardBals=S.cardBals;
+// Helper: get balance from cardBals, defaulting to startBal
+function bal(cb,id){
+  const t=TARGETS.find(x=>x.id===id);
+  if(!t)return 0;
+  return cb[id]!==undefined?cb[id]:t.startBal;
+}
+
+// ══ ROADMAP ENGINE ══
+// Pure function -- calculates all milestone dates from current state
+// Returns {milestones, balLog}
+function calcRoadmap(){
+  let balance=S.bal4496||0;
+  const origCB=S.cardBals;
   const milestones={};
   const balLog={};
   const phaseDone=S.phaseDone||{};
-  const pendingPhases=EXPENSE_PHASES.filter(p=>!phaseDone[p.id]&&!p.isSavings);
-  const repairBufDone=phaseDone['repair-buf'];
 
+  // Clone card balances for simulation
   const cardBals={};
-  SNOWBALL_TARGETS.forEach(t=>{
-    cardBals[t.id]=(S.cardBals&&S.cardBals[t.id]!==undefined)?S.cardBals[t.id]:t.startBal;
-  });
+  TARGETS.forEach(t=>{cardBals[t.id]=bal(S.cardBals||{},t.id);});
 
-  let snowballActive=pendingPhases.length===0;
-  let currentSnowIdx=SNOWBALL_TARGETS.findIndex(t=>cardBals[t.id]>0);
-  if(currentSnowIdx===-1)currentSnowIdx=null;
-
-  let repairHeld=(!repairBufDone&&!phaseDone['jon-tires'])?0:(!repairBufDone?1000:0);
+  // Pending expense phases (not done, not savings)
+  const pendingPhases=PHASES.filter(p=>!phaseDone[p.id]&&!p.isSavings);
+  let repairHeld=(!phaseDone['repair-buf']&&!phaseDone['jon-tires'])?0:(!phaseDone['repair-buf']?1000:0);
   let lastPhaseDate=null;
+  let snowballActive=pendingPhases.length===0;
+  let snowIdx=TARGETS.findIndex(t=>cardBals[t.id]>0);
+  if(snowIdx===-1)snowIdx=null;
 
   const d=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-  const maxDays=48*30;
 
-  for(let i=0;i<maxDays;i++){
-    const year=d.getFullYear();
-    const month=d.getMonth();
-    const day=d.getDate();
+  for(let i=0;i<1500;i++){
+    const yr=d.getFullYear(),mo=d.getMonth(),dy=d.getDate();
     const dateStr=d.toISOString().split('T')[0];
 
-    // Apply daily bills
-    getDailyBills(year,month,day).forEach(b=>{bal+=b.amt;});
+    // Inject simulation cardBals so getDailyBills skips paid-off minimums
+    S.cardBals=cardBals;
+    const dayBills=getDailyBills(yr,mo,dy,cardBals);
+    S.cardBals=origCB;
 
-    // Mark repair buffer after tires
-    if(milestones['jon-tires']&&!repairBufDone&&!milestones['repair-buf']){
+    dayBills.forEach(b=>{balance+=b.amt;});
+
+    // Mark repair buffer after tires done
+    if(milestones['jon-tires']&&!phaseDone['repair-buf']&&!milestones['repair-buf']){
       milestones['repair-buf']={date:milestones['jon-tires'].date};
       repairHeld=1000;
     }
 
-    // Check expense affordability
+    // Check expense phase affordability
     if(!snowballActive&&pendingPhases.length>0){
       const phase=pendingPhases[0];
       const gap=lastPhaseDate?Math.floor((d-lastPhaseDate)/86400000):999;
       if(!milestones[phase.id]&&gap>=14){
         const needed=phase.cost+800+repairHeld;
-        if(bal>=needed){
-          milestones[phase.id]={date:dateStr,bal:Math.round(bal)};
-          bal-=phase.cost;
+        if(balance>=needed){
+          milestones[phase.id]={date:dateStr,bal:Math.round(balance)};
+          balance-=phase.cost;
           lastPhaseDate=new Date(d);
           if(phase.id==='karen-tires')repairHeld=0;
           pendingPhases.shift();
@@ -532,706 +593,621 @@ function calcRoadmap() {
             snowballActive=true;
             milestones['snowball-start']={date:dateStr};
           }
-          balLog[dateStr]=Math.round(bal);
-          d.setDate(d.getDate()+1);
-          continue;
+          balLog[dateStr]=Math.round(balance);
+          d.setDate(dy+1);continue;
         }
       }
     }
 
     // Snowball payments on paycheck days
-    // Inject simulation cardBals so getDailyBills correctly skips paid-off minimums
-    if(snowballActive) S.cardBals={...(S.cardBals||{}),...cardBals};
-
-    if((day===7||day===22||d.getDay()===4)&&snowballActive&&currentSnowIdx!==null){
-      const target=SNOWBALL_TARGETS[currentSnowIdx];
+    if(snowballActive&&snowIdx!==null&&(dy===7||dy===22||d.getDay()===4)){
+      const target=TARGETS[snowIdx];
+      // Reserve: buffer + all bills until next Jon paycheck
       let reserve=300;
-      const nextJonDay=day<7?7:day<22?22:7;
-      const nextJonMonth=day>=22?month+1:month;
-      let rd=new Date(year,month,day+1);
-      const nextJon=new Date(year,nextJonMonth,nextJonDay);
+      const nextJonDay=dy<7?7:dy<22?22:7;
+      const nextJonMo=dy>=22?mo+1:mo;
+      let rd=new Date(yr,mo,dy+1);
+      const nextJon=new Date(yr,nextJonMo,nextJonDay);
       while(rd<nextJon){
-        getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate())
-          .forEach(b=>{
-            if(!b.isIncome&&b.amt<0&&b.label!==target.label)
-              reserve+=Math.abs(b.amt);
-          });
+        S.cardBals=cardBals;
+        getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate(),cardBals)
+          .forEach(b=>{if(!b.isIncome&&b.amt<0&&b.label!==target.label)reserve+=Math.abs(b.amt);});
+        S.cardBals=origCB;
         rd.setDate(rd.getDate()+1);
       }
-      const available=Math.max(0,bal-reserve);
+      const available=Math.max(0,balance-reserve);
       if(available>0&&cardBals[target.id]>0){
         const payment=Math.min(cardBals[target.id],available);
         cardBals[target.id]-=payment;
-        bal-=payment;
+        balance-=payment;
         if(cardBals[target.id]<=0){
           cardBals[target.id]=0;
           milestones[target.id+'-done']={date:dateStr,label:target.label};
-          currentSnowIdx++;
-          if(currentSnowIdx>=SNOWBALL_TARGETS.length){
-            milestones['debt-free']={date:dateStr};
-            currentSnowIdx=null;
-          }
+          snowIdx++;
+          if(snowIdx>=TARGETS.length){milestones['debt-free']={date:dateStr};snowIdx=null;}
         }
       }
     }
 
-    balLog[dateStr]=Math.round(bal);
-    if(snowballActive) S.cardBals=_origCardBals;
-    d.setDate(d.getDate()+1);
+    balLog[dateStr]=Math.round(balance);
+    d.setDate(dy+1);
   }
 
-  S.cardBals=_origCardBals;
-  return {milestones,balLog,finalCardBals:cardBals};
+  S.cardBals=origCB;
+  return{milestones,balLog,finalCardBals:cardBals};
 }
 
-// ── SURPLUS ──
-function nextPC(day){return day<7?7:day<22?22:7;}
-function nextPCMonth(day){return day>=22?(now.getMonth()+1>11?0:now.getMonth()+1):now.getMonth();}
-function calcSurplus(evts){
+// ══ SURPLUS CALCULATOR ══
+function calcSurplus(){
   const today=now.getDate();
-  const npc=nextPC(today);
-  const npcm=nextPCMonth(today);
-  const isSame=npcm===now.getMonth();
-  const endDay=isSame?npc:32;
-  const due=(evts||[]).filter(e=>!e.isIncome&&typeof e.amt==='number'&&e.amt<0&&e.day>today&&e.day<endDay);
-  const totalDue=due.reduce((a,e)=>a+Math.abs(e.amt),0);
+  const npcDay=today<7?7:today<22?22:7;
+  const npcMo=today>=22?(now.getMonth()+1>11?0:now.getMonth()+1):now.getMonth();
+  const isSame=npcMo===now.getMonth();
+  const endDay=isSame?npcDay:32;
+  const bills=[];
+  for(let d=today+1;d<endDay;d++){
+    getDailyBills(now.getFullYear(),now.getMonth(),d).forEach(b=>{
+      if(!b.isIncome&&b.amt<0)bills.push({...b,day:d});
+    });
+  }
+  const totalDue=bills.reduce((a,b)=>a+Math.abs(b.amt),0);
   const safe=Math.max(0,S.bal4496-totalDue-300);
-  return{due,totalDue,safe,npcLabel:`${MONTHS[npcm].substring(0,3)} ${npc}`};
+  return{bills,totalDue,safe,npcLabel:`${MN[npcMo].substring(0,3)} ${npcDay}`};
 }
 
-// ── MONTH EVENTS ──
+// ══ MONTH EVENTS ══
 function getMonthEvents(year,month,roadmap,balLog){
   const evts=[];
-  const add=(day,title,amt,color,note,isIncome=false,featured=false,isFinal=false)=>{
-    const dim=new Date(year,month+1,0).getDate();
-    if(day>=1&&day<=dim)evts.push({day,title,amt,color,note,isIncome,featured,isFinal});
-  };
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dim=new Date(year,month+1,0).getDate();
   const fromDay=(year===2026&&month===3)?22:1;
   const karenAmt=S.karenLastPay||S.karenAvgPay||762;
   const phaseDone=S.phaseDone||{};
+  const cb=S.cardBals||{};
 
-  // Paycheck note
-  const nextPending=EXPENSE_PHASES.find(p=>!phaseDone[p.id]);
-  const pcNote=nextPending?`→ Saving for ${nextPending.label} ($${nextPending.cost.toLocaleString()})`:'→ Transfer surplus to snowball same day';
+  const add=(day,title,amt,color,note='',isIncome=false,feat=false,isFinal=false)=>{
+    if(day>=1&&day<=dim)evts.push({day,title,amt,color,note,isIncome,feat,isFinal});
+  };
 
-  if(7>=fromDay)add(7,'Jon paycheck',JON_PAY,'#97C459',pcNote,true);
-  if(22>=fromDay)add(22,'Jon paycheck',JON_PAY,'#97C459',pcNote,true);
-  for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===4)add(d,'Karen paycheck — Copans',karenAmt,'#97C459','Direct deposit to #4496',true);}
-  for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===0)add(d,'Fresh Market',-200,'#85B7EB','$200/wk hard limit');}
+  const notDone=id=>{const m=roadmap[id+'-done'];return!m||m.date.substring(0,7)>=key;};
+
+  // Paychecks
+  const nextP=PHASES.find(p=>!phaseDone[p.id]);
+  const pcNote=nextP?`→ Saving for ${nextP.label} ($${nextP.cost.toLocaleString()})`:'→ Surplus to snowball target same day';
+  if(7>=fromDay)add(7,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
+  if(22>=fromDay)add(22,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
+  for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===4)add(d,'Karen paycheck — Copans',karenAmt,'#7aad4e','Direct deposit to #4496',true);}
+
+  // Groceries
+  for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===0)add(d,'Fresh Market',-200,'#6b9fd4','$200/wk hard limit');}
 
   // Transport
-  if(1>=fromDay){add(1,'SunPass',-20,'#666660','Tolls');add(1,'Gas',-60,'#666660','Gasoline');}
-  add(15,'Gas',-60,'#666660','Gasoline');
-  if(7>=fromDay)add(7,'Car wash',-11,'#666660','Biweekly');
-  add(21,'Car wash',-11,'#666660','Biweekly');
+  if(1>=fromDay){add(1,'SunPass',-20,'#5c5c58','Tolls');add(1,'Gas',-60,'#5c5c58','Gasoline');}
+  add(15,'Gas',-60,'#5c5c58','Gasoline');
+  if(7>=fromDay)add(7,'Car wash',-11,'#5c5c58','Biweekly');
+  add(21,'Car wash',-11,'#5c5c58','Biweekly');
+
+  // Fixed bills
+  if([0,3,6,9].includes(month))add(2,'Real-Debrid',-11,'#5c5c58','Quarterly $11');
+  if(key<='2026-05'&&notDone('amazon'))add(1,'Amazon Store Card',-29,'#e8836e','~29% APR');
+  add(2,'Amazon Prime',-15,'#5c5c58','Subscription');
+  if(key<='2027-08')add(4,'PayPal eBay',-43,'#d4922a','35.99% APR · done Aug 2027');
+  add(4,'ChatGPT',-22,'#5c5c58','Karen subscription');
+  add(4,'Zelle Randy',-150,'#7aad4e','Biweekly training');
+  add(18,'Zelle Randy',-150,'#7aad4e','Biweekly training');
+  if(notDone('mazda'))add(9,'Mazda CX-5',-638,'#d4922a','12.72% APR');
+  if(notDone('merrick'))add(11,'Merrick Bank',-35,'#e8836e','31.95% APR');
+  if(notDone('cap3186'))add(11,'Cap One #3186 (Karen)',-25,'#e8836e','28.24% APR');
+  if(key<='2026-10')add(13,'Affirm cluster',-131,'#a8a69f','0% APR');
+  if(key<='2027-01')add(13,'PayPal Newegg',-61,'#d4922a','35.99% APR fixed');
+  if(notDone('kpaypal'))add(13,'Karen PayPal Credit',-100,'#e8836e','29.64% APR — MANUAL');
+  add(13,'Claude.ai',-20,'#5c5c58','Subscription');
+  add(15,'T-Mobile',-152,'#a8a69f','Both phones');
+  if(notDone('usaaAmex'))add(15,'USAA Amex (Karen)',-63,'#e8836e','27.40% APR');
+  if(notDone('irs')){add(15,'IRS payment #1',-68,'#d4922a','Installment plan');add(16,'IRS payment #2',-35,'#d4922a','Installment plan');}
+  add(16,'AT&T fiber',-166,'#a8a69f','Internet');
+  if(notDone('cap4565'))add(21,'Cap One #4565 (Jon)',-25,'#e8836e','29% APR');
+  if(notDone('cap5592'))add(21,'Cap One #5592 (Karen)',-25,'#e8836e','28.99% APR');
+  if(notDone('cap7988'))add(21,'Cap One #7988 (Jon)',-30,'#e8836e','29% APR');
+  add(22,'Jon PayPal Credit',-22,'#a8a69f','0% plan — do NOT overpay');
+  add(22,'Spotify',-22,'#5c5c58','Subscription');
+  if(notDone('tn')&&key<='2027-12')add(22,'TN unemployment',-153,'#d4922a','~$153/mo');
+  add(23,'State Farm',-190,'#a8a69f','Auto insurance');
+  if(notDone('chase'))add(26,'Chase/Amazon',-26,'#a8a69f','APR TBD');
+  if(key<='2027-03'&&!(year===2026&&month===3))add(30,'PayPal Chinese vendor',-95,'#d4922a','24.99% APR fixed');
+  if(year===2026&&month===3)add(23,'Vehicle registration',-220,'#e8836e','One-time renewal');
+
+  // Expense phase events from roadmap
+  PHASES.forEach(phase=>{
+    if(phaseDone[phase.id]||phase.isSavings)return;
+    const m=roadmap[phase.id];
+    if(!m)return;
+    const ed=new Date(m.date+'T12:00:00');
+    if(ed.getFullYear()===year&&ed.getMonth()===month)
+      add(ed.getDate(),phase.label.toUpperCase(),-phase.cost,'#d4922a',`$${phase.cost.toLocaleString()} budget · calculated date`,false,true);
+  });
+
+  // Snowball payment events
+  const ssDate=roadmap['snowball-start']?.date;
+  if(ssDate){
+    for(let dd=fromDay;dd<=dim;dd++){
+      const edow=new Date(year,month,dd).getDay();
+      if(!(dd===7||dd===22||edow===4))continue;
+      const eventDate=`${year}-${String(month+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+      if(eventDate<ssDate)continue;
+      const activeTarget=TARGETS.find(t=>{
+        if(ssDate>eventDate)return false;
+        const done=roadmap[t.id+'-done'];
+        return!done||done.date>=eventDate;
+      });
+      if(!activeTarget)continue;
+      const prevDate=new Date(year,month,dd-1).toISOString().split('T')[0];
+      const prevBal=balLog[prevDate],todayBal=balLog[eventDate];
+      if(prevBal===undefined||todayBal===undefined)continue;
+      const dayNet=getDailyBills(year,month,dd).reduce((a,b)=>a+b.amt,0);
+      const payAmt=Math.round(prevBal+dayNet-todayBal);
+      if(payAmt<=5)continue;
+      const isFinal=roadmap[activeTarget.id+'-done']?.date===eventDate;
+      const title=isFinal?`${activeTarget.label} — CLEARED`:`Pay $${payAmt.toLocaleString()} → ${activeTarget.label}`;
+      evts.push({day:dd,title,amt:-payAmt,color:isFinal?'var(--pur)':'#7aad4e',note:isFinal?'Final payment · debt closed':'Snowball payment · log into card and pay now',isIncome:false,feat:true,isFinal});
+    }
+  }
 
   // Logged discretionary spends
   (S.discLog||[]).forEach(e=>{
     if(!e.date||!e.amt)return;
     const sp=new Date(e.date);
-    if(isNaN(sp.getTime()))return;
-    if(sp.getMonth()===month&&sp.getFullYear()===year)
-      add(sp.getDate(),e.label||'Discretionary spend',-Math.abs(e.amt),'#85B7EB','Logged spend');
+    if(isNaN(sp.getTime())||sp.getMonth()!==month||sp.getFullYear()!==year)return;
+    add(sp.getDate(),e.label||'Discretionary',-Math.abs(e.amt),'#6b9fd4','Logged spend');
   });
-
-  // Helper: hide bill after roadmap payoff date
-  const notDone=(id)=>{const dk=roadmap[id+'-done'];return!dk||dk.date.substring(0,7)>=key;};
-
-  if([0,3,6,9].includes(month))add(2,'Real-Debrid',-11,'#666660','Quarterly $11');
-  if(key<='2026-05'&&notDone('amazon'))add(1,'Amazon Store Card',-29,'#F09595','~29% APR');
-  add(2,'Amazon Prime',-15,'#666660','Subscription');
-  add(4,'PayPal eBay',-43,'#EF9F27','35.99% APR · done Aug 2027');
-  add(4,'ChatGPT',-22,'#666660','Karen subscription');
-  add(4,'Zelle Randy',-150,'#97C459','Biweekly training');
-  add(18,'Zelle Randy',-150,'#97C459','Biweekly training');
-  if(notDone('mazda'))add(9,'Mazda CX-5',-638,'#EF9F27','12.72% APR · payoff calculated');
-  if(notDone('merrick'))add(11,'Merrick Bank',-35,'#F09595','31.95% APR');
-  if(notDone('cap3186'))add(11,'Cap One #3186 (Karen)',-25,'#F09595','28.24% APR');
-  if(notDone('usaaAmex'))add(15,'USAA Amex (Karen)',-63,'#F09595','27.40% APR');
-  if(notDone('cap4565'))add(21,'Cap One #4565 (Jon)',-25,'#F09595','29% APR');
-  if(notDone('cap5592'))add(21,'Cap One #5592 (Karen)',-25,'#F09595','28.99% APR');
-  if(notDone('cap7988'))add(21,'Cap One #7988 (Jon)',-30,'#F09595','29% APR');
-  if(key<='2026-10')add(13,'Affirm cluster',-131,'#b4b2a9','0% APR — verify in Affirm app');
-  if(key<='2027-01')add(13,'PayPal Newegg',-61,'#EF9F27','35.99% APR fixed');
-  if(notDone('kpaypal'))add(13,'Karen PayPal Credit',-100,'#F09595','29.64% APR — MANUAL');
-  add(13,'Claude.ai',-20,'#666660','Subscription');
-  add(15,'T-Mobile',-152,'#b4b2a9','Both phones');
-  if(notDone('irs')){add(15,'IRS payment #1',-68,'#EF9F27','Installment plan');add(16,'IRS payment #2',-35,'#EF9F27','Installment plan');}
-  add(16,'AT&T fiber',-166,'#b4b2a9','Internet');
-  add(22,'Jon PayPal Credit',-22,'#b4b2a9','0% plan — do NOT overpay');
-  if(notDone('tn')&&key<='2027-12')add(22,'TN unemployment',-153,'#EF9F27','~$153/mo');
-  add(22,'Spotify',-22,'#666660','Subscription');
-  add(23,'State Farm',-190,'#b4b2a9','Auto insurance');
-  if(notDone('chase'))add(26,'Chase/Amazon',-26,'#b4b2a9','APR TBD');
-  if(key<='2027-03'&&!(year===2026&&month===3))add(30,'PayPal Chinese vendor',-95,'#EF9F27','24.99% APR fixed');
-
-  // Expense phase events from roadmap
-  EXPENSE_PHASES.forEach(phase=>{
-    if(phaseDone[phase.id]||phase.isSavings)return;
-    const m=roadmap[phase.id];
-    if(m){
-      const ed=new Date(m.date+'T12:00:00');
-      if(ed.getFullYear()===year&&ed.getMonth()===month)
-        add(ed.getDate(),phase.label.toUpperCase(),-phase.cost,'#EF9F27',`Budget $${phase.cost.toLocaleString()} · calculated affordable date`,false,true);
-    }
-  });
-
-  // April 2026 one-time
-  if(year===2026&&month===3){
-    add(23,'Vehicle registration',-220,'#F09595','One-time renewal');
-  }
-
-  // Snowball payment events -- computed from balLog diff
-  // Find which target is active on each paycheck day by checking roadmap payoff dates
-  const ssDate=roadmap['snowball-start']?.date;
-  if(ssDate){
-    for(let dd=fromDay;dd<=dim;dd++){
-      const dow2=new Date(year,month,dd).getDay();
-      if(!(dd===7||dd===22||dow2===4))continue;
-      const eventDate=`${year}-${String(month+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
-      if(eventDate<ssDate)continue;
-
-      // Find which target is active on this specific date
-      const activeTarget=SNOWBALL_TARGETS.find(t=>{
-        const startedBy=ssDate<=eventDate; // snowball started
-        if(!startedBy)return false;
-        const doneKey=t.id+'-done';
-        const done=roadmap[doneKey];
-        // Target is active if not yet done, or done on/after this date
-        return!done||(done.date>=eventDate);
-      });
-      if(!activeTarget)continue;
-
-      // Compute payment from balLog
-      const prevDate=new Date(year,month,dd-1).toISOString().split('T')[0];
-      const prevBal=balLog[prevDate];
-      const todayBal=balLog[eventDate];
-      if(prevBal===undefined||todayBal===undefined)continue;
-      const todayNet=getDailyBills(year,month,dd).reduce((a,b)=>a+b.amt,0);
-      const paymentAmt=Math.round(prevBal+todayNet-todayBal);
-      if(paymentAmt<=0)continue;
-
-      // Check if this is the final payment (target done on this date)
-      const doneOnDate=roadmap[activeTarget.id+'-done']?.date===eventDate;
-      const title=doneOnDate
-        ?`${activeTarget.label} — cleared`
-        :`Pay $${paymentAmt.toLocaleString()} → ${activeTarget.label}`;
-      const note=doneOnDate?'Final payment · debt closed':'Mandatory snowball · log into card and pay now';
-
-      // Don't show the regular minimum bill line if snowball closes it today
-      // (handled by notDone check above which uses month granularity, fine)
-
-      evts.push({day:dd,title,amt:-paymentAmt,color:doneOnDate?'var(--pur)':'#97C459',note,isIncome:false,featured:true,isFinal:doneOnDate});
-    }
-  }
 
   evts.sort((a,b)=>a.day-b.day);
   return evts;
 }
 
-// ── RENDER WEEK ──
+// ══ RENDER WEEK ══
 function renderWeek(){
   document.getElementById('b4496').textContent='$'+Math.round(S.bal4496).toLocaleString();
   document.getElementById('b6764').textContent='$'+Math.round(S.bal6764).toLocaleString();
   document.getElementById('b0725').textContent='$'+Math.round(S.bal0725).toLocaleString();
 
   const today=now.getDate();
-  const {milestones:roadmap,balLog}=calcRoadmap();
+  const todayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(today).padStart(2,'0')}`;
+  const {milestones:roadmap}=calcRoadmap();
   const phaseDone=S.phaseDone||{};
-  const nextPending=EXPENSE_PHASES.find(p=>!phaseDone[p.id]);
-  const evts=getMonthEvents(now.getFullYear(),now.getMonth(),roadmap,balLog);
-  const sur=calcSurplus(evts);
-
-  document.getElementById('week-banner').innerHTML=`
-    <div style="background:var(--abg);border:1px solid var(--am);border-radius:var(--rs);padding:10px 14px;margin-bottom:10px;">
-      <div style="font-size:13px;font-weight:700;color:var(--amb);">Today — ${MONTHS[now.getMonth()]} ${today}, ${now.getFullYear()} (${DAYS[now.getDay()]})</div>
-      <div style="font-size:11px;color:var(--t2);">Tap any balance to update · Dates auto-calculated from your balances</div>
-    </div>`;
+  const nextP=PHASES.find(p=>!phaseDone[p.id]);
+  const allPhasesDone=PHASES.every(p=>phaseDone[p.id]);
+  const sur=calcSurplus();
 
   let html='';
 
-  // Paycheck banners
-  const todayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(today).padStart(2,'0')}`;
+  // ── Today header ──
+  html+=`<div class="card" style="border-color:var(--am);background:var(--abg);margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:700;color:var(--amb);">${MN[now.getMonth()]} ${today}, ${now.getFullYear()} · ${DN[now.getDay()]}</div>
+    <div style="font-size:11px;color:var(--t2);margin-top:2px;">${allPhasesDone?'Snowball active — pay to '+( TARGETS.find(t=>bal(S.cardBals||{},t.id)>0)?.label||'all done'):'Saving for '+(nextP?.label||'...')}</div>
+  </div>`;
+
+  // ── Paycheck banners ──
   if((today===7||today===22)&&!(S.confirmed&&S.confirmed[`jon-${todayKey}`])){
-    html+=`<div class="confirm-banner">
-      <div class="cb-title">💰 Jon paycheck landed today</div>
-      <div class="cb-sub">${!nextPending?`Pay toward ${SNOWBALL_TARGETS.find(t=>{const b=(S.cardBals&&S.cardBals[t.id]!==undefined)?S.cardBals[t.id]:t.startBal;return b>0;})?.label||'current target'}`:'Surplus stays in #4496 — building for upcoming expenses'}</div>
-      <button class="btn btng btnsm" style="margin:0;" onclick="confirmAction('jon-${todayKey}')">✓ Got it</button>
+    const action=allPhasesDone?`Transfer $${Math.round(sur.safe).toLocaleString()} to snowball target`:'Leave surplus in #4496 — building for expenses';
+    html+=`<div class="banner">
+      <div class="banner-title">💰 Jon paycheck landed today</div>
+      <div class="banner-sub">${action}</div>
+      <button class="btn btng btnsm" onclick="confirmAction('jon-${todayKey}')">✓ Got it</button>
     </div>`;
   }
   if(now.getDay()===4&&!(S.confirmed&&S.confirmed[`karen-${todayKey}`])){
-    html+=`<div class="confirm-banner">
-      <div class="cb-title">💰 Karen paycheck expected today</div>
-      <div class="cb-sub">Auto-syncing from USAA deposit notification</div>
-      <button class="btn btno btnsm" style="margin:0;" onclick="confirmAction('karen-${todayKey}')">✓ Got it</button>
+    html+=`<div class="banner">
+      <div class="banner-title">💰 Karen paycheck expected today</div>
+      <div class="banner-sub">Auto-syncing from USAA deposit notification · affects projections</div>
+      <button class="btn btno btnsm" onclick="confirmAction('karen-${todayKey}')">✓ Got it</button>
     </div>`;
   }
 
-  // Command center
-  const snowballStart=roadmap['snowball-start'];
-  const snowballActive=snowballStart&&new Date()>=new Date(snowballStart.date+'T00:00:00');
-  const currentTarget=snowballActive?SNOWBALL_TARGETS.find(t=>{const b=(S.cardBals&&S.cardBals[t.id]!==undefined)?S.cardBals[t.id]:t.startBal;return b>0;}):null;
-  const currentTargetBal=currentTarget?((S.cardBals&&S.cardBals[currentTarget.id]!==undefined)?S.cardBals[currentTarget.id]:currentTarget.startBal):0;
-  const surplus=Math.max(0,S.bal4496-800);
-  const isPayday=today===7||today===22||now.getDay()===4;
-
-  if(snowballActive&&currentTarget){
-    const payAmt=Math.min(surplus,currentTargetBal);
-    const afterPay=currentTargetBal-payAmt;
-    const doneDate=roadmap[currentTarget.id+'-done'];
-    const doneDateLabel=doneDate?new Date(doneDate.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'...';
-    html+=`<div class="card" style="border:2px solid var(--gm);">
-      <div style="font-size:11px;font-weight:700;color:var(--grn);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;">🚀 Snowball active</div>
-      <div style="font-size:14px;color:var(--t2);margin-bottom:4px;">Current target</div>
-      <div style="font-size:22px;font-weight:700;color:var(--tx);margin-bottom:2px;">${currentTarget.label}</div>
-      <div style="font-size:13px;color:var(--t3);margin-bottom:16px;">$${currentTargetBal.toLocaleString()} remaining · paid off ${doneDateLabel}</div>
-      ${isPayday?`<div style="background:var(--gbg);border:1px solid var(--gm);border-radius:var(--rs);padding:12px;margin-bottom:10px;">
-        <div style="font-size:12px;color:var(--grn);font-weight:700;margin-bottom:4px;">ACTION REQUIRED TODAY</div>
-        <div style="font-size:28px;font-weight:700;color:var(--grn);margin-bottom:4px;">Pay $${Math.round(payAmt).toLocaleString()}</div>
-        <div style="font-size:13px;color:var(--t2);">Log into ${currentTarget.label} and pay $${Math.round(payAmt).toLocaleString()} right now.</div>
-        ${afterPay>0?`<div style="font-size:12px;color:var(--t3);margin-top:4px;">$${Math.round(afterPay).toLocaleString()} remaining after</div>`:`<div style="font-size:12px;color:var(--pur);font-weight:700;margin-top:4px;">✓ This clears the balance completely</div>`}
+  // ── Safe to spend card ──
+  const safeColor=sur.safe<300?'var(--red)':sur.safe<600?'var(--amb)':'var(--grn)';
+  html+=`<div class="card">
+    <div class="card-title">Safe to spend — before ${sur.npcLabel}</div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px;">
+      <div>
+        <div style="font-size:40px;font-weight:700;color:${safeColor};line-height:1;letter-spacing:-1px;">$${Math.round(sur.safe).toLocaleString()}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:4px;">${allPhasesDone?'→ Extra to snowball target':'→ Building for upcoming expenses'}</div>
       </div>
-      <button class="btn btng" style="margin-bottom:4px;" onclick="logSnowballPayment(${Math.round(payAmt)})">✓ Done — paid $${Math.round(payAmt).toLocaleString()} to ${currentTarget.label}</button>`
-      :`<div style="font-size:13px;color:var(--t2);padding:10px;background:var(--s2);border-radius:var(--rs);margin-bottom:10px;">Next payment on your next paycheck day (7th, 22nd, or Thursday)</div>`}
-      <button class="btn btno btnsm" style="margin:0;" onclick="openModal('card-${currentTarget.id}','Update ${currentTarget.label} balance')">Update balance manually</button>
+      <div style="text-align:right;">
+        <div style="font-size:14px;font-weight:700;color:var(--red);">-$${Math.round(sur.totalDue).toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--t3);">bills due</div>
+      </div>
     </div>`;
-  } else if(nextPending){
-    const m=roadmap[nextPending.id];
-    const dateLabel=m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'calculating...';
-    const needed=nextPending.cost+800;
-    const progress=Math.min(100,Math.round((S.bal4496/needed)*100));
-    const progColor=progress>=100?'var(--grn)':progress>=60?'var(--amb)':'var(--red)';
-    html+=`<div class="card" style="border-color:var(--am)40;">
-      <div style="font-size:11px;font-weight:700;color:var(--amb);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;">Saving for next expense</div>
-      <div style="font-size:22px;font-weight:700;color:var(--tx);margin-bottom:2px;">${nextPending.label}</div>
-      <div style="font-size:13px;color:var(--t3);margin-bottom:12px;">$${nextPending.cost.toLocaleString()} · ready ${dateLabel}</div>
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
-        <span style="color:var(--t2);">#4496 now</span>
-        <span style="font-weight:700;color:var(--blu);">$${Math.round(S.bal4496).toLocaleString()}</span>
-      </div>
-      <div class="prog"><div class="progfill" style="width:${progress}%;background:${progColor};"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:12px;">
-        <span style="color:var(--t3);">${progress}% there</span>
-        <span style="color:var(--t3);">need $${Math.max(0,needed-S.bal4496).toLocaleString()} more</span>
-      </div>
-      <div style="background:var(--s2);border-radius:var(--rs);padding:10px;font-size:13px;color:var(--t2);">
-        ✋ <strong>Do nothing</strong> — leave surplus in #4496. Building automatically.
-      </div>
-      <button class="btn btng btnsm" style="margin-top:10px;margin-bottom:0;" onclick="markPhaseDone('${nextPending.id}')">✓ Paid — move to next phase</button>
-    </div>`;
-  }
-
-  // Bills due
-  if(sur.due.length){
-    html+=`<div class="card"><div class="ct">Bills due before ${sur.npcLabel}</div>`;
-    sur.due.forEach(e=>{
-      const ord=e.day%10===1&&e.day!==11?'st':e.day%10===2&&e.day!==12?'nd':e.day%10===3&&e.day!==13?'rd':'th';
-      html+=`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--br);font-size:13px;">
-        <span style="color:var(--t2);">${e.title} <span style="color:var(--t3);">· ${e.day}${ord}</span></span>
-        <span style="color:var(--red);font-weight:600;">-$${Math.abs(e.amt).toLocaleString()}</span>
+  if(sur.bills.length){
+    sur.bills.forEach(b=>{
+      const ord=b.day%10===1&&b.day!==11?'st':b.day%10===2&&b.day!==12?'nd':b.day%10===3&&b.day!==13?'rd':'th';
+      html+=`<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:0.5px solid var(--br);font-size:12px;">
+        <span style="color:var(--t2);">${b.label} <span style="color:var(--t3);">· ${b.day}${ord}</span></span>
+        <span style="color:var(--red);">-$${Math.abs(b.amt).toLocaleString()}</span>
       </div>`;
     });
-    html+=`<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:700;">
-      <span style="color:var(--t3);">Total due</span>
-      <span style="color:var(--red);">-$${Math.round(sur.totalDue).toLocaleString()}</span>
-    </div></div>`;
   }
+  html+=`</div>`;
 
-  // Next 7 days
-  const weekEvts=evts.filter(e=>e.day>=today&&e.day<=today+7);
+  // ── Next 7 days ──
+  const weekEvts=[];
+  for(let dd=today;dd<=today+7;dd++){
+    getDailyBills(now.getFullYear(),now.getMonth(),dd).forEach(b=>{
+      weekEvts.push({...b,day:dd});
+    });
+  }
   const byDay={};
   weekEvts.forEach(e=>{if(!byDay[e.day])byDay[e.day]=[];byDay[e.day].push(e);});
   const days=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
   if(days.length){
-    html+=`<div class="card"><div class="ct">Next 7 days</div>`;
+    html+=`<div class="card"><div class="card-title">Next 7 days</div><div class="evlist">`;
     days.forEach(day=>{
       const isToday=day===today;
-      const dow=DAYS[new Date(now.getFullYear(),now.getMonth(),day).getDay()];
-      html+=`<div style="margin-bottom:2px;"><div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:5px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
+      const dow=DN[new Date(now.getFullYear(),now.getMonth(),day).getDay()];
+      html+=`<div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:${day===days[0]?'0':'8px'} 0 3px;text-transform:uppercase;letter-spacing:.06em;">${isToday?'TODAY · ':''  }${dow} ${day}</div>`;
       byDay[day].forEach(e=>{
-        const ac=e.isIncome?'var(--grn)':Math.abs(e.amt||0)>500?'var(--red)':'var(--t2)';
-        const as=typeof e.amt==='number'&&e.amt!==0?(e.amt>0?'+$'+e.amt.toLocaleString():'-$'+Math.abs(e.amt).toLocaleString()):'';
-        html+=`<div class="event" style="padding:5px 0;${e.featured?`border-left:2px solid ${e.isFinal?'var(--pur)':e.color};padding-left:8px;margin-left:-8px;`:''}">
-          <div class="edot" style="background:${e.color};margin-top:4px;${e.featured?'display:none;':''}"></div>
-          <div class="econtent">
-            <div class="etitle" style="font-size:12px;${e.featured?`font-weight:700;color:${e.isFinal?'var(--pur)':e.color};`:''}">${e.title}</div>
-            ${e.note?`<div class="esub">${e.note}</div>`:''}
-          </div>
-          ${as?`<div class="eamt" style="color:${ac};font-size:12px;${e.featured?'font-weight:700;':''}">${as}</div>`:''}
+        const ac=e.isIncome?'var(--grn)':Math.abs(e.amt)>400?'var(--red)':'var(--t2)';
+        const as=e.isIncome?`+$${e.amt.toLocaleString()}`:`-$${Math.abs(e.amt).toLocaleString()}`;
+        html+=`<div class="ev">
+          <div class="evdot" style="background:${e.isIncome?'var(--grn)':'var(--t3)'};"></div>
+          <div class="evcontent"><div class="evtitle">${e.label}</div></div>
+          <div class="evamt" style="color:${ac};">${as}</div>
         </div>`;
       });
-      html+='</div>';
     });
-    html+=`</div>`;
+    html+=`</div></div>`;
   }
 
-  // Spending pool
+  // ── Discretionary ──
   const spent=S.discSpent||0;
   const rem=Math.max(0,200-spent);
   const pct=Math.min(100,(spent/200)*100);
   const sc=pct>80?'var(--red)':pct>50?'var(--amb)':'var(--grn)';
-  const cw=Math.min(3,Math.floor((today-1)/7));
   html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <div class="ct" style="margin-bottom:0;">Discretionary — ${MONTHS[now.getMonth()].substring(0,3)}</div>
-      <div style="font-size:11px;color:var(--t3);">$200/mo cap</div>
+      <div class="card-title" style="margin-bottom:0;">Discretionary · ${MN[now.getMonth()].substring(0,3)}</div>
+      <div style="font-size:11px;color:var(--t3);">$200/mo soft cap</div>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4px;">
-      <div style="font-size:26px;font-weight:700;color:${sc};">$${rem.toFixed(0)} <span style="font-size:12px;color:var(--t3);font-weight:400;">left</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;">
+      <div style="font-size:28px;font-weight:700;color:${sc};letter-spacing:-.5px;">$${rem.toFixed(0)} <span style="font-size:12px;color:var(--t3);font-weight:400;">left</span></div>
       <div style="font-size:13px;color:var(--red);font-weight:700;">$${spent.toFixed(2)} used</div>
     </div>
-    <div class="prog"><div class="progfill" style="width:${pct}%;background:${sc};"></div></div>
-    <div class="wgrid">
-      ${['Wk1','Wk2','Wk3','Wk4'].map((l,i)=>{
-        const st=(S.weeks||[])[i];
-        const cls=st==='used'?'used':i===cw?'cur':'';
-        return `<div class="wp ${cls}" onclick="toggleWeek(${i})"><div class="wplabel">${l}</div><div class="wpval">${st==='used'?'-$50':'$50'}</div></div>`;
-      }).join('')}
-    </div>
-    <div style="font-size:10px;color:var(--t3);margin-bottom:6px;">Tap week to mark $50 used · Tap again to undo</div>
-    <div style="display:flex;gap:6px;">
-      <button class="btn btnr btnsm" style="flex:1;margin:0;" onclick="openModal('spend','Log spend',true)">➕ Log spend</button>
-      <button class="btn btno btnsm" style="flex:1;margin:0;" onclick="openModal('unexpected','Unexpected charge',true,true)">⚠ Unexpected</button>
-    </div>
+    <div class="prog"><div class="progbar" style="width:${pct}%;background:${sc};"></div></div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:10px;">Tracking only — balance auto-syncs from USAA daily</div>
+    <button class="btn btnr btnsm" onclick="openModal('spend','Log discretionary spend',true)">➕ Log spend</button>
   </div>`;
 
-  // Randy
+  // ── Spend log ──
+  const log=S.discLog||[];
+  if(log.length){
+    html+=`<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div class="card-title" style="margin-bottom:0;">Spend log</div>
+        <button class="btn btno btnsm" style="padding:4px 10px;font-size:11px;" onclick="resetDisc()">Reset month</button>
+      </div>`;
+    log.forEach((e,i)=>{
+      html+=`<div class="slog-entry">
+        <div class="slog-left">
+          <div class="slog-label">${e.label}</div>
+          <div class="slog-meta">${e.date}</div>
+        </div>
+        <div class="slog-right">
+          <span class="slog-amt">-$${e.amt.toFixed(2)}</span>
+          <button class="slog-del" onclick="deleteSpend(${i})">×</button>
+        </div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  // ── Randy ──
   const rs=(S.randySessions||[]).filter(s=>{const d=new Date(s.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
   const rt=rs.reduce((a,s)=>a+s.amt,0);
   html+=`<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rs.length?'10px':'0'};">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <div class="ct" style="margin-bottom:2px;">Randy — training</div>
-        <div style="font-size:22px;font-weight:700;color:var(--grn);">$${rt} <span style="font-size:12px;color:var(--t3);font-weight:400;">${rs.length} session${rs.length!==1?'s':''}</span></div>
+        <div class="card-title" style="margin-bottom:2px;">Randy — training</div>
+        <div style="font-size:20px;font-weight:700;color:var(--grn);letter-spacing:-.3px;">$${rt} <span style="font-size:12px;color:var(--t3);font-weight:400;">${rs.length} session${rs.length!==1?'s':''}</span></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-        <button class="btn btng btnsm" style="width:auto;margin:0;padding:10px 16px;" onclick="logRandy()">✓ $150</button>
-        ${rs.length?`<button class="btn btnr btnsm" style="width:auto;margin:0;padding:6px 12px;font-size:11px;" onclick="undoRandy()">Undo</button>`:''}
+        <button class="btn btng btnsm" style="width:auto;padding:8px 14px;" onclick="logRandy()">✓ $150</button>
+        ${rs.length?`<button class="btn btno btnsm" style="width:auto;padding:5px 10px;font-size:11px;" onclick="undoRandy()">Undo</button>`:''}
       </div>
     </div>
-    ${rs.length?`<div>${rs.slice(0,3).map((s,i)=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:0.5px solid var(--br);"><span style="color:var(--t2);">Session ${rs.length-i} · ${s.date}</span><span style="color:var(--grn);">$${s.amt}</span></div>`).join('')}</div>`:''}
+    ${rs.length?`<div style="margin-top:8px;">${rs.slice(0,3).map((s,i)=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:0.5px solid var(--br);"><span style="color:var(--t2);">Session ${rs.length-i} · ${s.date}</span><span style="color:var(--grn);">$${s.amt}</span></div>`).join('')}</div>`:''}
   </div>`;
 
-  // Karen pay
+  // ── Karen pay ──
   html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <div class="ct" style="margin-bottom:2px;">Karen's last pay</div>
+        <div class="card-title" style="margin-bottom:2px;">Karen's last pay</div>
         <div style="font-size:18px;font-weight:700;color:var(--amb);">$${S.karenLastPay||762}</div>
         <div style="font-size:11px;color:var(--t3);">Auto-updated every Thursday · affects projections</div>
       </div>
-      <button class="btn btna btnsm" style="width:auto;margin:0;padding:10px 16px;" onclick="openModal('karen-pay','Karen\\'s actual pay')">Update</button>
+      <button class="btn btna btnsm" style="width:auto;padding:8px 14px;" onclick="openModal('karen-pay','Karen\\'s actual pay')">Update</button>
     </div>
   </div>`;
-
-  // Unexpected
-  const unexp=S.unexpected||[];
-  if(unexp.length){
-    html+=`<div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div class="ct" style="margin-bottom:0;">Unexpected charges</div>
-        <button class="btn btno btnsm" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="clearUnexpected()">Clear</button>
-      </div>
-      ${unexp.slice(0,5).map(e=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--br);font-size:12px;"><div><div style="font-weight:600;color:var(--tx);">${e.label}</div><div style="color:var(--t3);">#${e.acct} · ${e.date}</div></div><div style="color:var(--red);font-weight:700;">-$${e.amt.toFixed(2)}</div></div>`).join('')}
-    </div>`;
-  }
-
-  // Spend log
-  const log=S.discLog||[];
-  if(log.length){
-    html+=`<div class="card"><div class="ct">Spend log</div>
-      ${log.slice(0,8).map(e=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--br);font-size:12px;"><span style="color:var(--t2);">${e.label} · ${e.date}</span><span style="color:var(--red);">-$${e.amt.toFixed(2)}</span></div>`).join('')}
-      <button class="btn btno btnsm" style="margin-top:8px;" onclick="resetSpend()">Reset month</button>
-    </div>`;
-  }
 
   document.getElementById('week-content').innerHTML=html;
 }
 
-window.logSnowballPayment=function(amt){
-  if(!S.snowballLog)S.snowballLog=[];
-  const ct=SNOWBALL_TARGETS.find(t=>{const b=(S.cardBals&&S.cardBals[t.id]!==undefined)?S.cardBals[t.id]:t.startBal;return b>0;});
-  if(!ct)return;
-  if(!S.cardBals)S.cardBals={};
-  const prev=(S.cardBals[ct.id]!==undefined)?S.cardBals[ct.id]:ct.startBal;
-  S.cardBals[ct.id]=Math.max(0,prev-amt);
-  S.snowballLog.unshift({amt,target:ct.label,date:new Date().toLocaleDateString()});
-  save(S);renderAll();toast(`$${amt.toLocaleString()} paid to ${ct.label} ✓`);
-};
-window.markPhaseDone=function(id){
-  if(!S.phaseDone)S.phaseDone={};
-  S.phaseDone[id]=true;
-  if(id==='jon-tires')S.phaseDone['repair-buf']=true;
-  save(S);renderAll();toast('Phase complete ✓');
-};
-window.confirmAction=function(id){if(!S.confirmed)S.confirmed={};S.confirmed[id]=true;save(S);renderWeek();toast('Confirmed ✓');};
-
-// ── RENDER MONTH ──
+// ══ RENDER MONTH ══
 let vMonth=now.getMonth(),vYear=now.getFullYear();
 window.changeMonth=function(dir){vMonth+=dir;if(vMonth>11){vMonth=0;vYear++;}if(vMonth<0){vMonth=11;vYear--;}renderMonth();};
 
 function renderMonth(){
-  document.getElementById('month-title').textContent=`${MONTHS[vMonth]} ${vYear}`;
+  document.getElementById('month-title').textContent=`${MN[vMonth]} ${vYear}`;
   const {milestones:roadmap,balLog}=calcRoadmap();
   const evts=getMonthEvents(vYear,vMonth,roadmap,balLog);
   const startDay=(vYear===2026&&vMonth===3)?22:1;
-  const isCurrentMonth=vYear===now.getFullYear()&&vMonth===now.getMonth();
+  const isCurMonth=vYear===now.getFullYear()&&vMonth===now.getMonth();
+  const key=`${vYear}-${String(vMonth+1).padStart(2,'0')}`;
 
-  // Starting balance from balLog
-  let runBal=S.bal4496;
-  if(!isCurrentMonth){
+  // Starting balance
+  let startBal=S.bal4496;
+  if(!isCurMonth){
     const prevEnd=new Date(vYear,vMonth,0);
-    for(let d=new Date(prevEnd);d>=new Date(now.getFullYear(),now.getMonth(),now.getDate());d.setDate(d.getDate()-1)){
+    let found=false;
+    for(let d=new Date(prevEnd);d>=new Date(now.getFullYear(),now.getMonth(),now.getDate())&&!found;d.setDate(d.getDate()-1)){
       const k=d.toISOString().split('T')[0];
-      if(balLog[k]!==undefined){runBal=balLog[k];break;}
+      if(balLog[k]!==undefined){startBal=balLog[k];found=true;}
     }
   }
 
   const totalIn=evts.filter(e=>e.isIncome&&e.day>=startDay).reduce((a,e)=>a+(e.amt||0),0);
-  const totalOut=evts.filter(e=>!e.isIncome&&e.day>=startDay&&typeof e.amt==='number'&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
+  const totalOut=evts.filter(e=>!e.isIncome&&e.day>=startDay&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
   const net=totalIn-totalOut;
 
   let html=`<div class="card">
-    <div class="ct">Month overview</div>
-    <div class="row"><div class="rl"><div class="rlabel">Expected income</div></div><div class="rval" style="color:var(--grn);">+$${totalIn.toLocaleString()}</div></div>
+    <div class="card-title">Month overview</div>
+    <div class="row"><div class="rl"><div class="rlabel">Income</div></div><div class="rval" style="color:var(--grn);">+$${totalIn.toLocaleString()}</div></div>
     <div class="row"><div class="rl"><div class="rlabel">Bills + spending</div></div><div class="rval" style="color:var(--red);">-$${totalOut.toLocaleString()}</div></div>
-    <div class="row"><div class="rl"><div class="rlabel">Starting #4496</div></div><div class="rval" style="color:var(--blu);">$${Math.round(runBal).toLocaleString()}</div></div>
+    <div class="row"><div class="rl"><div class="rlabel">Starting #4496</div></div><div class="rval" style="color:var(--blu);">$${Math.round(startBal).toLocaleString()}</div></div>
     <div class="row"><div class="rl"><div class="rlabel" style="font-weight:700;">Net</div></div><div class="rval" style="color:${net>=0?'var(--grn)':'var(--red)'};">${net>=0?'+':'-'}$${Math.abs(net).toLocaleString()}</div></div>
   </div>`;
 
+  // Group by day then week
   const byDay={};
   evts.forEach(e=>{if(e.day>=startDay){if(!byDay[e.day])byDay[e.day]=[];byDay[e.day].push(e);}});
   const sortedDays=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
-  let weekDays=[],weeks=[];
+  let wdays=[],weeks=[];
   sortedDays.forEach((day,i)=>{
-    weekDays.push(day);
-    if(new Date(vYear,vMonth,day).getDay()===6||i===sortedDays.length-1){weeks.push([...weekDays]);weekDays=[];}
+    wdays.push(day);
+    if(new Date(vYear,vMonth,day).getDay()===6||i===sortedDays.length-1){weeks.push([...wdays]);wdays=[];}
   });
 
-  weeks.forEach(wdays=>{
-    const wStart=wdays[0],wEnd=wdays[wdays.length-1];
-    const mn=MONTHS[vMonth].substring(0,3);
-    const allW=wdays.flatMap(d=>byDay[d]);
+  weeks.forEach(wds=>{
+    const wStart=wds[0],wEnd=wds[wds.length-1];
+    const mn=MN[vMonth].substring(0,3);
+    const allW=wds.flatMap(d=>byDay[d]);
     const wIn=allW.filter(e=>e.isIncome).reduce((a,e)=>a+(e.amt||0),0);
-    const wOut=allW.filter(e=>!e.isIncome&&typeof e.amt==='number'&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
-    html+=`<div class="card"><div class="wheader"><span>${mn} ${wStart}–${wEnd}</span><span>${wIn>0?`<span style="color:var(--grn);">+$${wIn.toLocaleString()}</span> `:''}${wOut>0?`<span style="color:var(--red);">-$${wOut.toLocaleString()}</span>`:''}</span></div>`;
-    wdays.forEach(day=>{
-      const isToday=isCurrentMonth&&day===now.getDate();
-      const isPast=isCurrentMonth&&day<now.getDate();
-      const dow=DAYS[new Date(vYear,vMonth,day).getDay()];
+    const wOut=allW.filter(e=>!e.isIncome&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
+    html+=`<div class="card"><div class="wheader"><span>${mn} ${wStart}–${wEnd}</span><span>${wIn>0?`<span style="color:var(--grn);">+$${wIn.toLocaleString()}</span> `:''}${wOut>0?`<span style="color:var(--red);">-$${wOut.toLocaleString()}</span>`:''}</span></div><div class="evlist">`;
+    wds.forEach(day=>{
+      const isToday=isCurMonth&&day===now.getDate();
+      const isPast=isCurMonth&&day<now.getDate();
+      const isFuture=!isCurMonth||day>=now.getDate();
+      const dow=DN[new Date(vYear,vMonth,day).getDay()];
       const dayKey=`${vYear}-${String(vMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       const dayEndBal=balLog[dayKey];
-      const isFuture=!isCurrentMonth||day>now.getDate();
-      html+=`<div style="${isPast?'opacity:0.5;':''}margin-bottom:2px;"><div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:4px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
-      const dayEvts=byDay[day]||[];
-      dayEvts.forEach(e=>{
+      html+=`<div style="${isPast?'opacity:0.45;':''}margin-bottom:2px;"><div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:7px 0 3px;text-transform:uppercase;letter-spacing:.06em;">${isToday?'TODAY · ':''}${dow} ${day}</div>`;
+      (byDay[day]||[]).forEach(e=>{
         const amtNum=typeof e.amt==='number'?e.amt:0;
-        const ac=e.isIncome?'var(--grn)':Math.abs(amtNum)>500?'var(--red)':'var(--t2)';
+        const ac=e.isIncome?'var(--grn)':Math.abs(amtNum)>400?'var(--red)':'var(--t2)';
         const as=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
-        html+=`<div class="event" style="padding:5px 0;${e.featured?`border-left:2px solid ${e.isFinal?'var(--pur)':e.color};padding-left:8px;margin-left:-8px;`:''}">
-          <div class="edot" style="background:${e.color};margin-top:4px;${e.featured?'display:none;':''}"></div>
-          <div class="econtent">
-            <div class="etitle" style="font-size:13px;${e.featured?`font-weight:700;color:${e.isFinal?'var(--pur)':e.color};`:''}">${e.title}</div>
-            ${e.note?`<div class="esub">${e.note}</div>`:''}
+        const featBorder=e.feat?`border-left:2px solid ${e.isFinal?'var(--pur)':e.color};padding-left:8px;margin-left:-8px;`:'';
+        html+=`<div class="ev${e.feat?' feat':''}" style="${featBorder}">
+          <div class="evdot" style="background:${e.color};"></div>
+          <div class="evcontent">
+            <div class="evtitle" style="font-size:13px;${e.feat?`color:${e.isFinal?'var(--pur)':e.color};`:''}">${e.title}</div>
+            ${e.note?`<div class="evsub">${e.note}</div>`:''}
           </div>
-          ${as?`<div class="eamt" style="color:${ac};${e.featured?'font-weight:700;':''}">${as}</div>`:''}
+          ${as?`<div class="evamt" style="color:${ac};${e.feat?'font-weight:700;':''}">${as}</div>`:''}
         </div>`;
       });
-      // Day summary
+      // Day balance summary from balLog
       if(isFuture&&dayEndBal!==undefined){
-        const balWarn=dayEndBal<300;
-        const balColor=dayEndBal<300?'var(--red)':dayEndBal<600?'var(--amb)':'var(--blu)';
-        const dayNet=dayEvts.reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
-        const netColor=dayNet>0?'var(--grn)':dayNet<0?'var(--red)':'var(--t3)';
-        const netStr=dayNet!==0?(dayNet>0?`+$${dayNet.toLocaleString()}`:`-$${Math.abs(dayNet).toLocaleString()}`):'';
-        html+=`<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;padding:4px 0 6px;border-top:0.5px solid var(--br);margin-top:3px;">
-          ${netStr?`<span style="font-size:11px;font-weight:600;color:${netColor};">${netStr}</span><span style="font-size:10px;color:var(--t3);">·</span>`:''}
-          <span style="font-size:12px;font-weight:700;color:${balColor};">$${Math.round(dayEndBal).toLocaleString()}${balWarn?' ⚠':''}</span>
+        const dayNet=(byDay[day]||[]).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
+        const nc=dayNet>0?'var(--grn)':dayNet<0?'var(--red)':'var(--t3)';
+        const ns=dayNet!==0?(dayNet>0?`+$${dayNet.toLocaleString()}`:`-$${Math.abs(dayNet).toLocaleString()}`):'';
+        const bc=dayEndBal<300?'var(--red)':dayEndBal<600?'var(--amb)':'var(--blu)';
+        html+=`<div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 0 5px;border-top:0.5px solid var(--br);margin-top:2px;">
+          ${ns?`<span style="font-size:11px;font-weight:600;color:${nc};">${ns}</span><span style="color:var(--t4);">·</span>`:''}
+          <span style="font-size:12px;font-weight:700;color:${bc};">$${Math.round(dayEndBal).toLocaleString()}${dayEndBal<300?' ⚠':''}</span>
         </div>`;
       }
       html+='</div>';
     });
-    html+=`</div>`;
+    html+=`</div></div>`;
   });
-  const prevM=(vMonth-1+12)%12; const prevY=vMonth===0?vYear-1:vYear;
-  const nextM=(vMonth+1)%12; const nextY=vMonth===11?vYear+1:vYear;
-  const prevLabel=`← ${MONTHS[prevM].substring(0,3)} '${String(prevY).slice(2)}`;
-  const nextLabel=`${MONTHS[nextM].substring(0,3)} '${String(nextY).slice(2)} →`;
-  document.getElementById('month-content').innerHTML=html+`
-    <div style="display:flex;gap:10px;margin-top:4px;">
-      <button class="btn btno" style="flex:1;" onclick="changeMonth(-1)">${prevLabel}</button>
-      <button class="btn btno" style="flex:1;" onclick="changeMonth(1)">${nextLabel}</button>
-    </div>`;
+
+  const prevM=(vMonth-1+12)%12,prevY=vMonth===0?vYear-1:vYear;
+  const nextM=(vMonth+1)%12,nextY=vMonth===11?vYear+1:vYear;
+  html+=`<div style="display:flex;gap:8px;margin-top:4px;">
+    <button class="btn btno" style="flex:1;" onclick="changeMonth(-1)">← ${MN[prevM].substring(0,3)} '${String(prevY).slice(2)}</button>
+    <button class="btn btno" style="flex:1;" onclick="changeMonth(1)">${MN[nextM].substring(0,3)} '${String(nextY).slice(2)} →</button>
+  </div>`;
+
+  document.getElementById('month-content').innerHTML=html;
 }
 
-// ── RENDER SNOWBALL ──
+// ══ RENDER SNOWBALL ══
 function renderSnowball(){
-  const {milestones:roadmap}=calcRoadmap();
+  const{milestones:roadmap}=calcRoadmap();
   const phaseDone=S.phaseDone||{};
-  const allExpensesDone=EXPENSE_PHASES.every(p=>phaseDone[p.id]);
+  const allExpDone=PHASES.every(p=>phaseDone[p.id]);
+  const cb=S.cardBals||{};
 
-  let html=`<div style="font-size:20px;font-weight:700;margin-bottom:2px;">Debt roadmap</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:12px;">All dates auto-calculated from your actual balances</div>`;
+  let html=`<div style="font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:2px;">Debt roadmap</div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:10px;">All dates calculated from your actual balance</div>`;
 
-  html+=`<div class="card"><div class="ct">Expense phases</div>`;
-  EXPENSE_PHASES.forEach(p=>{
+  // Expense phases
+  html+=`<div class="card"><div class="card-title">Expense phases</div>`;
+  PHASES.forEach(p=>{
     const done=phaseDone[p.id];
     const m=roadmap[p.id];
     const dateLabel=done?'DONE':m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'calculating...';
-    html+=`<div class="milestone">
-      <div class="ms-label">
-        <div style="font-weight:600;${done?'text-decoration:line-through;color:var(--t3);':''}">${p.label}</div>
-        <div class="ms-sub">$${p.cost.toLocaleString()} · ${done?'completed':'auto-scheduled'}</div>
+    html+=`<div class="ms">
+      <div class="ms-info">
+        <div class="ms-label" style="font-weight:600;${done?'text-decoration:line-through;color:var(--t3);':''}">${p.label}</div>
+        <div class="ms-sub">$${p.cost.toLocaleString()} · ${p.isSavings?'stays in savings':'from #4496'}</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div class="ms-date ${done?'ms-done':'ms-soon'}">${dateLabel}</div>
-        ${!done?`<button class="btn btng btnsm" style="width:auto;margin:0;padding:4px 10px;font-size:11px;" onclick="markPhaseDone('${p.id}')">✓ Done</button>`:''}
+      <div class="ms-right">
+        <div class="ms-date" style="color:${done?'var(--grn)':'var(--amb)'};">${dateLabel}</div>
+        ${!done?`<button class="btn btng btnsm" style="padding:4px 9px;font-size:11px;" onclick="markPhaseDone('${p.id}')">✓</button>`:''}
       </div>
     </div>`;
   });
   html+=`</div>`;
 
-  html+=`<div class="card"><div class="ct">Debt payoff order ${allExpensesDone?'🚀':''}</div>
-    ${!allExpensesDone?'<div style="font-size:12px;color:var(--amb);margin-bottom:10px;">Snowball starts after all expense phases complete</div>':''}`;
-
-  SNOWBALL_TARGETS.forEach((t,i)=>{
-    const currentBal=(S.cardBals&&S.cardBals[t.id]!==undefined)?S.cardBals[t.id]:t.startBal;
-    const done=currentBal<=0;
+  // Debt targets
+  html+=`<div class="card"><div class="card-title">Snowball order ${allExpDone?'🚀':''}</div>
+    ${!allExpDone?'<div style="font-size:12px;color:var(--amb);margin-bottom:10px;">Starts after all expense phases complete</div>':''}`;
+  TARGETS.forEach((t,i)=>{
+    const curBal=bal(cb,t.id);
+    const done=curBal<=0;
     const m=roadmap[t.id+'-done'];
     const dateLabel=done?'PAID OFF':m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...';
-    const isActive=allExpensesDone&&!done&&SNOWBALL_TARGETS.slice(0,i).every(prev=>{
-      const b=(S.cardBals&&S.cardBals[prev.id]!==undefined)?S.cardBals[prev.id]:prev.startBal;
-      return b<=0;
-    });
-    html+=`<div class="tcard ${isActive?'active':''} ${done?'tdone':''}">
+    const isActive=allExpDone&&!done&&TARGETS.slice(0,i).every(prev=>bal(cb,prev.id)<=0);
+    html+=`<div class="scard ${isActive?'active':''} ${done?'done':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:700;color:${done?'var(--grn)':isActive?'var(--amb)':'var(--tx)'};">${done?'✓ ':isActive?'🎯 ':`${i+1}. `}${t.label}</div>
-          <div style="font-size:11px;color:var(--t3);margin-top:1px;">${t.apr>0?(t.apr*100).toFixed(2)+'%':'0%'} APR · $${t.minPay}/mo min</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px;">${t.apr>0?(t.apr*100).toFixed(2)+'%':'0%'} APR · $${t.minPay}/mo min</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:17px;font-weight:700;color:${done?'var(--grn)':isActive?'var(--amb)':'var(--t2)'};">${done?'$0':'$'+currentBal.toLocaleString()}</div>
+          <div style="font-size:16px;font-weight:700;color:${done?'var(--grn)':isActive?'var(--amb)':'var(--t2)'};">${done?'$0':'$'+Math.round(curBal).toLocaleString()}</div>
           <div style="font-size:11px;color:${done?'var(--grn)':'var(--t3)'};">${dateLabel}</div>
         </div>
       </div>
       ${isActive?`<div style="display:flex;gap:6px;margin-top:10px;">
-        <button class="btn btng btnsm" style="flex:1;margin:0;" onclick="openModal('card-${t.id}','Update ${t.label} balance')">Update balance</button>
-        <button class="btn btna btnsm" style="flex:1;margin:0;" onclick="openModal('snowball-pmt','Log snowball payment')">💸 Log payment</button>
+        <button class="btn btng btnsm" style="flex:1;" onclick="openModal('card-${t.id}','Update ${t.label} balance')">Update balance</button>
+        <button class="btn btna btnsm" style="flex:1;" onclick="openModal('snowball-pmt','Log payment to ${t.label}')">💸 Log payment</button>
       </div>`:''}
     </div>`;
   });
   html+=`</div>`;
 
-  html+=`<div class="card">
-    <div class="ct">Calculated milestones</div>
-    <div class="milestone"><div class="ms-label">All CCs paid off</div><div class="ms-date ms-soon">${roadmap['chase-done']?new Date(roadmap['chase-done'].date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...'}</div></div>
-    <div class="milestone"><div class="ms-label">TN Unemployment done</div><div class="ms-date ms-soon">${roadmap['tn-done']?new Date(roadmap['tn-done'].date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...'}</div></div>
-    <div class="milestone"><div class="ms-label" style="font-weight:700;">Consumer debt free</div><div class="ms-date ms-future" style="font-size:15px;">${roadmap['irs-done']?new Date(roadmap['irs-done'].date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...'}</div></div>
-    <div class="milestone"><div class="ms-label">Mazda payoff</div><div class="ms-date ms-future">${roadmap['mazda-done']?new Date(roadmap['mazda-done'].date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...'}</div></div>
-    <div class="milestone"><div class="ms-label" style="font-weight:700;color:var(--pur);">Totally debt free</div><div class="ms-date" style="color:var(--pur);font-size:15px;">${roadmap['mazda-done']?new Date(roadmap['mazda-done'].date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...'}</div></div>
+  // Key milestones
+  const fmt=key=>{const m=roadmap[key];return m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...';};
+  html+=`<div class="card"><div class="card-title">Key milestones</div>
+    <div class="ms"><div class="ms-info"><div class="ms-label">All CCs paid off</div></div><div class="ms-date" style="color:var(--grn);">${fmt('chase-done')}</div></div>
+    <div class="ms"><div class="ms-info"><div class="ms-label">TN Unemployment done</div></div><div class="ms-date" style="color:var(--grn);">${fmt('tn-done')}</div></div>
+    <div class="ms"><div class="ms-info"><div class="ms-label" style="font-weight:700;">Consumer debt free 🏁</div></div><div class="ms-date" style="color:var(--pur);font-size:15px;">${fmt('irs-done')}</div></div>
+    <div class="ms"><div class="ms-info"><div class="ms-label">Mazda paid off</div></div><div class="ms-date" style="color:var(--blu);">${fmt('mazda-done')}</div></div>
+    <div class="ms"><div class="ms-info"><div class="ms-label" style="font-weight:700;color:var(--pur);">Totally debt free 🎉</div></div><div class="ms-date" style="color:var(--pur);font-size:15px;">${fmt('debt-free')}</div></div>
   </div>`;
 
-  html+=`<div class="card"><div class="ct">Payment log</div>`;
+  // Payment log
+  html+=`<div class="card"><div class="card-title">Payment log</div>`;
   const log=S.snowballLog||[];
   if(!log.length)html+='<div style="font-size:13px;color:var(--t3);">No payments logged yet</div>';
-  else html+=log.slice(0,8).map(e=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--br);font-size:12px;"><span style="color:var(--t2);">${e.target} · ${e.date}</span><span style="color:var(--grn);">-$${e.amt.toFixed(2)}</span></div>`).join('');
+  else html+=log.slice(0,10).map(e=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--br);font-size:12px;"><span style="color:var(--t2);">${e.target} · ${e.date}</span><span style="color:var(--grn);font-weight:700;">-$${e.amt.toFixed(2)}</span></div>`).join('');
   html+=`</div>`;
 
   document.getElementById('snowball-content').innerHTML=html;
 }
 
-// ── SPENDING ──
-function addSpend(amt,label){
-  S.discSpent=(S.discSpent||0)+amt;
-  S.bal4496=Math.max(0,S.bal4496-amt);
-  (S.discLog=S.discLog||[]).unshift({type:'spend',amt,date:new Date().toLocaleDateString(),label});
-  save(S);renderAll();toast(`-$${amt.toFixed(2)} logged`);
-}
-function addUnexpected(label,acct,amt){
-  if(!S.unexpected)S.unexpected=[];
-  S.unexpected.unshift({label,acct,amt,date:new Date().toLocaleDateString()});
-  if(acct==='4496')S.bal4496=Math.max(0,S.bal4496-amt);
-  if(acct==='savings')S.bal0725=Math.max(0,S.bal0725-amt);
-  if(acct==='6764')S.bal6764=Math.max(0,S.bal6764-amt);
-  save(S);renderAll();toast(`$${amt.toFixed(2)} logged`);
-}
-window.clearUnexpected=()=>{S.unexpected=[];save(S);renderWeek();toast('Cleared');};
-window.resetSpend=()=>{if(!confirm('Reset month?'))return;S.discSpent=0;S.discLog=[];S.weeks=[null,null,null,null];save(S);renderWeek();toast('Reset');};
-window.toggleWeek=function(i){
-  if(!S.weeks)S.weeks=[null,null,null,null];
-  if(S.weeks[i]===null){S.weeks[i]='used';S.discSpent=(S.discSpent||0)+50;S.bal4496=Math.max(0,S.bal4496-50);(S.discLog=S.discLog||[]).unshift({type:'spend',amt:50,date:`Wk${i+1}`,label:`Week ${i+1} allowance`});}
-  else{S.weeks[i]=null;S.discSpent=Math.max(0,(S.discSpent||0)-50);S.bal4496+=50;if(S.discLog&&S.discLog.length)S.discLog.shift();}
-  save(S);renderWeek();
-};
-window.logRandy=function(){
-  if(!S.randySessions)S.randySessions=[];
-  S.randySessions.unshift({date:new Date().toLocaleDateString(),amt:150});
-  S.bal4496=Math.max(0,S.bal4496-150);
-  save(S);renderWeek();toast('Session logged — $150');
-};
-window.undoRandy=function(){
-  if(!S.randySessions||!S.randySessions.length)return;
-  S.bal4496+=S.randySessions[0].amt;
-  S.randySessions.shift();
-  save(S);renderWeek();toast('Removed');
-};
-function logSnowballPmt(amt){
-  if(!S.snowballLog)S.snowballLog=[];
-  const ct=SNOWBALL_TARGETS.find(t=>{const b=(S.cardBals&&S.cardBals[t.id]!==undefined)?S.cardBals[t.id]:t.startBal;return b>0;});
-  S.snowballLog.unshift({amt,target:ct?ct.label:'Unknown',date:new Date().toLocaleDateString()});
-  if(ct){if(!S.cardBals)S.cardBals={};S.cardBals[ct.id]=Math.max(0,((S.cardBals[ct.id]!==undefined)?S.cardBals[ct.id]:ct.startBal)-amt);}
-  save(S);renderSnowball();toast(`$${amt.toFixed(2)} logged`);
-}
-
-// ── BILLS TAB ──
+// ══ BILLS TAB ══
 const BILLS=[
-  {id:'mazda',t:'Mazda CX-5 — $638.06',s:'#4496 · ~9th'},
+  {id:'mazda',t:'Mazda CX-5 — $638.06',s:'#4496 · ~9th · 12.72% APR'},
   {id:'att',t:'AT&T Fiber — $165.85',s:'#4496 · ~16th'},
   {id:'tmobile',t:'T-Mobile — $151.85',s:'#4496 · ~15th'},
   {id:'statefarm',t:'State Farm — ~$190',s:'#4496 · ~23rd · showing $160.27 Apr — monitor'},
-  {id:'tn',t:'TN Unemployment — ~$153',s:'#4496 · ~22nd'},
+  {id:'tn',t:'TN Unemployment — ~$153',s:'#4496 · ~22nd · $3,653 remaining'},
   {id:'irs1',t:'IRS payment #1 — $68',s:'#4496 · ~15th-16th'},
   {id:'irs2',t:'IRS payment #2 — $35',s:'#4496 · ~15th-16th'},
-  {id:'merrick',t:'Merrick Bank — $35',s:'#4496 · ~11th'},
+  {id:'merrick',t:'Merrick Bank — $35',s:'#4496 · ~11th · 31.95% APR'},
   {id:'cap3186',t:'Cap One #3186 (Karen) — $25',s:'#4496 · ~11th · 28.24% APR'},
   {id:'usaaamex',t:'USAA Amex (Karen) — $63 min',s:'#4496 · ~15th · 27.40% APR'},
   {id:'cap4565',t:'Cap One #4565 (Jon) — $25',s:'#4496 · ~21st · 29% APR'},
   {id:'cap5592',t:'Cap One #5592 (Karen) — $25',s:'#4496 · ~21st · 28.99% APR'},
   {id:'cap7988',t:'Cap One #7988 (Jon) — $30',s:'#4496 · ~21st · 29% APR'},
-  {id:'affirm',t:'Affirm cluster — ~$131',s:'#4496 · ~13th · 0% APR'},
-  {id:'newegg',t:'PayPal Newegg — $60.68',s:'#4496 · ~13th'},
-  {id:'ebay',t:'PayPal eBay — $42.69',s:'#4496 · ~4th'},
-  {id:'chinese',t:'PayPal Chinese — $94.94',s:'#4496 · 30th'},
-  {id:'jonpaypal',t:'Jon PayPal Credit — $22',s:'#4496 · 0% plan · do NOT overpay'},
+  {id:'affirm',t:'Affirm cluster — ~$131',s:'#4496 · ~13th · 0% APR — verify in Affirm app'},
+  {id:'newegg',t:'PayPal Newegg — $60.68',s:'#4496 · ~13th · done Jan 2027'},
+  {id:'ebay',t:'PayPal eBay — $42.69',s:'#4496 · ~4th · done Aug 2027'},
+  {id:'chinese',t:'PayPal Chinese — $94.94',s:'#4496 · 30th · done Mar 2027'},
+  {id:'jonpaypal',t:'Jon PayPal Credit — $22',s:'#4496 · 0% Customer Assistance — do NOT overpay'},
   {id:'karenpaypal',t:'Karen PayPal Credit — $100',s:'MANUAL · 29.64% APR · ~13th · hardship plan pending'},
-  {id:'chase',t:'Chase/Amazon Prime — $26',s:'#4496 · ~26th'},
-  {id:'amazon-store',t:'Amazon Store Card — $29',s:'#4496 · ~1st'},
+  {id:'amazon-store',t:'Amazon Store Card — $29',s:'#4496 · ~1st · ~29% APR · $76 remaining'},
+  {id:'chase',t:'Chase/Amazon Prime — $26',s:'#4496 · ~26th · APR TBD'},
   {id:'spotify',t:'Spotify — $21.53',s:'#4496 · ~22nd'},
   {id:'claude',t:'Claude.ai — $20',s:'#4496 · ~13th'},
   {id:'chatgpt',t:'ChatGPT — $21.94',s:'#4496 · ~4th'},
   {id:'prime',t:'Amazon Prime — $15.17',s:'#4496 · ~2nd'},
   {id:'realdebrid',t:'Real-Debrid — $11/quarter',s:'#4496 · 2nd of Apr/Jul/Oct/Jan'},
+  {id:'randy',t:'Randy training — $150 biweekly',s:'#4496 · ~4th + ~18th · Zelle'},
 ];
 function renderBills(){
   document.getElementById('bills-list').innerHTML=BILLS.map(b=>{
     const done=S.billChecks&&S.billChecks[b.id];
-    return `<div class="ci ${done?'done':''}" onclick="toggleBill('${b.id}')">
-      <div class="cb ${done?'done':''}"><span class="ck">✓</span></div>
-      <div class="cil"><div class="cititle">${b.t}</div><div class="cisub">${b.s}</div></div>
+    return `<div class="ci ${done?'on':''}" onclick="toggleBill('${b.id}')">
+      <div class="cbox ${done?'on':''}"><span class="ck">✓</span></div>
+      <div class="cilabel"><div class="cititle">${b.t}</div><div class="cisub">${b.s}</div></div>
     </div>`;
   }).join('');
 }
 window.toggleBill=id=>{if(!S.billChecks)S.billChecks={};S.billChecks[id]=!S.billChecks[id];save(S);renderBills();};
 window.resetBills=()=>{S.billChecks={};save(S);renderBills();toast('Bills reset');};
 
-// ── DEBUG ──
+// ══ ACTIONS ══
+// Spend log — tracking only, never touches bal4496
+function addSpend(amt,label){
+  S.discSpent=(S.discSpent||0)+amt;
+  (S.discLog=S.discLog||[]).unshift({amt,date:new Date().toLocaleDateString(),label});
+  save(S);renderWeek();toast(`-$${amt.toFixed(2)} logged`);
+}
+window.deleteSpend=function(i){
+  const entry=S.discLog[i];
+  if(!entry)return;
+  S.discSpent=Math.max(0,(S.discSpent||0)-entry.amt);
+  S.discLog.splice(i,1);
+  save(S);renderWeek();toast('Entry removed');
+};
+window.resetDisc=function(){
+  if(!confirm('Reset discretionary log for this month?'))return;
+  S.discSpent=0;S.discLog=[];S.weeks=[null,null,null,null];
+  save(S);renderWeek();toast('Reset');
+};
+
+// Randy — tracking only, does not touch bal4496
+window.logRandy=function(){
+  if(!S.randySessions)S.randySessions=[];
+  S.randySessions.unshift({date:new Date().toLocaleDateString(),amt:150});
+  save(S);renderWeek();toast('Session logged — $150');
+};
+window.undoRandy=function(){
+  if(!S.randySessions||!S.randySessions.length)return;
+  S.randySessions.shift();
+  save(S);renderWeek();toast('Removed');
+};
+
+// Snowball
+function logSnowballPmt(amt){
+  if(!S.snowballLog)S.snowballLog=[];
+  const ct=TARGETS.find(t=>bal(S.cardBals||{},t.id)>0);
+  if(!ct){toast('No active target');return;}
+  if(!S.cardBals)S.cardBals={};
+  const prev=S.cardBals[ct.id]!==undefined?S.cardBals[ct.id]:ct.startBal;
+  S.cardBals[ct.id]=Math.max(0,prev-amt);
+  S.snowballLog.unshift({amt,target:ct.label,date:new Date().toLocaleDateString()});
+  save(S);renderSnowball();toast(`$${amt.toLocaleString()} paid to ${ct.label} ✓`);
+}
+window.markPhaseDone=function(id){
+  if(!S.phaseDone)S.phaseDone={};
+  S.phaseDone[id]=true;
+  if(id==='jon-tires')S.phaseDone['repair-buf']=true;
+  save(S);renderAll();toast('Phase complete ✓');
+};
+window.confirmAction=function(id){if(!S.confirmed)S.confirmed={};S.confirmed[id]=true;save(S);renderWeek();toast('✓');};
+
+// ══ DEBUG EXPORTS ══
 window.getDailyBills=getDailyBills;
 window.calcRoadmap=()=>calcRoadmap();
 window.getS=()=>S;
 
-// ── INIT ──
+// ══ INIT ══
 checkAuth();
 </script>
 </body>
