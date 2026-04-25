@@ -261,7 +261,7 @@ const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const JON_PAY = 1641;
 const now = new Date();
 const mKey = `${now.getFullYear()}-${now.getMonth()}`;
-const BUFFER = 300; 
+const BUFFER = 300; // minimum safe buffer in #4496 after any expense
 
 // Expense phases in order with cost
 const EXPENSE_PHASES = [
@@ -302,8 +302,8 @@ function defaultState() {
     randySessions:[],
     billChecks:{}, pcChecks:{},
     snowballPhase:0,
-    phaseDone:{},     
-    cardBals:{},       
+    phaseDone:{},      // which expense phases are marked done
+    cardBals:{},       // current balances updated by user
     snowballLog:[],
     unexpected:[{label:'Vehicle registration renewal',acct:'4496',amt:220.40,date:'4/23/2026'}],
     confirmed:{},
@@ -415,6 +415,7 @@ window.submitModal=function(){
   if(modalMode==='spend'){addSpend(amt,label);}
   if(modalMode==='unexpected'){addUnexpected(label,acct,amt);}
   if(modalMode==='snowball-pmt'){logSnowballPmt(amt);}
+  // Card balance update
   if(modalMode.startsWith('card-')){
     const id=modalMode.replace('card-','');
     if(!S.cardBals)S.cardBals={};
@@ -426,23 +427,33 @@ window.editBal=a=>openModal('bal'+a,`Update #${a==='0725'?'savings':a} balance`)
 
 // ─────────────────────────────────────────────
 // ── CORE: DAILY CASHFLOW PROJECTOR ──
+// Walks forward day by day from today, applying
+// all known income and bills, returns a daily
+// balance array and key milestone dates.
 // ─────────────────────────────────────────────
 function getDailyBills(year, month, day) {
+  // Returns array of {label, amt} for bills on this exact date
   const bills = [];
   const key = `${year}-${String(month+1).padStart(2,'0')}`;
   const dow = new Date(year,month,day).getDay();
-  const karenAmt = S.karenLastPay || S.karenAvgPay || 762;
+  const karenAmt = S.karenAvgPay || 762;
 
+  // Income
   if(day===7||day===22) bills.push({label:'Jon paycheck',amt:JON_PAY,isIncome:true});
   if(dow===4) bills.push({label:'Karen paycheck',amt:karenAmt,isIncome:true});
 
+  // Groceries every Sunday
   if(dow===0) bills.push({label:'Fresh Market',amt:-200});
-  // if(dow===5) bills.push({label:'Discretionary',amt:-50}); //
 
+  // Discretionary $200/mo -- $50 every Friday
+  if(dow===5) bills.push({label:'Discretionary',amt:-50});
+
+  // Transport -- gas $60 twice a month, carwash $11 biweekly, SunPass $20/mo
   if(day===1) bills.push({label:'SunPass',amt:-20});
   if(day===1||day===15) bills.push({label:'Gas',amt:-60});
   if(day===7||day===21) bills.push({label:'Car wash',amt:-11});
 
+  // Fixed monthly
   if(day===1&&key<='2026-05') bills.push({label:'Amazon Store Card',amt:-29});
   if(day===2) bills.push({label:'Amazon Prime',amt:-15});
   if(day===2&&[0,3,6,9].includes(month)) bills.push({label:'Real-Debrid',amt:-11});
@@ -459,10 +470,7 @@ function getDailyBills(year, month, day) {
   if(day===22&&key<='2027-12') bills.push({label:'TN unemployment',amt:-153});
   if(day===23) bills.push({label:'State Farm',amt:-190});
   if(day===26) bills.push({label:'Chase/Amazon',amt:-26});
-  
-  if(key==='2026-04'&&day===23) bills.push({label:'Vehicle registration',amt:-220});
-  if(key==='2026-04'&&day===30) bills.push({label:'PayPal Chinese — FIRST PMT',amt:-95});
-  else if(day===30&&key<='2027-03') bills.push({label:'PayPal Chinese vendor',amt:-95});
+  if(day===30&&key<='2027-03') bills.push({label:'PayPal Chinese',amt:-95});
 
   return bills.filter(b=>b.amt!==0);
 }
@@ -470,10 +478,12 @@ function getDailyBills(year, month, day) {
 function calcRoadmap() {
   let bal = S.bal4496 || 0;
   const milestones = {};
+  const balLog = {}; // date -> balance after all that day's events
   const phaseDone = S.phaseDone || {};
   const pendingPhases = EXPENSE_PHASES.filter(p => !phaseDone[p.id] && !p.isSavings);
   const repairBufDone = phaseDone['repair-buf'];
 
+  // How much is due in the next 14 days from a given date
   function billsDueNext14(fromYear, fromMonth, fromDay) {
     let total = 0;
     let d = new Date(fromYear, fromMonth, fromDay + 1);
@@ -494,8 +504,10 @@ function calcRoadmap() {
   let currentSnowTarget = SNOWBALL_TARGETS.findIndex(t => cardBals[t.id] > 0);
   if(currentSnowTarget === -1) currentSnowTarget = null;
 
+  // Repair buffer: $1,000 must be held in savings after Jon's tires
+  // Don't count it as available balance
   let repairHeld = !repairBufDone && !phaseDone['jon-tires'] ? 0 : (!repairBufDone ? 1000 : 0);
-  let lastPhaseDate = null; 
+  let lastPhaseDate = null; // enforce minimum gap between phases
 
   let d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const maxDays = 48 * 30;
@@ -506,14 +518,19 @@ function calcRoadmap() {
     const day = d.getDate();
     const dateStr = d.toISOString().split('T')[0];
 
+    // Apply daily cashflow
     const dayBills = getDailyBills(year, month, day);
     dayBills.forEach(b => { bal += b.amt; });
 
+    // After Jon's tires paid, hold $1,000 repair buffer
     if(milestones['jon-tires'] && !repairBufDone && !milestones['repair-buf']) {
       milestones['repair-buf'] = { date: milestones['jon-tires'].date };
       repairHeld = 1000;
     }
 
+    // Check if next phase is affordable
+    // Must have: cost + $300 buffer + upcoming 14-day bills + repair buffer held
+    // Also enforce minimum 21-day gap between phases
     if(!snowballActive && pendingPhases.length > 0) {
       const nextPhase = pendingPhases[0];
       const daysSinceLast = lastPhaseDate
@@ -537,14 +554,18 @@ function calcRoadmap() {
       }
     }
 
+    // Snowball payments on paycheck days -- use actual balance surplus
     if((day===7||day===22||d.getDay()===4) && snowballActive && currentSnowTarget !== null) {
       const target = SNOWBALL_TARGETS[currentSnowTarget];
-      const monthlyIn = JON_PAY * 2 + (S.karenAvgPay||762) * 4.33;
-      const monthlyOut = 3300;
-      const biweeklySurplus = Math.max(0, monthlyIn - monthlyOut) / 2;
-      if(cardBals[target.id] > 0) {
-        const payment = Math.min(cardBals[target.id], biweeklySurplus);
+      // Calculate actual surplus: what's left above a $300 safety buffer
+      // Look at bills due in next 14 days and reserve those + buffer
+      const upcoming = billsDueNext14(year, month, day);
+      const reserve = upcoming + BUFFER;
+      const available = Math.max(0, bal - reserve);
+      if(available > 0 && cardBals[target.id] > 0) {
+        const payment = Math.min(cardBals[target.id], available);
         cardBals[target.id] -= payment;
+        bal -= payment; // actually deduct from running balance
         if(cardBals[target.id] <= 0) {
           cardBals[target.id] = 0;
           milestones[target.id + '-done'] = { date: dateStr, label: target.label };
@@ -556,10 +577,13 @@ function calcRoadmap() {
         }
       }
     }
+
+    balLog[dateStr] = Math.round(bal);
     d.setDate(d.getDate() + 1);
     if(milestones['debt-free']) break;
   }
-  return milestones;
+
+  return { milestones, balLog };
 }
 
 // ── SURPLUS CALC ──
@@ -578,74 +602,71 @@ function calcSurplus(){
   return{due,totalDue,safe,npcLabel:`${MONTHS[npcm].substring(0,3)} ${npc}`};
 }
 
-// ── UNIFIED MONTH EVENTS ──
+// ── MONTH EVENTS (for calendar display) ──
 function getMonthEvents(year, month) {
   const evts=[];
+  const add=(day,title,amt,color,note,isIncome=false)=>{
+    const dim=new Date(year,month+1,0).getDate();
+    if(day>=1&&day<=dim)evts.push({day,title,amt,color,note,isIncome});
+  };
+  const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dim=new Date(year,month+1,0).getDate();
-  const roadmap=calcRoadmap();
+  const fromDay=(year===2026&&month===3)?22:1;
+  const karenAmt=S.karenLastPay||S.karenAvgPay||762;
+  const {milestones:roadmap,balLog}=calcRoadmap();
   const phaseDone=S.phaseDone||{};
 
+  // Paycheck note based on what's next
   const nextPending=EXPENSE_PHASES.find(p=>!phaseDone[p.id]);
   const pcNote=nextPending
     ?`→ Saving for ${nextPending.label} ($${nextPending.cost.toLocaleString()})`
     :'→ Transfer surplus to snowball same day';
 
-  for(let d=1; d<=dim; d++) {
-    const bills = getDailyBills(year, month, d);
-    bills.forEach(b => {
-        const details = { color: '#b4b2a9', note: '' };
-        if(b.isIncome) {
-          details.color = '#97C459';
-          if(b.label === 'Jon paycheck') details.note = pcNote;
-          if(b.label === 'Karen paycheck') details.note = '→ Transfer full amount to #4496 same day';
-        } else {
-          const lbl = b.label;
-          if(lbl === 'Fresh Market') { details.color = '#85B7EB'; details.note = '$200/wk hard limit'; }
-          else if(lbl === 'Amazon Store Card') { details.color = '#F09595'; details.note = '~29% APR'; }
-          else if(lbl === 'Amazon Prime') { details.color = '#666660'; details.note = 'Subscription'; }
-          else if(lbl === 'Real-Debrid') { details.color = '#666660'; details.note = 'Quarterly $11'; }
-          else if(lbl === 'PayPal eBay') { details.color = '#EF9F27'; details.note = '35.99% APR · done Aug 2027'; }
-          else if(lbl === 'ChatGPT') { details.color = '#666660'; details.note = 'Karen subscription'; }
-          else if(lbl === 'Randy training') { details.color = '#97C459'; details.note = 'Biweekly training'; }
-          else if(lbl === 'Mazda CX-5') { details.color = '#EF9F27'; details.note = '12.72% APR · payoff Aug 2029'; }
-          else if(lbl === 'Merrick Bank') { details.color = '#F09595'; details.note = '31.95% APR'; }
-          else if(lbl === 'Affirm cluster') { details.color = '#b4b2a9'; details.note = '0% APR — verify in Affirm app'; }
-          else if(lbl === 'PayPal Newegg') { details.color = '#EF9F27'; details.note = '35.99% APR fixed'; }
-          else if(lbl === 'Karen PayPal Credit') { details.color = '#F09595'; details.note = '29.64% APR — MANUAL'; }
-          else if(lbl === 'Claude.ai') { details.color = '#666660'; details.note = 'Subscription'; }
-          else if(lbl === 'T-Mobile') { details.color = '#b4b2a9'; details.note = 'Both phones'; }
-          else if(lbl === 'IRS #1') { details.color = '#EF9F27'; details.note = 'Installment plan'; }
-          else if(lbl === 'IRS #2') { details.color = '#EF9F27'; details.note = 'Installment plan'; }
-          else if(lbl === 'AT&T fiber') { details.color = '#b4b2a9'; details.note = 'Internet'; }
-          else if(lbl === 'Jon PayPal Credit') { details.color = '#b4b2a9'; details.note = '0% plan — do NOT overpay'; }
-          else if(lbl === 'TN unemployment') { details.color = '#EF9F27'; details.note = '~$153/mo'; }
-          else if(lbl === 'Spotify') { details.color = '#666660'; details.note = 'Subscription'; }
-          else if(lbl === 'State Farm') { details.color = '#b4b2a9'; details.note = 'Auto insurance'; }
-          else if(lbl === 'Chase/Amazon') { details.color = '#b4b2a9'; details.note = 'APR TBD'; }
-          else if(lbl.includes('PayPal Chinese')) { details.color = '#EF9F27'; details.note = '24.99% APR fixed'; }
-          else if(lbl === 'Vehicle registration') { details.color = '#F09595'; details.note = 'One-time renewal'; }
-          else if(lbl === 'Discretionary') { details.color = '#85B7EB'; details.note = '$50/wk limit'; }
-          else if(lbl === 'Gas') { details.color = '#666660'; details.note = 'Gasoline'; }
-          else if(lbl === 'SunPass') { details.color = '#666660'; details.note = 'Tolls'; }
-          else if(lbl === 'Car wash') { details.color = '#666660'; details.note = 'Car wash'; }
-        }
-        evts.push({
-          day: d, title: b.label, amt: b.amt, color: details.color, note: details.note, isIncome: !!b.isIncome
-        });
-    });
-  }
+  if(7>=fromDay) add(7,'Jon paycheck',JON_PAY,'#97C459',pcNote,true);
+  if(22>=fromDay) add(22,'Jon paycheck',JON_PAY,'#97C459',pcNote,true);
+  for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===4)add(d,'Karen paycheck — Copans',karenAmt,'#97C459','→ Transfer full amount to #4496 same day',true);}
+  for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===0)add(d,'Fresh Market',-200,'#85B7EB','$200/wk hard limit');}
 
+  if(key<='2026-05') add(1,'Amazon Store Card',-29,'#F09595','~29% APR');
+  add(2,'Amazon Prime',-15,'#666660','Subscription');
+  if([0,3,6,9].includes(month)) add(2,'Real-Debrid',-11,'#666660','Quarterly $11');
+  add(4,'PayPal eBay',-43,'#EF9F27','35.99% APR · done Aug 2027');
+  add(4,'ChatGPT',-22,'#666660','Karen subscription');
+  add(4,'Zelle Randy',-150,'#97C459','Biweekly training');
+  add(18,'Zelle Randy',-150,'#97C459','Biweekly training');
+  add(9,'Mazda CX-5',-638,'#EF9F27','12.72% APR · payoff Aug 2029');
+  add(11,'Merrick Bank',-35,'#F09595','31.95% APR');
+  if(key<='2026-10') add(13,'Affirm cluster',-131,'#b4b2a9','0% APR — verify in Affirm app');
+  if(key<='2027-01') add(13,'PayPal Newegg',-61,'#EF9F27','35.99% APR fixed');
+  add(13,'Karen PayPal Credit',-100,'#F09595','29.64% APR — MANUAL');
+  add(13,'Claude.ai',-20,'#666660','Subscription');
+  add(15,'T-Mobile',-152,'#b4b2a9','Both phones');
+  add(15,'IRS payment #1',-68,'#EF9F27','Installment plan');
+  add(16,'IRS payment #2',-35,'#EF9F27','Installment plan');
+  add(16,'AT&T fiber',-166,'#b4b2a9','Internet');
+  add(22,'Jon PayPal Credit',-22,'#b4b2a9','0% plan — do NOT overpay');
+  if(key<='2027-12') add(22,'TN unemployment',-153,'#EF9F27','~$153/mo');
+  add(22,'Spotify',-22,'#666660','Subscription');
+  add(23,'State Farm',-190,'#b4b2a9','Auto insurance');
+  add(26,'Chase/Amazon',-26,'#b4b2a9','APR TBD');
+  if(key<='2027-03'&&!(year===2026&&month===3)) add(30,'PayPal Chinese vendor',-95,'#EF9F27','24.99% APR fixed');
+
+  // Dynamic one-time expenses from roadmap
   EXPENSE_PHASES.forEach(phase=>{
     if(phaseDone[phase.id]||phase.isSavings)return;
     const m=roadmap[phase.id];
     if(m){
       const ed=new Date(m.date+'T12:00:00');
       if(ed.getFullYear()===year&&ed.getMonth()===month){
-        evts.push({day:ed.getDate(), title:phase.label.toUpperCase(), amt:-phase.cost, color:'#F09595', note:`Calculated affordable date · budget $${phase.cost.toLocaleString()}`, isIncome:false});
+        add(ed.getDate(),phase.label.toUpperCase(),-phase.cost,'#F09595',`Calculated affordable date · budget $${phase.cost.toLocaleString()}`);
       }
     }
   });
 
+  if(year===2026&&month===3){
+    add(23,'Vehicle registration',-220,'#F09595','One-time renewal');
+    add(30,'PayPal Chinese — FIRST PMT',-95,'#F09595','Confirm autopay set');
+  }
   evts.sort((a,b)=>a.day-b.day);
   return evts;
 }
@@ -657,7 +678,7 @@ function renderWeek() {
   document.getElementById('b0725').textContent='$'+Math.round(S.bal0725).toLocaleString();
 
   const today=now.getDate();
-  const roadmap=calcRoadmap();
+  const {milestones:roadmap,balLog}=calcRoadmap();
   const phaseDone=S.phaseDone||{};
   const nextPending=EXPENSE_PHASES.find(p=>!phaseDone[p.id]);
 
@@ -675,6 +696,7 @@ function renderWeek() {
 
   let html='';
 
+  // Paycheck confirmation banners
   const todayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(today).padStart(2,'0')}`;
   if((today===7||today===22)&&!(S.confirmed&&S.confirmed[`jon-${todayKey}`])){
     html+=`<div class="confirm-banner">
@@ -694,6 +716,7 @@ function renderWeek() {
     </div>`;
   }
 
+  // Surplus card
   html+=`<div class="card" style="border-color:var(--bm)40;">
     <div class="ct">Safe to transfer — before ${sur.npcLabel}</div>
     <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px;">
@@ -715,6 +738,7 @@ function renderWeek() {
   });
   html+=`</div>`;
 
+  // Next milestone callout
   if(nextPending) {
     const m=roadmap[nextPending.id];
     const dateLabel=m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'calculating...';
@@ -738,6 +762,7 @@ function renderWeek() {
       <button class="btn btng btnsm" style="margin-top:10px;margin-bottom:0;" onclick="markPhaseDone('${nextPending.id}')">✓ Mark as paid — move to next phase</button>
     </div>`;
   } else {
+    // Snowball active -- show current target
     const ct=SNOWBALL_TARGETS.find(t=>{
       const b=(S.cardBals&&S.cardBals[t.id]!==undefined)?S.cardBals[t.id]:t.startBal;
       return b>0;
@@ -759,6 +784,7 @@ function renderWeek() {
     }
   }
 
+  // Next 7 days
   const evts=getMonthEvents(now.getFullYear(),now.getMonth());
   const weekEvts=evts.filter(e=>e.day>=today&&e.day<=today+7);
   const byDay={};
@@ -788,6 +814,7 @@ function renderWeek() {
     html+=`</div>`;
   }
 
+  // Spending pool
   const spent=S.discSpent||0;
   const rem=Math.max(0,200-spent);
   const pct=Math.min(100,(spent/200)*100);
@@ -818,6 +845,7 @@ function renderWeek() {
     </div>
   </div>`;
 
+  // Randy
   const rs=(S.randySessions||[]).filter(s=>{const d=new Date(s.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
   const rt=rs.reduce((a,s)=>a+s.amt,0);
   html+=`<div class="card">
@@ -834,6 +862,7 @@ function renderWeek() {
     ${rs.length?`<div>${rs.slice(0,3).map((s,i)=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-top:0.5px solid var(--br);"><span style="color:var(--t2);">Session ${rs.length-i} · ${s.date}</span><span style="color:var(--grn);">$${s.amt}</span></div>`).join('')}</div>`:''}
   </div>`;
 
+  // Karen pay
   html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div>
@@ -845,6 +874,7 @@ function renderWeek() {
     </div>
   </div>`;
 
+  // Unexpected
   const unexp=S.unexpected||[];
   if(unexp.length){
     html+=`<div class="card">
@@ -860,6 +890,7 @@ function renderWeek() {
     </div>`;
   }
 
+  // Spend log
   const log=S.discLog||[];
   if(log.length){
     html+=`<div class="card"><div class="ct">Spend log</div>
@@ -874,6 +905,7 @@ function renderWeek() {
 window.markPhaseDone=function(id){
   if(!S.phaseDone)S.phaseDone={};
   S.phaseDone[id]=true;
+  // Also mark repair buffer done automatically
   if(id==='jon-tires') S.phaseDone['repair-buf']=true;
   save(S);renderAll();toast('Phase complete ✓');
 };
@@ -885,26 +917,24 @@ window.changeMonth=function(dir){vMonth+=dir;if(vMonth>11){vMonth=0;vYear++;}if(
 
 function renderMonth(){
   document.getElementById('month-title').textContent=`${MONTHS[vMonth]} ${vYear}`;
+  const {milestones:roadmap,balLog}=calcRoadmap();
   const evts=getMonthEvents(vYear,vMonth);
   const startDay=(vYear===2026&&vMonth===3)?22:1;
   const isCurrentMonth=vYear===now.getFullYear()&&vMonth===now.getMonth();
 
+  // Get starting balance from balLog (includes snowball payments + expense deductions)
   let runBal = S.bal4496;
   if(!isCurrentMonth){
-    let simYear = now.getFullYear();
-    let simMonth = now.getMonth();
-    while(simYear < vYear || (simYear === vYear && simMonth < vMonth)){
-      const simFromDay = (simYear === now.getFullYear() && simMonth === now.getMonth())
-        ? now.getDate() + 1 : 1;
-      const simEvts = getMonthEvents(simYear, simMonth);
-      simEvts.forEach(e => {
-        if(e.day >= simFromDay && typeof e.amt === 'number') {
-          runBal += e.amt;
-        }
-      });
-      simMonth++;
-      if(simMonth > 11){ simMonth = 0; simYear++; }
+    // Find the last day of the month before vMonth that has a balLog entry
+    const prevMonthEnd = new Date(vYear, vMonth, 0); // last day of previous month
+    const prevKey = prevMonthEnd.toISOString().split('T')[0];
+    // Walk back from last day of prev month to find a logged balance
+    let found = false;
+    for(let d = new Date(prevMonthEnd); d >= new Date(now.getFullYear(), now.getMonth(), now.getDate()); d.setDate(d.getDate()-1)){
+      const k = d.toISOString().split('T')[0];
+      if(balLog[k] !== undefined){ runBal = balLog[k]; found = true; break; }
     }
+    if(!found) runBal = S.bal4496; // fallback
   }
 
   const totalIn=evts.filter(e=>e.isIncome&&e.day>=startDay).reduce((a,e)=>a+(e.amt||0),0);
@@ -919,6 +949,7 @@ function renderMonth(){
     <div class="row"><div class="rl"><div class="rlabel" style="font-weight:700;">Net</div></div><div class="rval" style="color:${net>=0?'var(--grn)':'var(--red)'};">${net>=0?'+':'-'}$${Math.abs(net).toLocaleString()}</div></div>
   </div>`;
 
+  // Build events by day
   const byDay={};
   evts.forEach(e=>{if(e.day>=startDay){if(!byDay[e.day])byDay[e.day]=[];byDay[e.day].push(e);}});
   const sortedDays=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
@@ -945,10 +976,10 @@ function renderMonth(){
         const isInc=e.isIncome;
         const ac=isInc?'var(--grn)':Math.abs(amtNum)>500?'var(--red)':'var(--t2)';
         const as=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
-        
+        // Current month: only days after today update runBal (real balance already includes today)
+        // Future months: all days update runBal (pre-sim stopped before vMonth)
         const isFuture = !isCurrentMonth || day > now.getDate();
         if(amtNum !== 0 && isFuture) runBal += amtNum;
-        
         const balWarn=runBal<300;
         const balColor=runBal<300?'var(--red)':runBal<600?'var(--amb)':'var(--blu)';
         html+=`<div class="event" style="padding:5px 0;">
@@ -970,13 +1001,14 @@ function renderMonth(){
 
 // ── SNOWBALL ──
 function renderSnowball(){
-  const roadmap=calcRoadmap();
+  const {milestones:roadmap,balLog}=calcRoadmap();
   const phaseDone=S.phaseDone||{};
   const allExpensesDone=EXPENSE_PHASES.every(p=>phaseDone[p.id]);
 
   let html=`<div style="font-size:20px;font-weight:700;margin-bottom:2px;">Debt roadmap</div>
     <div style="font-size:12px;color:var(--t3);margin-bottom:12px;">All dates auto-calculated from your actual balances</div>`;
 
+  // Expense phases
   html+=`<div class="card"><div class="ct">Expense phases</div>`;
   EXPENSE_PHASES.forEach(p=>{
     const done=phaseDone[p.id];
@@ -995,6 +1027,7 @@ function renderSnowball(){
   });
   html+=`</div>`;
 
+  // Snowball targets
   html+=`<div class="card"><div class="ct">Debt payoff order ${allExpensesDone?'🚀':''}</div>
     ${!allExpensesDone?'<div style="font-size:12px;color:var(--amb);margin-bottom:10px;">Snowball starts after all expense phases complete</div>':''}`;
 
@@ -1026,6 +1059,7 @@ function renderSnowball(){
   });
   html+=`</div>`;
 
+  // Milestones summary
   const dfDate=roadmap['debt-free'];
   html+=`<div class="card">
     <div class="ct">Calculated milestones</div>
@@ -1036,6 +1070,7 @@ function renderSnowball(){
     <div class="milestone"><div class="ms-label"><div style="font-weight:700;color:var(--pur);">Totally debt free</div></div><div class="ms-date" style="color:var(--pur);font-size:15px;">Aug 2029</div></div>
   </div>`;
 
+  // Snowball log
   html+=`<div class="card"><div class="ct">Payment log</div>`;
   const log=S.snowballLog||[];
   if(!log.length) html+='<div style="font-size:13px;color:var(--t3);">No payments logged yet</div>';
@@ -1128,8 +1163,30 @@ function renderBills(){
 window.toggleBill=id=>{if(!S.billChecks)S.billChecks={};S.billChecks[id]=!S.billChecks[id];save(S);renderBills();};
 window.resetBills=()=>{S.billChecks={};save(S);renderBills();toast('Bills reset');};
 
+// ── INIT ──
+// Expose for debugging
+window._debug = () => ({
+  bal: S.bal4496,
+  karenAvg: S.karenAvgPay,
+  walkMay: () => {
+    let bal = S.bal4496;
+    for(let day = now.getDate()+1; day <= 31; day++) {
+      const bills = getDailyBills(2026, 3, day);
+      bills.forEach(b => console.log(`Apr ${day}: ${b.label} ${b.amt}`));
+      bills.forEach(b => bal += b.amt);
+      console.log(`Apr ${day} end: $${Math.round(bal)}`);
+    }
+    for(let day = 1; day <= 31; day++) {
+      const bills = getDailyBills(2026, 4, day);
+      bills.forEach(b => console.log(`May ${day}: ${b.label} ${b.amt}`));
+      bills.forEach(b => bal += b.amt);
+      console.log(`May ${day} end: $${Math.round(bal)}`);
+    }
+    console.log('June 1 start should be:', Math.round(bal));
+  }
+});
 window.getDailyBills = getDailyBills;
-window.calcRoadmap = calcRoadmap;
+window.calcRoadmap = () => calcRoadmap();
 window.getS = () => S;
 checkAuth();
 </script>
