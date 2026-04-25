@@ -546,7 +546,9 @@ function calcRoadmap() {
           .forEach(b=>{if(!b.isIncome&&b.amt<0)reserve+=Math.abs(b.amt);});
         rd.setDate(rd.getDate()+1);
       }
-      const available=Math.max(0,bal-reserve);
+      // The snowball payment replaces the target's minimum, so remove it from reserve
+      const targetMinInReserve = target.minPay;
+      const available=Math.max(0,bal-(reserve-targetMinInReserve));
       if(available>0&&cardBals[target.id]>0){
         const payment=Math.min(cardBals[target.id],available);
         cardBals[target.id]-=payment;
