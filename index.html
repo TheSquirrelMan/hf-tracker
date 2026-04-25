@@ -220,6 +220,19 @@ select.minput option{background:var(--s2);}
   </div>
 </div>
 
+<!-- BILL MODAL -->
+<div class="mbg" id="bill-modal" onclick="closeBillModal()">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <div class="mtitle" id="bm-title">Edit bill</div>
+    <input class="minput" type="text" id="bm-name" placeholder="Bill name">
+    <input class="minput" type="number" id="bm-amt" placeholder="Amount ($)" inputmode="decimal">
+    <input class="minput" type="number" id="bm-day" placeholder="Due day (1-31)" inputmode="numeric" min="1" max="31">
+    <input class="minput" type="text" id="bm-note" placeholder="Note (optional)">
+    <button class="btn btng" onclick="saveBillModal()">Save</button>
+    <button class="btn btno" onclick="closeBillModal()">Cancel</button>
+  </div>
+</div>
+
 <!-- NAV -->
 <nav class="nav" style="display:none;" id="main-nav">
   <button class="nb on" onclick="sw('week',this)">This Week</button>
@@ -270,12 +283,7 @@ select.minput option{background:var(--s2);}
 
 <!-- BILLS -->
 <div class="panel" id="p-bills" style="display:none;">
-  <div style="font-size:18px;font-weight:700;margin-bottom:2px;letter-spacing:-.3px;">Monthly bills</div>
-  <div style="font-size:12px;color:var(--t3);margin-bottom:10px;">Tap to mark processed · resets monthly</div>
-  <div class="card">
-    <div id="bills-list"></div>
-    <button class="btn btno btnsm" style="margin-top:10px;" onclick="resetBills()">Reset all</button>
-  </div>
+  <div id="bills-content"></div>
 </div>
 
 <script type="module">
@@ -469,6 +477,9 @@ window.submitModal=function(){
 };
 window.editBal=a=>openModal('bal'+a,`Update ${a==='0725'?'savings':('#'+a)} balance`);
 
+// Set of default bill IDs for filtering custom-added bills
+const DEFAULT_BILL_IDS=new Set(['mazda','att','tmobile','statefarm','tn','irs1','irs2','merrick','cap3186','usaaAmex','cap4565','cap5592','cap7988','jonpaypal','karenpaypal','chase','spotify','claude','chatgpt','prime','randy','realdebrid','affirm','newegg','ebay','chinese','amazon']);
+
 // ══ DAILY BILLS ENGINE ══
 // Returns array of {label, amt, isIncome} for a given date
 // Uses S.cardBals (or override) for paid-off suppression
@@ -480,6 +491,19 @@ function getDailyBills(year,month,day,cardBalOverride){
   const cb=cardBalOverride||(S.cardBals||{});
 
   const push=(label,amt,isIncome=false)=>bills.push({label,amt,isIncome});
+
+  // Helper: get bill amount from userBills if edited, else default
+  const ub=(id,def)=>{
+    if(S.userBills){const b=S.userBills.find(x=>x.id===id);if(b)return b.amt;}
+    return def;
+  };
+
+  // User-managed custom bills (added by user, not in defaults)
+  if(S.userBills){
+    S.userBills.filter(b=>!DEFAULT_BILL_IDS.has(b.id)&&b.day===day).forEach(b=>{
+      push(b.name,-b.amt);
+    });
+  }
 
   // Income
   if(day===7||day===22)push('Jon paycheck',JON_PAY,true);
@@ -493,33 +517,33 @@ function getDailyBills(year,month,day,cardBalOverride){
   if(day===15)push('Gas',-60);
   if(day===7||day===21)push('Car wash',-11);
 
-  // Fixed bills with payoff suppression
+  // Fixed bills with payoff suppression -- amounts pulled from userBills if edited
   if(day===1&&key<='2026-05'&&bal(cb,'amazon')>0)push('Amazon Store Card',-29);
-  if(day===2)push('Amazon Prime',-15);
+  if(day===2)push('Amazon Prime',-ub('prime',15));
   if(day===2&&[0,3,6,9].includes(month))push('Real-Debrid',-11);
   if(day===4&&key<='2027-08')push('PayPal eBay',-43);
-  if(day===4)push('ChatGPT',-22);
-  if(day===4||day===18)push('Randy training',-150);
-  if(day===9&&bal(cb,'mazda')>0)push('Mazda CX-5',-638);
-  if(day===11&&bal(cb,'merrick')>0)push('Merrick Bank',-35);
-  if(day===11&&bal(cb,'cap3186')>0)push('Cap One #3186',-25);
+  if(day===4)push('ChatGPT',-ub('chatgpt',22));
+  if(day===4||day===18)push('Randy training',-ub('randy',150));
+  if(day===9&&bal(cb,'mazda')>0)push('Mazda CX-5',-ub('mazda',638));
+  if(day===11&&bal(cb,'merrick')>0)push('Merrick Bank',-ub('merrick',35));
+  if(day===11&&bal(cb,'cap3186')>0)push('Cap One #3186',-ub('cap3186',25));
   if(day===13&&key<='2026-10')push('Affirm cluster',-131);
   if(day===13&&key<='2027-01')push('PayPal Newegg',-61);
-  if(day===13&&bal(cb,'kpaypal')>0)push('Karen PayPal Credit',-100);
-  if(day===13)push('Claude.ai',-20);
-  if(day===15)push('T-Mobile',-152);
-  if(day===15&&bal(cb,'usaaAmex')>0)push('USAA Amex',-63);
-  if(day===15&&bal(cb,'irs')>0)push('IRS #1',-68);
-  if(day===16&&bal(cb,'irs')>0)push('IRS #2',-35);
-  if(day===16)push('AT&T fiber',-166);
-  if(day===21&&bal(cb,'cap4565')>0)push('Cap One #4565',-25);
-  if(day===21&&bal(cb,'cap5592')>0)push('Cap One #5592',-25);
-  if(day===21&&bal(cb,'cap7988')>0)push('Cap One #7988',-30);
-  if(day===22)push('Jon PayPal Credit',-22);
-  if(day===22)push('Spotify',-22);
-  if(day===22&&key<='2027-12'&&bal(cb,'tn')>0)push('TN unemployment',-153);
-  if(day===23)push('State Farm',-190);
-  if(day===26&&bal(cb,'chase')>0)push('Chase/Amazon',-26);
+  if(day===13&&bal(cb,'kpaypal')>0)push('Karen PayPal Credit',-ub('karenpaypal',100));
+  if(day===13)push('Claude.ai',-ub('claude',20));
+  if(day===15)push('T-Mobile',-ub('tmobile',152));
+  if(day===15&&bal(cb,'usaaAmex')>0)push('USAA Amex',-ub('usaaAmex',63));
+  if(day===15&&bal(cb,'irs')>0)push('IRS #1',-ub('irs1',68));
+  if(day===16&&bal(cb,'irs')>0)push('IRS #2',-ub('irs2',35));
+  if(day===16)push('AT&T fiber',-ub('att',166));
+  if(day===21&&bal(cb,'cap4565')>0)push('Cap One #4565',-ub('cap4565',25));
+  if(day===21&&bal(cb,'cap5592')>0)push('Cap One #5592',-ub('cap5592',25));
+  if(day===21&&bal(cb,'cap7988')>0)push('Cap One #7988',-ub('cap7988',30));
+  if(day===22)push('Jon PayPal Credit',-ub('jonpaypal',22));
+  if(day===22)push('Spotify',-ub('spotify',22));
+  if(day===22&&key<='2027-12'&&bal(cb,'tn')>0)push('TN unemployment',-ub('tn',153));
+  if(day===23)push('State Farm',-ub('statefarm',190));
+  if(day===26&&bal(cb,'chase')>0)push('Chase/Amazon',-ub('chase',26));
   if(day===30&&key<='2027-03'&&!(year===2026&&month===3))push('PayPal Chinese',-95);
 
   // One-time
@@ -1175,46 +1199,155 @@ function renderSnowball(){
 }
 
 // ══ BILLS TAB ══
-const BILLS=[
-  {id:'mazda',t:'Mazda CX-5 — $638.06',s:'#4496 · ~9th · 12.72% APR'},
-  {id:'att',t:'AT&T Fiber — $165.85',s:'#4496 · ~16th'},
-  {id:'tmobile',t:'T-Mobile — $151.85',s:'#4496 · ~15th'},
-  {id:'statefarm',t:'State Farm — ~$190',s:'#4496 · ~23rd · showing $160.27 Apr — monitor'},
-  {id:'tn',t:'TN Unemployment — ~$153',s:'#4496 · ~22nd · $3,653 remaining'},
-  {id:'irs1',t:'IRS payment #1 — $68',s:'#4496 · ~15th-16th'},
-  {id:'irs2',t:'IRS payment #2 — $35',s:'#4496 · ~15th-16th'},
-  {id:'merrick',t:'Merrick Bank — $35',s:'#4496 · ~11th · 31.95% APR'},
-  {id:'cap3186',t:'Cap One #3186 (Karen) — $25',s:'#4496 · ~11th · 28.24% APR'},
-  {id:'usaaamex',t:'USAA Amex (Karen) — $63 min',s:'#4496 · ~15th · 27.40% APR'},
-  {id:'cap4565',t:'Cap One #4565 (Jon) — $25',s:'#4496 · ~21st · 29% APR'},
-  {id:'cap5592',t:'Cap One #5592 (Karen) — $25',s:'#4496 · ~21st · 28.99% APR'},
-  {id:'cap7988',t:'Cap One #7988 (Jon) — $30',s:'#4496 · ~21st · 29% APR'},
-  {id:'affirm',t:'Affirm cluster — ~$131',s:'#4496 · ~13th · 0% APR — verify in Affirm app'},
-  {id:'newegg',t:'PayPal Newegg — $60.68',s:'#4496 · ~13th · done Jan 2027'},
-  {id:'ebay',t:'PayPal eBay — $42.69',s:'#4496 · ~4th · done Aug 2027'},
-  {id:'chinese',t:'PayPal Chinese — $94.94',s:'#4496 · 30th · done Mar 2027'},
-  {id:'jonpaypal',t:'Jon PayPal Credit — $22',s:'#4496 · 0% Customer Assistance — do NOT overpay'},
-  {id:'karenpaypal',t:'Karen PayPal Credit — $100',s:'MANUAL · 29.64% APR · ~13th · hardship plan pending'},
-  {id:'amazon-store',t:'Amazon Store Card — $29',s:'#4496 · ~1st · ~29% APR · $76 remaining'},
-  {id:'chase',t:'Chase/Amazon Prime — $26',s:'#4496 · ~26th · APR TBD'},
-  {id:'spotify',t:'Spotify — $21.53',s:'#4496 · ~22nd'},
-  {id:'claude',t:'Claude.ai — $20',s:'#4496 · ~13th'},
-  {id:'chatgpt',t:'ChatGPT — $21.94',s:'#4496 · ~4th'},
-  {id:'prime',t:'Amazon Prime — $15.17',s:'#4496 · ~2nd'},
-  {id:'realdebrid',t:'Real-Debrid — $11/quarter',s:'#4496 · 2nd of Apr/Jul/Oct/Jan'},
-  {id:'randy',t:'Randy training — $150 biweekly',s:'#4496 · ~4th + ~18th · Zelle'},
+// Default user-managed bills -- stored in S.userBills
+// Locked/auto-ending bills stay hardcoded in getDailyBills()
+const DEFAULT_BILLS=[
+  {id:'mazda',    name:'Mazda CX-5',           amt:638, day:9,  note:'12.72% APR'},
+  {id:'att',      name:'AT&T Fiber',            amt:166, day:16, note:'Internet'},
+  {id:'tmobile',  name:'T-Mobile',              amt:152, day:15, note:'Both phones'},
+  {id:'statefarm',name:'State Farm',            amt:190, day:23, note:'Auto insurance · showing $160.27 Apr — monitor'},
+  {id:'tn',       name:'TN Unemployment',       amt:153, day:22, note:'~$3,653 remaining'},
+  {id:'irs1',     name:'IRS payment #1',        amt:68,  day:15, note:'Installment plan'},
+  {id:'irs2',     name:'IRS payment #2',        amt:35,  day:16, note:'Installment plan'},
+  {id:'merrick',  name:'Merrick Bank',          amt:35,  day:11, note:'31.95% APR'},
+  {id:'cap3186',  name:'Cap One #3186 (Karen)', amt:25,  day:11, note:'28.24% APR'},
+  {id:'usaaAmex', name:'USAA Amex (Karen)',     amt:63,  day:15, note:'27.40% APR · min payment'},
+  {id:'cap4565',  name:'Cap One #4565 (Jon)',   amt:25,  day:21, note:'29% APR'},
+  {id:'cap5592',  name:'Cap One #5592 (Karen)', amt:25,  day:21, note:'28.99% APR'},
+  {id:'cap7988',  name:'Cap One #7988 (Jon)',   amt:30,  day:21, note:'29% APR'},
+  {id:'jonpaypal',name:'Jon PayPal Credit',     amt:22,  day:22, note:'0% Customer Assistance — do NOT overpay'},
+  {id:'karenpaypal',name:'Karen PayPal Credit', amt:100, day:13, note:'29.64% APR · MANUAL · hardship plan pending'},
+  {id:'chase',    name:'Chase/Amazon Prime',    amt:26,  day:26, note:'APR TBD'},
+  {id:'spotify',  name:'Spotify',               amt:22,  day:22, note:'Subscription'},
+  {id:'claude',   name:'Claude.ai',             amt:20,  day:13, note:'Subscription'},
+  {id:'chatgpt',  name:'ChatGPT',               amt:22,  day:4,  note:'Karen subscription'},
+  {id:'prime',    name:'Amazon Prime',          amt:15,  day:2,  note:'Subscription'},
+  {id:'randy',    name:'Randy training',        amt:150, day:4,  note:'Biweekly · also ~18th'},
 ];
-function renderBills(){
-  document.getElementById('bills-list').innerHTML=BILLS.map(b=>{
-    const done=S.billChecks&&S.billChecks[b.id];
-    return `<div class="ci ${done?'on':''}" onclick="toggleBill('${b.id}')">
-      <div class="cbox ${done?'on':''}"><span class="ck">✓</span></div>
-      <div class="cilabel"><div class="cititle">${b.t}</div><div class="cisub">${b.s}</div></div>
-    </div>`;
-  }).join('');
+
+// Locked bills -- hardcoded engine logic, shown read-only
+const LOCKED_BILLS=[
+  {id:'realdebrid', name:'Real-Debrid',         amt:11,  note:'Quarterly · Apr/Jul/Oct/Jan 2nd'},
+  {id:'affirm',     name:'Affirm cluster',       amt:131, note:'0% APR · ends ~Oct 2026'},
+  {id:'newegg',     name:'PayPal Newegg',        amt:61,  note:'35.99% APR · ends Jan 2027'},
+  {id:'ebay',       name:'PayPal eBay',          amt:43,  note:'35.99% APR · ends Aug 2027'},
+  {id:'chinese',    name:'PayPal Chinese',       amt:95,  note:'24.99% APR · ends Mar 2027'},
+  {id:'amazon',     name:'Amazon Store Card',    amt:29,  note:'~29% APR · ends ~May 2026'},
+];
+
+function getUserBills(){
+  if(!S.userBills||!S.userBills.length)return DEFAULT_BILLS.map(b=>({...b}));
+  return S.userBills;
 }
-window.toggleBill=id=>{if(!S.billChecks)S.billChecks={};S.billChecks[id]=!S.billChecks[id];save(S);renderBills();};
-window.resetBills=()=>{S.billChecks={};save(S);renderBills();toast('Bills reset');};
+
+// Bill edit modal state
+let editingBill=null;
+
+function renderBills(){
+  const bills=getUserBills();
+  const totalAmt=bills.reduce((a,b)=>a+b.amt,0);
+
+  let html=`<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;">
+    <div>
+      <div style="font-size:18px;font-weight:700;letter-spacing:-.3px;">Bills manager</div>
+      <div style="font-size:12px;color:var(--t3);margin-top:2px;">$${totalAmt.toLocaleString()}/mo · tap to edit</div>
+    </div>
+    <button class="btn btng btnsm" style="width:auto;padding:8px 14px;" onclick="addBill()">+ Add bill</button>
+  </div>`;
+
+  // User-managed bills
+  html+=`<div class="card" style="padding:0;">`;
+  bills.forEach((b,i)=>{
+    html+=`<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:0.5px solid var(--br);${i===bills.length-1?'border-bottom:none;':''}">
+      <div style="flex:1;min-width:0;cursor:pointer;" onclick="editBillItem('${b.id}')">
+        <div style="font-size:14px;font-weight:600;">${b.name}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:1px;">~${b.day}th · ${b.note||''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        <div style="font-size:15px;font-weight:700;color:var(--red);cursor:pointer;" onclick="editBillItem('${b.id}')">-$${b.amt}</div>
+        <button style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:2px 4px;line-height:1;" onclick="deleteBill('${b.id}')">×</button>
+      </div>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // Locked bills
+  html+=`<div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin:14px 0 6px;">Auto-managed · hardcoded logic</div>
+  <div class="card" style="padding:0;">`;
+  LOCKED_BILLS.forEach((b,i)=>{
+    html+=`<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:0.5px solid var(--br);${i===LOCKED_BILLS.length-1?'border-bottom:none;':''}opacity:0.6;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;">${b.name} <span style="font-size:10px;color:var(--t3);background:var(--s3);padding:2px 5px;border-radius:4px;margin-left:4px;">locked</span></div>
+        <div style="font-size:11px;color:var(--t3);margin-top:1px;">${b.note}</div>
+      </div>
+      <div style="font-size:14px;font-weight:700;color:var(--red);">-$${b.amt}</div>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  document.getElementById('bills-content').innerHTML=html;
+}
+
+window.editBillItem=function(id){
+  const bills=getUserBills();
+  const b=bills.find(x=>x.id===id);
+  if(!b)return;
+  editingBill=id;
+  // Show edit modal
+  const modal=document.getElementById('bill-modal');
+  document.getElementById('bm-name').value=b.name;
+  document.getElementById('bm-amt').value=b.amt;
+  document.getElementById('bm-day').value=b.day;
+  document.getElementById('bm-note').value=b.note||'';
+  document.getElementById('bm-title').textContent='Edit bill';
+  modal.classList.add('open');
+  setTimeout(()=>document.getElementById('bm-name').focus(),140);
+};
+
+window.addBill=function(){
+  editingBill=null;
+  const modal=document.getElementById('bill-modal');
+  document.getElementById('bm-name').value='';
+  document.getElementById('bm-amt').value='';
+  document.getElementById('bm-day').value='';
+  document.getElementById('bm-note').value='';
+  document.getElementById('bm-title').textContent='Add bill';
+  modal.classList.add('open');
+  setTimeout(()=>document.getElementById('bm-name').focus(),140);
+};
+
+window.saveBillModal=function(){
+  const name=document.getElementById('bm-name').value.trim();
+  const amt=parseFloat(document.getElementById('bm-amt').value);
+  const day=parseInt(document.getElementById('bm-day').value);
+  const note=document.getElementById('bm-note').value.trim();
+  if(!name||isNaN(amt)||isNaN(day)||day<1||day>31){toast('Fill in all fields');return;}
+  const bills=getUserBills();
+  if(editingBill){
+    const idx=bills.findIndex(b=>b.id===editingBill);
+    if(idx>=0)bills[idx]={...bills[idx],name,amt,day,note};
+  } else {
+    const id='bill_'+Date.now();
+    bills.push({id,name,amt,day,note});
+  }
+  S.userBills=bills;
+  save(S);
+  closeBillModal();
+  renderBills();
+  renderAll();
+  toast(editingBill?'Bill updated':'Bill added');
+};
+
+window.deleteBill=function(id){
+  const bills=getUserBills();
+  const b=bills.find(x=>x.id===id);
+  if(!b)return;
+  if(!confirm(`Delete "${b.name}"?`))return;
+  S.userBills=bills.filter(x=>x.id!==id);
+  save(S);renderBills();renderAll();toast('Bill removed');
+};
+
+window.closeBillModal=()=>document.getElementById('bill-modal').classList.remove('open');
 
 // ══ ACTIONS ══
 // Spend log — tracking only, never touches bal4496
