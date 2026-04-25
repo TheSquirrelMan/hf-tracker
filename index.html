@@ -250,7 +250,8 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const stateRef = ref(db, 'state');
+const SECRET = '1e4ce42d793ba967a33d1bb54dbc6faaed0aab5c115f0671e2ef77db1d66203e';
+const stateRef = ref(db, `hft/${SECRET}/state`);
 
 // ── CONSTANTS ──
 const PIN = '0628';
@@ -1038,10 +1039,14 @@ function renderMonth(){
     });
     html+=`</div>`;
   });
+  const prevM=(vMonth-1+12)%12; const prevY=vMonth===0?vYear-1:vYear;
+  const nextM=(vMonth+1)%12; const nextY=vMonth===11?vYear+1:vYear;
+  const prevLabel=`← ${MONTHS[prevM].substring(0,3)} '${String(prevY).slice(2)}`;
+  const nextLabel=`${MONTHS[nextM].substring(0,3)} '${String(nextY).slice(2)} →`;
   document.getElementById('month-content').innerHTML=html+`
     <div style="display:flex;gap:10px;margin-top:4px;">
-      <button class="btn btno" style="flex:1;" onclick="changeMonth(-1)">← ${MONTHS[(vMonth-1+12)%12].substring(0,3)}</button>
-      <button class="btn btno" style="flex:1;" onclick="changeMonth(1)">${MONTHS[(vMonth+1)%12].substring(0,3)} →</button>
+      <button class="btn btno" style="flex:1;" onclick="changeMonth(-1)">${prevLabel}</button>
+      <button class="btn btno" style="flex:1;" onclick="changeMonth(1)">${nextLabel}</button>
     </div>`;
 }
 
