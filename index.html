@@ -285,6 +285,7 @@ const SNOWBALL_TARGETS = [
   { id:'chase',     label:'Chase/Amazon Prime',     startBal:1000, minPay:26,  apr:0.24 },
   { id:'tn',        label:'TN Unemployment',        startBal:3653, minPay:153, apr:0 },
   { id:'irs',       label:'IRS 2024',               startBal:4767, minPay:103, apr:0 },
+  { id:'mazda',     label:'Mazda CX-5',              startBal:20693,minPay:638, apr:0.1272 },
 ];
 
 // ── STATE ──
@@ -457,7 +458,7 @@ function getDailyBills(year, month, day) {
   if(day===2&&[0,3,6,9].includes(month)) bills.push({label:'Real-Debrid',amt:-11});
   if(day===4) bills.push({label:'PayPal eBay',amt:-43},{label:'ChatGPT',amt:-22});
   if(day===4||day===18) bills.push({label:'Randy training',amt:-150});
-  if(day===9) bills.push({label:'Mazda CX-5',amt:-638});
+  if(day===9) { if(cb.mazda===undefined||cb.mazda>0) bills.push({label:'Mazda CX-5',amt:-638}); }
   if(cb.merrick===undefined||cb.merrick>0) { if(day===11) bills.push({label:'Merrick Bank',amt:-35}); }
   if(day===13&&key<='2026-10') bills.push({label:'Affirm cluster',amt:-131});
   if(day===13&&key<='2027-01') bills.push({label:'PayPal Newegg',amt:-61});
@@ -658,7 +659,7 @@ function getMonthEvents(year, month) {
   add(4,'ChatGPT',-22,'#666660','Karen subscription');
   add(4,'Zelle Randy',-150,'#97C459','Biweekly training');
   add(18,'Zelle Randy',-150,'#97C459','Biweekly training');
-  add(9,'Mazda CX-5',-638,'#EF9F27','12.72% APR · payoff Aug 2029');
+  if(notDone('mazda')) add(9,'Mazda CX-5',-638,'#EF9F27','12.72% APR · payoff calculated');
   if(notDone('merrick')) add(11,'Merrick Bank',-35,'#F09595','31.95% APR');
   if(key<='2026-10') add(13,'Affirm cluster',-131,'#b4b2a9','0% APR — verify in Affirm app');
   if(key<='2027-01') add(13,'PayPal Newegg',-61,'#EF9F27','35.99% APR fixed');
@@ -1163,8 +1164,8 @@ function renderSnowball(){
     <div class="milestone"><div class="ms-label"><div>All CCs paid off</div></div><div class="ms-date ms-soon">${roadmap['chase-done']?new Date(roadmap['chase-done'].date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...'}</div></div>
     <div class="milestone"><div class="ms-label"><div>TN Unemployment done</div></div><div class="ms-date ms-soon">${roadmap['tn-done']?new Date(roadmap['tn-done'].date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...'}</div></div>
     <div class="milestone"><div class="ms-label"><div style="font-weight:700;">Consumer debt free</div></div><div class="ms-date ms-future" style="font-size:15px;">${roadmap['irs-done']?new Date(roadmap['irs-done'].date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...'}</div></div>
-    <div class="milestone"><div class="ms-label"><div>Mazda payoff</div></div><div class="ms-date ms-future">Aug 2029</div></div>
-    <div class="milestone"><div class="ms-label"><div style="font-weight:700;color:var(--pur);">Totally debt free</div></div><div class="ms-date" style="color:var(--pur);font-size:15px;">Aug 2029</div></div>
+    <div class="milestone"><div class="ms-label"><div>Mazda payoff</div></div><div class="ms-date ms-future">${roadmap['mazda-done']?new Date(roadmap['mazda-done'].date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...'}</div></div>
+    <div class="milestone"><div class="ms-label"><div style="font-weight:700;color:var(--pur);">Totally debt free</div></div><div class="ms-date" style="color:var(--pur);font-size:15px;">${roadmap['mazda-done']?new Date(roadmap['mazda-done'].date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...'}</div></div>
   </div>`;
 
   // Snowball log
