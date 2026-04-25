@@ -526,15 +526,13 @@ function calcRoadmap() {
     }
 
     // Check if next phase is affordable
-    // Must have: cost + $300 buffer + upcoming 14-day bills + repair buffer held
-    // Also enforce minimum 21-day gap between phases
+    // needed = cost + flat $800 buffer (covers worst-case single bill like Mazda)
     if(!snowballActive && pendingPhases.length > 0) {
       const nextPhase = pendingPhases[0];
       const daysSinceLast = lastPhaseDate
         ? Math.floor((d - lastPhaseDate) / 86400000) : 999;
       if(!milestones[nextPhase.id] && daysSinceLast >= 21) {
-        const upcoming = billsDueNext14(year, month, day);
-        const needed = nextPhase.cost + BUFFER + upcoming + repairHeld;
+        const needed = nextPhase.cost + 800 + repairHeld;
         if(bal >= needed) {
           milestones[nextPhase.id] = { date: dateStr, bal: Math.round(bal) };
           bal -= nextPhase.cost;
@@ -555,11 +553,7 @@ function calcRoadmap() {
     // Snowball payments on paycheck days -- use actual balance surplus
     if((day===7||day===22||d.getDay()===4) && snowballActive && currentSnowTarget !== null) {
       const target = SNOWBALL_TARGETS[currentSnowTarget];
-      // Calculate actual surplus: what's left above a $300 safety buffer
-      // Look at bills due in next 14 days and reserve those + buffer
-      const upcoming = billsDueNext14(year, month, day);
-      const reserve = upcoming + BUFFER;
-      const available = Math.max(0, bal - reserve);
+      const available = Math.max(0, bal - 800); // keep $800 buffer
       if(available > 0 && cardBals[target.id] > 0) {
         const payment = Math.min(cardBals[target.id], available);
         cardBals[target.id] -= payment;
