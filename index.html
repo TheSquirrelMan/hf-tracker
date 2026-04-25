@@ -1015,35 +1015,42 @@ function renderMonth(){
       const isPast=isCurrentMonth&&day<now.getDate();
       const dow=DAYS[new Date(vYear,vMonth,day).getDay()];
       const dayKey=`${vYear}-${String(vMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      const dayEndBal=balLog[dayKey]; // authoritative balance from projection
+      const dayEndBal=balLog[dayKey];
+      const isFuture=!isCurrentMonth||day>now.getDate();
       html+=`<div style="${isPast?'opacity:0.5;':''}margin-bottom:2px;"><div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:4px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
       const dayEvts=byDay[day]||[];
-      dayEvts.forEach((e,ei)=>{
+      dayEvts.forEach(e=>{
         const amtNum=typeof e.amt==='number'?e.amt:0;
         const isInc=e.isIncome;
         const ac=isInc?'var(--grn)':Math.abs(amtNum)>500?'var(--red)':'var(--t2)';
         const as=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
-        const isFuture=!isCurrentMonth||day>now.getDate();
-        // Show balance only on last event of the day, using balLog value
-        const isLastEvt=ei===dayEvts.length-1;
-        const showBal=isFuture&&isLastEvt&&dayEndBal!==undefined;
-        const balWarn=dayEndBal<300;
-        const balColor=dayEndBal<300?'var(--red)':dayEndBal<600?'var(--amb)':'var(--blu)';
         html+=`<div class="event" style="padding:5px 0;">
           <div class="edot" style="background:${e.color};margin-top:4px;"></div>
           <div class="econtent">
             <div class="etitle" style="font-size:13px;">${e.title}</div>
             ${e.note?`<div class="esub">${e.note}</div>`:''}
-            ${showBal?`<div class="ebal"><span style="color:${balColor};font-weight:${balWarn?'700':'400'};">#4496 → $${Math.round(dayEndBal).toLocaleString()}${balWarn?' ⚠':''}</span></div>`:''}
           </div>
           ${as?`<div class="eamt" style="color:${ac};">${as}</div>`:''}
         </div>`;
       });
+      // End of day balance summary
+      if(isFuture&&dayEndBal!==undefined){
+        const balWarn=dayEndBal<300;
+        const balColor=dayEndBal<300?'var(--red)':dayEndBal<600?'var(--amb)':'var(--blu)';
+        html+=`<div style="text-align:right;padding:3px 0 5px;border-top:0.5px solid var(--br);margin-top:2px;">
+          <span style="font-size:11px;color:var(--t3);">balance </span>
+          <span style="font-size:12px;font-weight:700;color:${balColor};">$${Math.round(dayEndBal).toLocaleString()}${balWarn?' ⚠':''}</span>
+        </div>`;
+      }
       html+='</div>';
     });
     html+=`</div>`;
   });
-  document.getElementById('month-content').innerHTML=html;
+  document.getElementById('month-content').innerHTML=html+`
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn btno" style="flex:1;" onclick="changeMonth(-1)">← ${MONTHS[(vMonth-1+12)%12].substring(0,3)}</button>
+      <button class="btn btno" style="flex:1;" onclick="changeMonth(1)">${MONTHS[(vMonth+1)%12].substring(0,3)} →</button>
+    </div>`;
 }
 
 // ── SNOWBALL ──
