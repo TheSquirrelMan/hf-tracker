@@ -436,7 +436,7 @@ function getDailyBills(year, month, day) {
   const bills = [];
   const key = `${year}-${String(month+1).padStart(2,'0')}`;
   const dow = new Date(year,month,day).getDay();
-  const karenAmt = S.karenAvgPay || 762;
+  const karenAmt = S.karenLastPay || S.karenAvgPay || 762;
 
   // Income
   if(day===7||day===22) bills.push({label:'Jon paycheck',amt:JON_PAY,isIncome:true});
@@ -548,6 +548,7 @@ function calcRoadmap() {
             snowballActive = true;
             milestones['snowball-start'] = { date: dateStr };
           }
+          balLog[dateStr] = Math.round(bal); // log before continue
           d.setDate(d.getDate() + 1);
           continue;
         }
