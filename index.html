@@ -556,7 +556,18 @@ function calcRoadmap() {
     // Snowball payments on paycheck days -- use actual balance surplus
     if((day===7||day===22||d.getDay()===4) && snowballActive && currentSnowTarget !== null) {
       const target = SNOWBALL_TARGETS[currentSnowTarget];
-      const available = Math.max(0, bal - 800); // keep $800 buffer
+      // Reserve bills due before next paycheck plus $300 safety
+      let reserve = 300;
+      const nextPayday = day < 7 ? 7 : day < 22 ? 22 : 7;
+      const nextPayMonth = day >= 22 ? month + 1 : month;
+      let rd = new Date(year, month, day + 1);
+      const nextPay = new Date(year, nextPayMonth, nextPayday);
+      while(rd < nextPay) {
+        getDailyBills(rd.getFullYear(), rd.getMonth(), rd.getDate())
+          .forEach(b => { if(!b.isIncome && b.amt < 0) reserve += Math.abs(b.amt); });
+        rd.setDate(rd.getDate() + 1);
+      }
+      const available = Math.max(0, bal - reserve);
       if(available > 0 && cardBals[target.id] > 0) {
         const payment = Math.min(cardBals[target.id], available);
         cardBals[target.id] -= payment;
