@@ -798,7 +798,7 @@ function renderWeek(){
   const allPhasesDone=PHASES.every(p=>phaseDone[p.id]);
   const sur=calcSurplus();
 
-  // Find next milestone date and label for header
+  // ── Today header ──
   let nextMilestone=null;
   if(nextP){
     const m=roadmap[nextP.id];
@@ -835,7 +835,7 @@ function renderWeek(){
 
   // ── Paycheck banners ──
   if((today===7||today===22)&&!(S.confirmed&&S.confirmed[`jon-${todayKey}`])){
-    const action=allPhasesDone?`Transfer $${Math.round(sur.safe).toLocaleString()} to snowball target`:'Leave surplus in #4496 — building for expenses';
+    const action=allPhasesDone?'Transfer surplus to snowball target now':'Leave surplus in #4496 — building for expenses';
     html+=`<div class="banner">
       <div class="banner-title">💰 Jon paycheck landed today</div>
       <div class="banner-sub">${action}</div>
@@ -849,31 +849,6 @@ function renderWeek(){
       <button class="btn btno btnsm" onclick="confirmAction('karen-${todayKey}')">✓ Got it</button>
     </div>`;
   }
-
-  // ── Safe to spend card ──
-  const safeColor=sur.safe<300?'var(--red)':sur.safe<600?'var(--amb)':'var(--grn)';
-  html+=`<div class="card">
-    <div class="card-title">Safe to spend — before ${sur.npcLabel}</div>
-    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px;">
-      <div>
-        <div style="font-size:40px;font-weight:700;color:${safeColor};line-height:1;letter-spacing:-1px;">$${Math.round(sur.safe).toLocaleString()}</div>
-        <div style="font-size:11px;color:var(--t3);margin-top:4px;">${allPhasesDone?'→ Extra to snowball target':'→ Building for upcoming expenses'}</div>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:14px;font-weight:700;color:var(--red);">-$${Math.round(sur.totalDue).toLocaleString()}</div>
-        <div style="font-size:10px;color:var(--t3);">bills due</div>
-      </div>
-    </div>`;
-  if(sur.bills.length){
-    sur.bills.forEach(b=>{
-      const ord=b.day%10===1&&b.day!==11?'st':b.day%10===2&&b.day!==12?'nd':b.day%10===3&&b.day!==13?'rd':'th';
-      html+=`<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:0.5px solid var(--br);font-size:12px;">
-        <span style="color:var(--t2);">${b.label} <span style="color:var(--t3);">· ${b.day}${ord}</span></span>
-        <span style="color:var(--red);">-$${Math.abs(b.amt).toLocaleString()}</span>
-      </div>`;
-    });
-  }
-  html+=`</div>`;
 
   // ── Next 7 days ──
   const weekEvtsByDay={};
