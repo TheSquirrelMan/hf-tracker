@@ -628,9 +628,25 @@ function getMonthEvents(year, month) {
   for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===4)add(d,'Karen paycheck — Copans',karenAmt,'#97C459','→ Transfer full amount to #4496 same day',true);}
   for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===0)add(d,'Fresh Market',-200,'#85B7EB','$200/wk hard limit');}
 
+  // Transport (these are real fixed costs, show in calendar)
+  if(1>=fromDay){add(1,'SunPass',-20,'#666660','Tolls');add(1,'Gas',-60,'#666660','Gasoline');}
+  add(15,'Gas',-60,'#666660','Gasoline');
+  if(7>=fromDay) add(7,'Car wash',-11,'#666660','Biweekly');
+  add(21,'Car wash',-11,'#666660','Biweekly');
+
+  // Discretionary: show actual logged spends only, not auto $50/fri
+  // (getDailyBills keeps $50/fri for projection accuracy)
+  (S.discLog||[]).forEach(e=>{
+    if(!e.date||!e.amt)return;
+    const sp=new Date(e.date);
+    if(isNaN(sp.getTime()))return;
+    if(sp.getMonth()===month&&sp.getFullYear()===year){
+      add(sp.getDate(),e.label||'Discretionary spend',-Math.abs(e.amt),'#85B7EB','Logged');
+    }
+  });
+  if([0,3,6,9].includes(month)) add(2,'Real-Debrid',-11,'#666660','Quarterly $11');
   if(key<='2026-05') add(1,'Amazon Store Card',-29,'#F09595','~29% APR');
   add(2,'Amazon Prime',-15,'#666660','Subscription');
-  if([0,3,6,9].includes(month)) add(2,'Real-Debrid',-11,'#666660','Quarterly $11');
   add(4,'PayPal eBay',-43,'#EF9F27','35.99% APR · done Aug 2027');
   add(4,'ChatGPT',-22,'#666660','Karen subscription');
   add(4,'Zelle Randy',-150,'#97C459','Biweekly training');
@@ -668,6 +684,36 @@ function getMonthEvents(year, month) {
     add(23,'Vehicle registration',-220,'#F09595','One-time renewal');
     add(30,'PayPal Chinese — FIRST PMT',-95,'#F09595','Confirm autopay set');
   }
+  // Snowball payments -- show as events when snowball active
+  const snowballStart = roadmap['snowball-start'];
+  if(snowballStart) {
+    const ssDate = new Date(snowballStart.date+'T12:00:00');
+    const ssKey = snowballStart.date.substring(0,7); // YYYY-MM
+    const thisKey = `${year}-${String(month+1).padStart(2,'0')}`;
+    if(thisKey >= ssKey) {
+      // Find current target for this month
+      const currentTarget = SNOWBALL_TARGETS.find(t => {
+        const doneKey = t.id+'-done';
+        const done = roadmap[doneKey];
+        if(!done) return true;
+        const doneDate = done.date.substring(0,7);
+        return doneDate >= thisKey;
+      });
+      if(currentTarget) {
+        // Add snowball payment on paycheck days
+        for(let dd=fromDay;dd<=dim;dd++){
+          const dow2=new Date(year,month,dd).getDay();
+          if(dd===7||dd===22||dow2===4){
+            const eventDate=`${year}-${String(month+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+            if(eventDate>=snowballStart.date){
+              add(dd,`💸 Snowball → ${currentTarget.label}`,0,'#97C459','Extra payment hits debt · amount varies by surplus');
+            }
+          }
+        }
+      }
+    }
+  }
+
   evts.sort((a,b)=>a.day-b.day);
   return evts;
 }
