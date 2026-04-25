@@ -600,9 +600,9 @@ function calcSurplus(){
 // ── MONTH EVENTS (for calendar display) ──
 function getMonthEvents(year, month) {
   const evts=[];
-  const add=(day,title,amt,color,note,isIncome=false)=>{
+  const add=(day,title,amt,color,note,isIncome=false,featured=false,isFinal=false)=>{
     const dim=new Date(year,month+1,0).getDate();
-    if(day>=1&&day<=dim)evts.push({day,title,amt,color,note,isIncome});
+    if(day>=1&&day<=dim)evts.push({day,title,amt,color,note,isIncome,featured,isFinal});
   };
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dim=new Date(year,month+1,0).getDate();
@@ -672,7 +672,7 @@ function getMonthEvents(year, month) {
     if(m){
       const ed=new Date(m.date+'T12:00:00');
       if(ed.getFullYear()===year&&ed.getMonth()===month){
-        add(ed.getDate(),phase.label.toUpperCase(),-phase.cost,'#F09595',`Calculated affordable date · budget $${phase.cost.toLocaleString()}`);
+        add(ed.getDate(),phase.label.toUpperCase(),-phase.cost,'#EF9F27',`Budget $${phase.cost.toLocaleString()} · calculated affordable date`,false,true);
       }
     }
   });
@@ -708,7 +708,13 @@ function getMonthEvents(year, month) {
               paymentAmt=Math.round(prevBal+todayNet-todayBal);
             }
             if(paymentAmt>0){
-              evts.push({day:dd,title:`💸 Pay $${paymentAmt.toLocaleString()} → ${currentTarget.label}`,amt:-paymentAmt,color:'#97C459',note:'Mandatory snowball payment — log into card and pay now',isIncome:false});
+              // Check if this is the final payment on the current target
+              const cardBalNow=(S.cardBals&&S.cardBals[currentTarget.id]!==undefined)?S.cardBals[currentTarget.id]:currentTarget.startBal;
+              const isFinalPmt=paymentAmt>=cardBalNow;
+              const title=isFinalPmt
+                ? `${currentTarget.label} · paid off`
+                : `Pay $${paymentAmt.toLocaleString()} → ${currentTarget.label}`;
+              evts.push({day:dd,title,amt:-paymentAmt,color:'#97C459',note:isFinalPmt?'Final payment — card closed':'Mandatory snowball payment — log into card and pay now',isIncome:false,featured:true,isFinal:isFinalPmt});
             }
           }
         }
@@ -1048,13 +1054,13 @@ function renderMonth(){
         const isInc=e.isIncome;
         const ac=isInc?'var(--grn)':Math.abs(amtNum)>500?'var(--red)':'var(--t2)';
         const as=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
-        html+=`<div class="event" style="padding:5px 0;">
-          <div class="edot" style="background:${e.color};margin-top:4px;"></div>
+        html+=`<div class="event" style="padding:5px 0;${e.featured?`border-left:2px solid ${e.isFinal?'var(--pur)':e.color};padding-left:8px;margin-left:-8px;`:''}">
+          <div class="edot" style="background:${e.color};margin-top:4px;${e.featured?'display:none;':''}"></div>
           <div class="econtent">
-            <div class="etitle" style="font-size:13px;">${e.title}</div>
+            <div class="etitle" style="font-size:13px;${e.featured?`font-weight:700;color:${e.isFinal?'var(--pur)':e.color};`:''}${e.isFinal?'letter-spacing:.02em;':''}">${e.title}</div>
             ${e.note?`<div class="esub">${e.note}</div>`:''}
           </div>
-          ${as?`<div class="eamt" style="color:${ac};">${as}</div>`:''}
+          ${as?`<div class="eamt" style="color:${ac};${e.featured?'font-weight:700;':''}">${as}</div>`:''}
         </div>`;
       });
       // End of day balance summary
@@ -1062,11 +1068,11 @@ function renderMonth(){
         const balWarn=dayEndBal<300;
         const balColor=dayEndBal<300?'var(--red)':dayEndBal<600?'var(--amb)':'var(--blu)';
         const dayNet=dayEvts.reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
-        const netColor=dayNet>=0?'var(--grn)':'var(--red)';
+        const netColor=dayNet>0?'var(--grn)':dayNet<0?'var(--red)':'var(--t3)';
         const netStr=dayNet!==0?(dayNet>0?`+$${dayNet.toLocaleString()}`:`-$${Math.abs(dayNet).toLocaleString()}`):'';
-        html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0 6px;border-top:0.5px solid var(--br);margin-top:3px;">
-          <span style="font-size:11px;color:${dayEvts.length>1&&netStr?netColor:'transparent'};font-weight:600;">${dayEvts.length>1&&netStr?netStr:'·'}</span>
-          <span style="font-size:11px;"><span style="color:var(--t3);">balance&nbsp;</span><span style="font-weight:700;color:${balColor};">$${Math.round(dayEndBal).toLocaleString()}${balWarn?' ⚠':''}</span></span>
+        html+=`<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;padding:4px 0 6px;border-top:0.5px solid var(--br);margin-top:3px;">
+          ${netStr&&dayEvts.length>0?`<span style="font-size:11px;font-weight:600;color:${netColor};">${netStr}</span><span style="font-size:11px;color:var(--br);">·</span>`:''}
+          <span style="font-size:12px;font-weight:700;color:${balColor};">$${Math.round(dayEndBal).toLocaleString()}${balWarn?' ⚠':''}</span>
         </div>`;
       }
       html+='</div>';
