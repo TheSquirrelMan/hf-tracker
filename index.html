@@ -559,7 +559,6 @@ function calcRoadmap(){
   if(snowIdx===-1)snowIdx=null;
 
   const d=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-  let minBalSoFar=0; // track lowest balance in current paycheck cycle
 
   for(let i=0;i<1500;i++){
     const yr=d.getFullYear(),mo=d.getMonth(),dy=d.getDate();
@@ -571,15 +570,6 @@ function calcRoadmap(){
     S.cardBals=origCB;
 
     dayBills.forEach(b=>{balance+=b.amt;});
-
-    // Reset minBalSoFar after paycheck days -- we only care about negatives
-    // within the current paycheck cycle, not carry them forward forever
-    const hasPaycheck=dayBills.some(b=>b.isIncome&&b.amt>600);
-    if(hasPaycheck){
-      minBalSoFar=balance; // fresh start after paychecks land
-    } else {
-      minBalSoFar=Math.min(minBalSoFar,balance);
-    }
 
     // Mark repair buffer after tires done
     if(milestones['jon-tires']&&!phaseDone['repair-buf']&&!milestones['repair-buf']){
@@ -593,20 +583,37 @@ function calcRoadmap(){
       const gap=lastPhaseDate?Math.floor((d-lastPhaseDate)/86400000):999;
       if(!milestones[phase.id]&&gap>=14){
         const needed=phase.cost+800+repairHeld;
-        // Only trigger if balance is sufficient AND no day in path went negative
-        if(balance>=needed&&minBalSoFar>=0){
-          milestones[phase.id]={date:dateStr,bal:Math.round(balance)};
-          balance-=phase.cost;
-          lastPhaseDate=new Date(d);
-          if(phase.id==='karen-tires')repairHeld=0;
-          pendingPhases.shift();
-          if(pendingPhases.length===0){
-            snowballActive=true;
-            milestones['snowball-start']={date:dateStr};
+        if(balance>=needed){
+          // Lookahead: simulate balance after spending phase cost
+          // and ensure it won't go negative before next Jon paycheck
+          const afterCost=balance-phase.cost;
+          const nextJonDay=dy<7?7:dy<22?22:7;
+          const nextJonMo=dy>=22?mo+1:mo;
+          let sim=afterCost;
+          let simOk=true;
+          let rd=new Date(yr,mo,dy+1);
+          const nextJon=new Date(yr,nextJonMo,nextJonDay);
+          while(rd<nextJon){
+            S.cardBals=cardBals;
+            getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate(),cardBals)
+              .forEach(b=>{sim+=b.amt;});
+            S.cardBals=origCB;
+            if(sim<0){simOk=false;break;}
+            rd.setDate(rd.getDate()+1);
           }
-          minBalSoFar=balance; // reset minimum after phase triggers
-          balLog[dateStr]=Math.round(balance);
-          d.setDate(dy+1);continue;
+          if(simOk){
+            milestones[phase.id]={date:dateStr,bal:Math.round(balance)};
+            balance-=phase.cost;
+            lastPhaseDate=new Date(d);
+            if(phase.id==='karen-tires')repairHeld=0;
+            pendingPhases.shift();
+            if(pendingPhases.length===0){
+              snowballActive=true;
+              milestones['snowball-start']={date:dateStr};
+            }
+            balLog[dateStr]=Math.round(balance);
+            d.setDate(dy+1);continue;
+          }
         }
       }
     }
