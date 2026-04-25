@@ -754,11 +754,8 @@ function renderWeek(){
   if(now.getDay()===4&&!(S.confirmed&&S.confirmed[`karen-${todayKey}`])){
     html+=`<div class="confirm-banner">
       <div class="cb-title">💰 Karen paycheck expected today</div>
-      <div class="cb-sub">Enter actual amount received</div>
-      <div style="display:flex;gap:8px;margin-top:6px;">
-        <button class="btn btna btnsm" style="flex:1;margin:0;" onclick="openModal('karen-pay','Karen\\'s actual pay today')">Enter Karen's pay</button>
-        <button class="btn btno btnsm" style="flex:1;margin:0;" onclick="confirmAction('karen-${todayKey}')">✓ Confirmed</button>
-      </div>
+      <div class="cb-sub">Auto-syncing from USAA deposit notification</div>
+      <button class="btn btno btnsm" style="margin:0;" onclick="confirmAction('karen-${todayKey}')">✓ Got it</button>
     </div>`;
   }
 
@@ -913,7 +910,7 @@ function renderWeek(){
       <div>
         <div class="ct" style="margin-bottom:2px;">Karen's last pay</div>
         <div style="font-size:18px;font-weight:700;color:var(--amb);">$${S.karenLastPay||762}</div>
-        <div style="font-size:11px;color:var(--t3);">Update every Thursday · affects projections</div>
+        <div style="font-size:11px;color:var(--t3);">Auto-updated every Thursday · affects projections</div>
       </div>
       <button class="btn btna btnsm" style="width:auto;margin:0;padding:10px 16px;" onclick="openModal('karen-pay','Karen\\'s actual pay')">Update</button>
     </div>
