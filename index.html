@@ -798,12 +798,39 @@ function renderWeek(){
   const allPhasesDone=PHASES.every(p=>phaseDone[p.id]);
   const sur=calcSurplus();
 
+  // Find next milestone date and label for header
+  let nextMilestone=null;
+  if(nextP){
+    const m=roadmap[nextP.id];
+    if(m)nextMilestone={label:nextP.label,cost:nextP.cost,date:m.date};
+  } else {
+    // Find next snowball payoff
+    const nextTarget=TARGETS.find(t=>bal(S.cardBals||{},t.id)>0);
+    if(nextTarget){
+      const m=roadmap[nextTarget.id+'-done'];
+      if(m)nextMilestone={label:nextTarget.label+' paid off',date:m.date};
+    }
+  }
+
+  const fmtDate=dateStr=>{
+    const d=new Date(dateStr+'T12:00:00');
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  };
+  const daysUntil=dateStr=>{
+    const d=new Date(dateStr+'T12:00:00');
+    const diff=Math.ceil((d-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/(1000*60*60*24));
+    return diff;
+  };
+
   let html='';
 
   // ── Today header ──
+  const nextMsText=nextMilestone
+    ?`${nextMilestone.label}${nextMilestone.cost?' ($'+nextMilestone.cost.toLocaleString()+')':''} · ${fmtDate(nextMilestone.date)} (${daysUntil(nextMilestone.date)}d)`
+    :'All debts paid off 🎉';
   html+=`<div class="card" style="border-color:var(--am);background:var(--abg);margin-bottom:8px;">
     <div style="font-size:13px;font-weight:700;color:var(--amb);">${MN[now.getMonth()]} ${today}, ${now.getFullYear()} · ${DN[now.getDay()]}</div>
-    <div style="font-size:11px;color:var(--t2);margin-top:2px;">${allPhasesDone?'Snowball active — pay to '+( TARGETS.find(t=>bal(S.cardBals||{},t.id)>0)?.label||'all done'):'Saving for '+(nextP?.label||'...')}</div>
+    <div style="font-size:11px;color:var(--t2);margin-top:2px;">Next: ${nextMsText}</div>
   </div>`;
 
   // ── Paycheck banners ──
@@ -849,33 +876,66 @@ function renderWeek(){
   html+=`</div>`;
 
   // ── Next 7 days ──
-  const weekEvts=[];
+  const weekEvtsByDay={};
+  const addWE=(dayOffset,label,amt,isIncome,color,note='',feat=false)=>{
+    if(!weekEvtsByDay[dayOffset])weekEvtsByDay[dayOffset]=[];
+    weekEvtsByDay[dayOffset].push({label,amt,isIncome,color,note,feat});
+  };
+  // Regular bills
   for(let dd=today;dd<=today+7;dd++){
-    getDailyBills(now.getFullYear(),now.getMonth(),dd).forEach(b=>{
-      weekEvts.push({...b,day:dd});
+    const ed=new Date(now.getFullYear(),now.getMonth(),dd);
+    getDailyBills(ed.getFullYear(),ed.getMonth(),ed.getDate()).forEach(b=>{
+      addWE(dd,b.label,b.amt,b.isIncome,b.isIncome?'var(--grn)':'var(--t3)');
     });
   }
-  const byDay={};
-  weekEvts.forEach(e=>{if(!byDay[e.day])byDay[e.day]=[];byDay[e.day].push(e);});
-  const days=Object.keys(byDay).map(Number).sort((a,b)=>a-b);
-  if(days.length){
+  // Roadmap milestones in next 7 days
+  const todayDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const in7=new Date(todayDate);in7.setDate(in7.getDate()+8);
+  PHASES.forEach(p=>{
+    if(phaseDone[p.id]||p.isSavings)return;
+    const m=roadmap[p.id];if(!m)return;
+    const md=new Date(m.date+'T12:00:00');
+    if(md>=todayDate&&md<in7){
+      const diff=Math.round((md-todayDate)/86400000);
+      addWE(today+diff,p.label.toUpperCase(),-p.cost,false,'var(--amb)',`$${p.cost.toLocaleString()} · calculated safe date`,true);
+    }
+  });
+  if(allPhasesDone){
+    const nxt=TARGETS.find(t=>bal(S.cardBals||{},t.id)>0);
+    if(nxt){
+      const m=roadmap[nxt.id+'-done'];if(m){
+        const md=new Date(m.date+'T12:00:00');
+        if(md>=todayDate&&md<in7){
+          const diff=Math.round((md-todayDate)/86400000);
+          addWE(today+diff,`${nxt.label} — PAID OFF`,0,false,'var(--pur)','Snowball clears this debt',true);
+        }
+      }
+    }
+  }
+  const wdays=Object.keys(weekEvtsByDay).map(Number).sort((a,b)=>a-b);
+  if(wdays.length){
     html+=`<div class="card"><div class="card-title">Next 7 days</div><div class="evlist">`;
-    days.forEach(day=>{
+    wdays.forEach(day=>{
       const isToday=day===today;
-      const dow=DN[new Date(now.getFullYear(),now.getMonth(),day).getDay()];
-      html+=`<div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:${day===days[0]?'0':'8px'} 0 3px;text-transform:uppercase;letter-spacing:.06em;">${isToday?'TODAY · ':''  }${dow} ${day}</div>`;
-      byDay[day].forEach(e=>{
-        const ac=e.isIncome?'var(--grn)':Math.abs(e.amt)>400?'var(--red)':'var(--t2)';
-        const as=e.isIncome?`+$${e.amt.toLocaleString()}`:`-$${Math.abs(e.amt).toLocaleString()}`;
-        html+=`<div class="ev">
-          <div class="evdot" style="background:${e.isIncome?'var(--grn)':'var(--t3)'};"></div>
-          <div class="evcontent"><div class="evtitle">${e.label}</div></div>
-          <div class="evamt" style="color:${ac};">${as}</div>
+      const ed=new Date(now.getFullYear(),now.getMonth(),day);
+      const dow=DN[ed.getDay()];
+      html+=`<div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:${day===wdays[0]?'0':'8px'} 0 3px;text-transform:uppercase;letter-spacing:.06em;">${isToday?'TODAY · ':''}${dow} ${ed.getDate()}</div>`;
+      weekEvtsByDay[day].forEach(e=>{
+        const ac=e.isIncome?'var(--grn)':e.amt<0&&Math.abs(e.amt)>400?'var(--red)':e.color||'var(--t2)';
+        const as=e.amt!==0?(e.amt>0?`+$${e.amt.toLocaleString()}`:`-$${Math.abs(e.amt).toLocaleString()}`):'';
+        html+=`<div class="ev${e.feat?' feat':''}" style="${e.feat?`border-left:2px solid ${e.color};padding-left:8px;margin-left:-8px;`:''}">
+          <div class="evdot" style="background:${e.color||'var(--t3)'};${e.feat?'display:none;':''}"></div>
+          <div class="evcontent">
+            <div class="evtitle" style="${e.feat?`color:${e.color};font-weight:700;`:''}">${e.label}</div>
+            ${e.note?`<div class="evsub">${e.note}</div>`:''}
+          </div>
+          ${as?`<div class="evamt" style="color:${ac};${e.feat?'font-weight:700;':''}">${as}</div>`:''}
         </div>`;
       });
     });
     html+=`</div></div>`;
   }
+
 
   // ── Discretionary ──
   const spent=S.discSpent||0;
