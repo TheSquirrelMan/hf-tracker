@@ -613,7 +613,7 @@ function getMonthEvents(year,month,roadmap,balLog){
 
   if(7>=fromDay)add(7,'Jon paycheck',JON_PAY,'#97C459',pcNote,true);
   if(22>=fromDay)add(22,'Jon paycheck',JON_PAY,'#97C459',pcNote,true);
-  for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===4)add(d,'Karen paycheck — Copans',karenAmt,'#97C459','→ Transfer full amount to #4496 same day',true);}
+  for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===4)add(d,'Karen paycheck — Copans',karenAmt,'#97C459','Direct deposit to #4496',true);}
   for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===0)add(d,'Fresh Market',-200,'#85B7EB','$200/wk hard limit');}
 
   // Transport
