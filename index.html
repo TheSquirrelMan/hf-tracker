@@ -535,8 +535,7 @@ function calcRoadmap() {
     // Snowball payments on paycheck days
     if((day===7||day===22||d.getDay()===4)&&snowballActive&&currentSnowIdx!==null){
       const target=SNOWBALL_TARGETS[currentSnowIdx];
-      // Reserve bills until next Jon paycheck
-      // Temporarily inject simulation cardBals so getDailyBills skips paid-off minimums
+      // Reserve bills until next Jon paycheck, excluding current target's minimum
       const _saved=S.cardBals;
       S.cardBals={...(S.cardBals||{}),...cardBals};
       let reserve=300;
@@ -546,7 +545,10 @@ function calcRoadmap() {
       const nextJon=new Date(year,nextJonMonth,nextJonDay);
       while(rd<nextJon){
         getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate())
-          .forEach(b=>{if(!b.isIncome&&b.amt<0)reserve+=Math.abs(b.amt);});
+          .forEach(b=>{
+            if(!b.isIncome&&b.amt<0&&b.label!==target.label)
+              reserve+=Math.abs(b.amt);
+          });
         rd.setDate(rd.getDate()+1);
       }
       S.cardBals=_saved;
