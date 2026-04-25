@@ -559,7 +559,7 @@ function calcRoadmap(){
   if(snowIdx===-1)snowIdx=null;
 
   const d=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-  let minBalSoFar=balance; // track lowest balance seen since last phase reset
+  let minBalSoFar=0; // track lowest balance in current paycheck cycle
 
   for(let i=0;i<1500;i++){
     const yr=d.getFullYear(),mo=d.getMonth(),dy=d.getDate();
@@ -571,7 +571,15 @@ function calcRoadmap(){
     S.cardBals=origCB;
 
     dayBills.forEach(b=>{balance+=b.amt;});
-    minBalSoFar=Math.min(minBalSoFar,balance); // track running minimum
+
+    // Reset minBalSoFar after paycheck days -- we only care about negatives
+    // within the current paycheck cycle, not carry them forward forever
+    const hasPaycheck=dayBills.some(b=>b.isIncome&&b.amt>600);
+    if(hasPaycheck){
+      minBalSoFar=balance; // fresh start after paychecks land
+    } else {
+      minBalSoFar=Math.min(minBalSoFar,balance);
+    }
 
     // Mark repair buffer after tires done
     if(milestones['jon-tires']&&!phaseDone['repair-buf']&&!milestones['repair-buf']){
