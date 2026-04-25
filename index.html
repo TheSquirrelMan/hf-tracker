@@ -1014,24 +1014,27 @@ function renderMonth(){
       const isToday=isCurrentMonth&&day===now.getDate();
       const isPast=isCurrentMonth&&day<now.getDate();
       const dow=DAYS[new Date(vYear,vMonth,day).getDay()];
+      const dayKey=`${vYear}-${String(vMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const dayEndBal=balLog[dayKey]; // authoritative balance from projection
       html+=`<div style="${isPast?'opacity:0.5;':''}margin-bottom:2px;"><div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:4px 0 2px;text-transform:uppercase;letter-spacing:.04em;">${isToday?'TODAY — ':''}${dow} ${day}</div>`;
-      byDay[day].forEach(e=>{
+      const dayEvts=byDay[day]||[];
+      dayEvts.forEach((e,ei)=>{
         const amtNum=typeof e.amt==='number'?e.amt:0;
         const isInc=e.isIncome;
         const ac=isInc?'var(--grn)':Math.abs(amtNum)>500?'var(--red)':'var(--t2)';
         const as=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
-        // Current month: only days after today update runBal (real balance already includes today)
-        // Future months: all days update runBal (pre-sim stopped before vMonth)
-        const isFuture = !isCurrentMonth || day > now.getDate();
-        if(amtNum !== 0 && isFuture) runBal += amtNum;
-        const balWarn=runBal<300;
-        const balColor=runBal<300?'var(--red)':runBal<600?'var(--amb)':'var(--blu)';
+        const isFuture=!isCurrentMonth||day>now.getDate();
+        // Show balance only on last event of the day, using balLog value
+        const isLastEvt=ei===dayEvts.length-1;
+        const showBal=isFuture&&isLastEvt&&dayEndBal!==undefined;
+        const balWarn=dayEndBal<300;
+        const balColor=dayEndBal<300?'var(--red)':dayEndBal<600?'var(--amb)':'var(--blu)';
         html+=`<div class="event" style="padding:5px 0;">
           <div class="edot" style="background:${e.color};margin-top:4px;"></div>
           <div class="econtent">
             <div class="etitle" style="font-size:13px;">${e.title}</div>
             ${e.note?`<div class="esub">${e.note}</div>`:''}
-            ${isFuture&&amtNum!==0?`<div class="ebal"><span style="color:${balColor};font-weight:${balWarn?'700':'400'};">#4496 → $${Math.round(runBal).toLocaleString()}${balWarn?' ⚠':''}</span></div>`:''}
+            ${showBal?`<div class="ebal"><span style="color:${balColor};font-weight:${balWarn?'700':'400'};">#4496 → $${Math.round(dayEndBal).toLocaleString()}${balWarn?' ⚠':''}</span></div>`:''}
           </div>
           ${as?`<div class="eamt" style="color:${ac};">${as}</div>`:''}
         </div>`;
