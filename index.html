@@ -1037,7 +1037,11 @@ function renderMonth(){
       if(isFuture&&dayEndBal!==undefined){
         const balWarn=dayEndBal<300;
         const balColor=dayEndBal<300?'var(--red)':dayEndBal<600?'var(--amb)':'var(--blu)';
-        html+=`<div style="text-align:right;padding:3px 0 5px;border-top:0.5px solid var(--br);margin-top:2px;">
+        const dayNet=dayEvts.reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
+        const netStr=dayNet!==0?(dayNet>0?`+$${dayNet.toLocaleString()}`:`-$${Math.abs(dayNet).toLocaleString()}`):'';
+        const netColor=dayNet>=0?'var(--grn)':'var(--red)';
+        html+=`<div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:3px 0 5px;border-top:0.5px solid var(--br);margin-top:2px;">
+          ${dayEvts.length>1&&netStr?`<span style="font-size:11px;color:${netColor};font-weight:600;">${netStr} today</span>`:''}
           <span style="font-size:11px;color:var(--t3);">balance </span>
           <span style="font-size:12px;font-weight:700;color:${balColor};">$${Math.round(dayEndBal).toLocaleString()}${balWarn?' ⚠':''}</span>
         </div>`;
