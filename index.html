@@ -450,6 +450,11 @@ function getDailyBills(year, month, day) {
   if(day===4||day===18) bills.push({label:'Randy training',amt:-150});
   if(day===9&&(cb.mazda===undefined||cb.mazda>0)) bills.push({label:'Mazda CX-5',amt:-638});
   if(day===11&&(cb.merrick===undefined||cb.merrick>0)) bills.push({label:'Merrick Bank',amt:-35});
+  if(day===11&&(cb.cap3186===undefined||cb.cap3186>0)) bills.push({label:'Cap One #3186',amt:-25});
+  if(day===15&&(cb.usaaAmex===undefined||cb.usaaAmex>0)) bills.push({label:'USAA Amex',amt:-63});
+  if(day===21&&(cb.cap4565===undefined||cb.cap4565>0)) bills.push({label:'Cap One #4565',amt:-25});
+  if(day===21&&(cb.cap5592===undefined||cb.cap5592>0)) bills.push({label:'Cap One #5592',amt:-25});
+  if(day===21&&(cb.cap7988===undefined||cb.cap7988>0)) bills.push({label:'Cap One #7988',amt:-30});
   if(day===13&&key<='2026-10') bills.push({label:'Affirm cluster',amt:-131});
   if(day===13&&key<='2027-01') bills.push({label:'PayPal Newegg',amt:-61});
   if(day===13&&(cb.kpaypal===undefined||cb.kpaypal>0)) bills.push({label:'Karen PayPal Credit',amt:-100});
@@ -462,7 +467,7 @@ function getDailyBills(year, month, day) {
   if(day===22&&key<='2027-12'&&(cb.tn===undefined||cb.tn>0)) bills.push({label:'TN unemployment',amt:-153});
   if(day===23) bills.push({label:'State Farm',amt:-190});
   if(day===26&&(cb.chase===undefined||cb.chase>0)) bills.push({label:'Chase/Amazon',amt:-26});
-  if(day===30&&key<='2027-03') bills.push({label:'PayPal Chinese',amt:-95});
+  if(day===30&&key<='2027-03'&&!(year===2026&&month===3)) bills.push({label:'PayPal Chinese',amt:-95});
 
   // April 2026 one-time
   if(year===2026&&month===3&&day===23) bills.push({label:'Vehicle registration',amt:-220});
@@ -643,6 +648,11 @@ function getMonthEvents(year,month,roadmap,balLog){
   add(18,'Zelle Randy',-150,'#97C459','Biweekly training');
   if(notDone('mazda'))add(9,'Mazda CX-5',-638,'#EF9F27','12.72% APR · payoff calculated');
   if(notDone('merrick'))add(11,'Merrick Bank',-35,'#F09595','31.95% APR');
+  if(notDone('cap3186'))add(11,'Cap One #3186 (Karen)',-25,'#F09595','28.24% APR');
+  if(notDone('usaaAmex'))add(15,'USAA Amex (Karen)',-63,'#F09595','27.40% APR');
+  if(notDone('cap4565'))add(21,'Cap One #4565 (Jon)',-25,'#F09595','29% APR');
+  if(notDone('cap5592'))add(21,'Cap One #5592 (Karen)',-25,'#F09595','28.99% APR');
+  if(notDone('cap7988'))add(21,'Cap One #7988 (Jon)',-30,'#F09595','29% APR');
   if(key<='2026-10')add(13,'Affirm cluster',-131,'#b4b2a9','0% APR — verify in Affirm app');
   if(key<='2027-01')add(13,'PayPal Newegg',-61,'#EF9F27','35.99% APR fixed');
   if(notDone('kpaypal'))add(13,'Karen PayPal Credit',-100,'#F09595','29.64% APR — MANUAL');
@@ -1185,13 +1195,17 @@ const BILLS=[
   {id:'irs1',t:'IRS payment #1 — $68',s:'#4496 · ~15th-16th'},
   {id:'irs2',t:'IRS payment #2 — $35',s:'#4496 · ~15th-16th'},
   {id:'merrick',t:'Merrick Bank — $35',s:'#4496 · ~11th'},
+  {id:'cap3186',t:'Cap One #3186 (Karen) — $25',s:'#4496 · ~11th · 28.24% APR'},
+  {id:'usaaamex',t:'USAA Amex (Karen) — $63 min',s:'#4496 · ~15th · 27.40% APR'},
+  {id:'cap4565',t:'Cap One #4565 (Jon) — $25',s:'#4496 · ~21st · 29% APR'},
+  {id:'cap5592',t:'Cap One #5592 (Karen) — $25',s:'#4496 · ~21st · 28.99% APR'},
+  {id:'cap7988',t:'Cap One #7988 (Jon) — $30',s:'#4496 · ~21st · 29% APR'},
   {id:'affirm',t:'Affirm cluster — ~$131',s:'#4496 · ~13th · 0% APR'},
   {id:'newegg',t:'PayPal Newegg — $60.68',s:'#4496 · ~13th'},
   {id:'ebay',t:'PayPal eBay — $42.69',s:'#4496 · ~4th'},
   {id:'chinese',t:'PayPal Chinese — $94.94',s:'#4496 · 30th'},
   {id:'jonpaypal',t:'Jon PayPal Credit — $22',s:'#4496 · 0% plan · do NOT overpay'},
   {id:'karenpaypal',t:'Karen PayPal Credit — $100',s:'MANUAL · 29.64% APR · ~13th · hardship plan pending'},
-  {id:'usaaamex',t:'USAA Amex Karen — $63 min',s:'27.40% APR · set autopay on usaa.com'},
   {id:'chase',t:'Chase/Amazon Prime — $26',s:'#4496 · ~26th'},
   {id:'amazon-store',t:'Amazon Store Card — $29',s:'#4496 · ~1st'},
   {id:'spotify',t:'Spotify — $21.53',s:'#4496 · ~22nd'},
