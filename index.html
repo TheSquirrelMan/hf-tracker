@@ -450,23 +450,26 @@ function getDailyBills(year, month, day) {
   if(day===1||day===15) bills.push({label:'Gas',amt:-60});
   if(day===7||day===21) bills.push({label:'Car wash',amt:-11});
 
-  // Fixed monthly
-  if(day===1&&key<='2026-05') bills.push({label:'Amazon Store Card',amt:-29});
+  // Fixed monthly -- stop minimums when card is paid off
+  const cb = S.cardBals || {};
+  if(day===1&&key<='2026-05'&&(cb.amazon===undefined||cb.amazon>0)) bills.push({label:'Amazon Store Card',amt:-29});
   if(day===2) bills.push({label:'Amazon Prime',amt:-15});
   if(day===2&&[0,3,6,9].includes(month)) bills.push({label:'Real-Debrid',amt:-11});
   if(day===4) bills.push({label:'PayPal eBay',amt:-43},{label:'ChatGPT',amt:-22});
   if(day===4||day===18) bills.push({label:'Randy training',amt:-150});
   if(day===9) bills.push({label:'Mazda CX-5',amt:-638});
-  if(day===11) bills.push({label:'Merrick Bank',amt:-35});
+  if(cb.merrick===undefined||cb.merrick>0) { if(day===11) bills.push({label:'Merrick Bank',amt:-35}); }
   if(day===13&&key<='2026-10') bills.push({label:'Affirm cluster',amt:-131});
   if(day===13&&key<='2027-01') bills.push({label:'PayPal Newegg',amt:-61});
-  if(day===13) bills.push({label:'Karen PayPal Credit',amt:-100},{label:'Claude.ai',amt:-20});
-  if(day===15) bills.push({label:'T-Mobile',amt:-152},{label:'IRS #1',amt:-68});
-  if(day===16) bills.push({label:'IRS #2',amt:-35},{label:'AT&T fiber',amt:-166});
+  if(cb.kpaypal===undefined||cb.kpaypal>0) { if(day===13) bills.push({label:'Karen PayPal Credit',amt:-100}); }
+  if(day===13) bills.push({label:'Claude.ai',amt:-20});
+  if(day===15) bills.push({label:'T-Mobile',amt:-152});
+  if(cb.irs===undefined||cb.irs>0) { if(day===15) bills.push({label:'IRS #1',amt:-68}); if(day===16) bills.push({label:'IRS #2',amt:-35}); }
+  if(day===16) bills.push({label:'AT&T fiber',amt:-166});
   if(day===22) bills.push({label:'Jon PayPal Credit',amt:-22},{label:'Spotify',amt:-22});
-  if(day===22&&key<='2027-12') bills.push({label:'TN unemployment',amt:-153});
+  if((cb.tn===undefined||cb.tn>0)&&key<='2027-12') { if(day===22) bills.push({label:'TN unemployment',amt:-153}); }
   if(day===23) bills.push({label:'State Farm',amt:-190});
-  if(day===26) bills.push({label:'Chase/Amazon',amt:-26});
+  if(cb.chase===undefined||cb.chase>0) { if(day===26) bills.push({label:'Chase/Amazon',amt:-26}); }
   if(day===30&&key<='2027-03') bills.push({label:'PayPal Chinese',amt:-95});
 
   return bills.filter(b=>b.amt!==0);
@@ -635,28 +638,31 @@ function getMonthEvents(year, month) {
       add(sp.getDate(),e.label||'Discretionary spend',-Math.abs(e.amt),'#85B7EB','Logged');
     }
   });
+  // Helper: only show if not yet paid off per roadmap
+  const notDone=(id)=>{const d=roadmap[id+'-done'];return!d||d.date.substring(0,7)>=key;};
+
   if([0,3,6,9].includes(month)) add(2,'Real-Debrid',-11,'#666660','Quarterly $11');
-  if(key<='2026-05') add(1,'Amazon Store Card',-29,'#F09595','~29% APR');
+  if(key<='2026-05'&&notDone('amazon')) add(1,'Amazon Store Card',-29,'#F09595','~29% APR');
   add(2,'Amazon Prime',-15,'#666660','Subscription');
   add(4,'PayPal eBay',-43,'#EF9F27','35.99% APR · done Aug 2027');
   add(4,'ChatGPT',-22,'#666660','Karen subscription');
   add(4,'Zelle Randy',-150,'#97C459','Biweekly training');
   add(18,'Zelle Randy',-150,'#97C459','Biweekly training');
   add(9,'Mazda CX-5',-638,'#EF9F27','12.72% APR · payoff Aug 2029');
-  add(11,'Merrick Bank',-35,'#F09595','31.95% APR');
+  if(notDone('merrick')) add(11,'Merrick Bank',-35,'#F09595','31.95% APR');
   if(key<='2026-10') add(13,'Affirm cluster',-131,'#b4b2a9','0% APR — verify in Affirm app');
   if(key<='2027-01') add(13,'PayPal Newegg',-61,'#EF9F27','35.99% APR fixed');
-  add(13,'Karen PayPal Credit',-100,'#F09595','29.64% APR — MANUAL');
+  if(notDone('kpaypal')) add(13,'Karen PayPal Credit',-100,'#F09595','29.64% APR — MANUAL');
   add(13,'Claude.ai',-20,'#666660','Subscription');
   add(15,'T-Mobile',-152,'#b4b2a9','Both phones');
-  add(15,'IRS payment #1',-68,'#EF9F27','Installment plan');
-  add(16,'IRS payment #2',-35,'#EF9F27','Installment plan');
+  if(notDone('irs')) add(15,'IRS payment #1',-68,'#EF9F27','Installment plan');
+  if(notDone('irs')) add(16,'IRS payment #2',-35,'#EF9F27','Installment plan');
   add(16,'AT&T fiber',-166,'#b4b2a9','Internet');
   add(22,'Jon PayPal Credit',-22,'#b4b2a9','0% plan — do NOT overpay');
-  if(key<='2027-12') add(22,'TN unemployment',-153,'#EF9F27','~$153/mo');
+  if(notDone('tn')&&key<='2027-12') add(22,'TN unemployment',-153,'#EF9F27','~$153/mo');
   add(22,'Spotify',-22,'#666660','Subscription');
   add(23,'State Farm',-190,'#b4b2a9','Auto insurance');
-  add(26,'Chase/Amazon',-26,'#b4b2a9','APR TBD');
+  if(notDone('chase')) add(26,'Chase/Amazon',-26,'#b4b2a9','APR TBD');
   if(key<='2027-03'&&!(year===2026&&month===3)) add(30,'PayPal Chinese vendor',-95,'#EF9F27','24.99% APR fixed');
 
   // Dynamic one-time expenses from roadmap
