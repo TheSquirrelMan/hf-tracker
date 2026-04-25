@@ -965,9 +965,9 @@ window.logSnowballPayment=function(amt){
   S.snowballLog.unshift({amt,target:ct.label,date:new Date().toLocaleDateString()});
   save(S);renderAll();toast(`$${amt.toLocaleString()} paid to ${ct.label} ✓`);
 };
+window.markPhaseDone=function(id){
   if(!S.phaseDone)S.phaseDone={};
   S.phaseDone[id]=true;
-  // Also mark repair buffer done automatically
   if(id==='jon-tires') S.phaseDone['repair-buf']=true;
   save(S);renderAll();toast('Phase complete ✓');
 };
