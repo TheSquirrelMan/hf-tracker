@@ -675,29 +675,34 @@ function getMonthEvents(year, month) {
     add(23,'Vehicle registration',-220,'#F09595','One-time renewal');
     add(30,'PayPal Chinese — FIRST PMT',-95,'#F09595','Confirm autopay set');
   }
-  // Snowball payments -- show as events when snowball active
+  // Snowball payments -- show exact amount using balLog diff
   const snowballStart = roadmap['snowball-start'];
   if(snowballStart) {
-    const ssDate = new Date(snowballStart.date+'T12:00:00');
-    const ssKey = snowballStart.date.substring(0,7); // YYYY-MM
-    const thisKey = `${year}-${String(month+1).padStart(2,'0')}`;
-    if(thisKey >= ssKey) {
-      // Find current target for this month
-      const currentTarget = SNOWBALL_TARGETS.find(t => {
-        const doneKey = t.id+'-done';
-        const done = roadmap[doneKey];
-        if(!done) return true;
-        const doneDate = done.date.substring(0,7);
-        return doneDate >= thisKey;
-      });
-      if(currentTarget) {
-        // Add snowball payment on paycheck days
-        for(let dd=fromDay;dd<=dim;dd++){
-          const dow2=new Date(year,month,dd).getDay();
-          if(dd===7||dd===22||dow2===4){
-            const eventDate=`${year}-${String(month+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
-            if(eventDate>=snowballStart.date){
-              add(dd,`💸 Snowball → ${currentTarget.label}`,0,'#97C459','Extra payment hits debt · amount varies by surplus');
+    const ssKey = snowballStart.date;
+    const currentTarget = SNOWBALL_TARGETS.find(t => {
+      const doneKey = t.id+'-done';
+      const done = roadmap[doneKey];
+      if(!done) return true;
+      return done.date.substring(0,7) >= `${year}-${String(month+1).padStart(2,'0')}`;
+    });
+    if(currentTarget) {
+      for(let dd=fromDay;dd<=dim;dd++){
+        const dow2=new Date(year,month,dd).getDay();
+        if(dd===7||dd===22||dow2===4){
+          const eventDate=`${year}-${String(month+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+          if(eventDate>=ssKey){
+            // Calculate exact payment from balLog
+            const prevDate=new Date(year,month,dd-1).toISOString().split('T')[0];
+            const prevBal=balLog[prevDate];
+            const todayBal=balLog[eventDate];
+            const todayBills=getDailyBills(year,month,dd);
+            const todayNet=todayBills.reduce((a,b)=>a+b.amt,0);
+            let paymentAmt=0;
+            if(prevBal!==undefined&&todayBal!==undefined){
+              paymentAmt=Math.round(prevBal+todayNet-todayBal);
+            }
+            if(paymentAmt>0){
+              evts.push({day:dd,title:`💸 Pay $${paymentAmt.toLocaleString()} → ${currentTarget.label}`,amt:-paymentAmt,color:'#97C459',note:'Mandatory snowball payment — log into card and pay now',isIncome:false});
             }
           }
         }
@@ -727,10 +732,7 @@ function renderWeek() {
     </div>`;
 
   const sur=calcSurplus();
-  const safeColor=sur.safe<300?'var(--red)':sur.safe<600?'var(--amb)':'var(--grn)';
-  const phaseAction=!nextPending
-    ?'→ Transfer surplus to snowball same day'
-    :`→ Building toward ${nextPending.label} ($${nextPending.cost.toLocaleString()})`;
+
 
   let html='';
 
@@ -754,74 +756,87 @@ function renderWeek() {
     </div>`;
   }
 
-  // Surplus card
-  html+=`<div class="card" style="border-color:var(--bm)40;">
-    <div class="ct">Safe to transfer — before ${sur.npcLabel}</div>
-    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px;">
-      <div>
-        <div style="font-size:38px;font-weight:700;color:${safeColor};line-height:1;">$${Math.round(sur.safe).toLocaleString()}</div>
-        <div style="font-size:11px;color:var(--t3);margin-top:3px;">${phaseAction}</div>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:14px;font-weight:700;color:var(--red);">-$${Math.round(sur.totalDue).toLocaleString()}</div>
-        <div style="font-size:10px;color:var(--t3);">still due</div>
-      </div>
-    </div>`;
-  sur.due.forEach(e=>{
-    const ord=e.day%10===1&&e.day!==11?'st':e.day%10===2&&e.day!==12?'nd':e.day%10===3&&e.day!==13?'rd':'th';
-    html+=`<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:0.5px solid var(--br);font-size:12px;">
-      <span style="color:var(--t2);">${e.title} <span style="color:var(--t3);">~${e.day}${ord}</span></span>
-      <span style="color:var(--red);">-$${Math.abs(e.amt).toLocaleString()}</span>
-    </div>`;
-  });
-  html+=`</div>`;
+  // ── COMMAND CENTER ──
+  // Figure out exactly what to do right now
+  const snowballStart = roadmap['snowball-start'];
+  const snowballActive = snowballStart && new Date() >= new Date(snowballStart.date+'T00:00:00');
+  const currentTarget = snowballActive ? SNOWBALL_TARGETS.find(t=>{
+    const b=(S.cardBals&&S.cardBals[t.id]!==undefined)?S.cardBals[t.id]:t.startBal;
+    return b>0;
+  }) : null;
+  const currentTargetBal = currentTarget ? ((S.cardBals&&S.cardBals[currentTarget.id]!==undefined)?S.cardBals[currentTarget.id]:currentTarget.startBal) : 0;
 
-  // Next milestone callout
-  if(nextPending) {
+  // Calculate surplus above $800 buffer
+  const surplus = Math.max(0, S.bal4496 - 800);
+  const isPayday = today===7||today===22||now.getDay()===4;
+
+  if(snowballActive && currentTarget) {
+    // SNOWBALL MODE -- tell them exactly what to pay and where
+    const payAmt = Math.min(surplus, currentTargetBal);
+    const afterPay = currentTargetBal - payAmt;
+    const doneDate = roadmap[currentTarget.id+'-done'];
+    const doneDateLabel = doneDate ? new Date(doneDate.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '...';
+    html+=`<div class="card" style="border:2px solid var(--gm);background:var(--gbg)20;">
+      <div style="font-size:11px;font-weight:700;color:var(--grn);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;">🚀 Snowball active</div>
+      <div style="font-size:14px;color:var(--t2);margin-bottom:4px;">Current target</div>
+      <div style="font-size:22px;font-weight:700;color:var(--tx);margin-bottom:2px;">${currentTarget.label}</div>
+      <div style="font-size:13px;color:var(--t3);margin-bottom:16px;">$${currentTargetBal.toLocaleString()} remaining · paid off ${doneDateLabel}</div>
+      ${isPayday?`
+      <div style="background:var(--gbg);border:1px solid var(--gm);border-radius:var(--rs);padding:12px;margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--grn);font-weight:700;margin-bottom:4px;">ACTION REQUIRED TODAY</div>
+        <div style="font-size:28px;font-weight:700;color:var(--grn);margin-bottom:4px;">Pay $${Math.round(payAmt).toLocaleString()}</div>
+        <div style="font-size:13px;color:var(--t2);">Log into ${currentTarget.label} and make a payment of $${Math.round(payAmt).toLocaleString()} right now.</div>
+        ${afterPay>0?`<div style="font-size:12px;color:var(--t3);margin-top:4px;">$${Math.round(afterPay).toLocaleString()} remaining after payment</div>`:`<div style="font-size:12px;color:var(--grn);font-weight:700;margin-top:4px;">🎉 This pays it off completely!</div>`}
+      </div>
+      <button class="btn btng" style="margin-bottom:4px;" onclick="logSnowballPayment(${Math.round(payAmt)})">✓ Done — paid $${Math.round(payAmt).toLocaleString()} to ${currentTarget.label}</button>`
+      :`<div style="font-size:13px;color:var(--t2);padding:10px;background:var(--s2);border-radius:var(--rs);margin-bottom:10px;">Next payment on your next paycheck day (7th, 22nd, or Thursday)</div>`}
+      <button class="btn btno btnsm" style="margin:0;" onclick="openModal('card-${currentTarget.id}','Update ${currentTarget.label} balance')">Update balance manually</button>
+    </div>`;
+  } else if(nextPending) {
+    // EXPENSE PHASE -- show exactly what's being saved for
     const m=roadmap[nextPending.id];
     const dateLabel=m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'calculating...';
-    const needed=nextPending.cost+BUFFER;
+    const needed=nextPending.cost+800;
     const progress=Math.min(100,Math.round((S.bal4496/needed)*100));
     const progColor=progress>=100?'var(--grn)':progress>=60?'var(--amb)':'var(--red)';
+    const stillNeed=Math.max(0,needed-S.bal4496);
     html+=`<div class="card" style="border-color:var(--am)40;">
-      <div class="ct">Next expense — ${nextPending.label}</div>
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;">
-        <div>
-          <div style="font-size:26px;font-weight:700;color:var(--amb);">${dateLabel}</div>
-          <div style="font-size:11px;color:var(--t3);">earliest affordable date</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:14px;font-weight:700;color:var(--tx);">$${S.bal4496.toLocaleString()} / $${needed.toLocaleString()}</div>
-          <div style="font-size:10px;color:var(--t3);">current / needed</div>
-        </div>
+      <div style="font-size:11px;font-weight:700;color:var(--amb);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;">Saving for next expense</div>
+      <div style="font-size:22px;font-weight:700;color:var(--tx);margin-bottom:2px;">${nextPending.label}</div>
+      <div style="font-size:13px;color:var(--t3);margin-bottom:12px;">$${nextPending.cost.toLocaleString()} · ready ${dateLabel}</div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+        <span style="color:var(--t2);">#4496 now</span>
+        <span style="font-weight:700;color:var(--blu);">$${Math.round(S.bal4496).toLocaleString()}</span>
       </div>
       <div class="prog"><div class="progfill" style="width:${progress}%;background:${progColor};"></div></div>
-      <div style="font-size:11px;color:var(--t3);">${progress}% there · auto-recalculates when balance changes</div>
-      <button class="btn btng btnsm" style="margin-top:10px;margin-bottom:0;" onclick="markPhaseDone('${nextPending.id}')">✓ Mark as paid — move to next phase</button>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:12px;">
+        <span style="color:var(--t3);">${progress}% there</span>
+        <span style="color:var(--t3);">need $${stillNeed.toLocaleString()} more</span>
+      </div>
+      <div style="background:var(--s2);border-radius:var(--rs);padding:10px;font-size:13px;color:var(--t2);">
+        ✋ <strong>Do nothing</strong> — leave surplus in #4496. Money is building automatically.
+      </div>
+      <button class="btn btng btnsm" style="margin-top:10px;margin-bottom:0;" onclick="markPhaseDone('${nextPending.id}')">✓ Paid — move to next phase</button>
     </div>`;
-  } else {
-    // Snowball active -- show current target
-    const ct=SNOWBALL_TARGETS.find(t=>{
-      const b=(S.cardBals&&S.cardBals[t.id]!==undefined)?S.cardBals[t.id]:t.startBal;
-      return b>0;
-    });
-    if(ct){
-      const bal=(S.cardBals&&S.cardBals[ct.id]!==undefined)?S.cardBals[ct.id]:ct.startBal;
-      const doneDate=roadmap[ct.id+'-done'];
-      const dateLabel=doneDate?new Date(doneDate.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'calculating...';
-      html+=`<div class="card" style="border-color:var(--gm)40;">
-        <div class="ct">🚀 Snowball active — current target</div>
-        <div style="font-size:18px;font-weight:700;color:var(--amb);margin-bottom:4px;">${ct.label}</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div style="font-size:26px;font-weight:700;color:var(--red);">$${bal.toLocaleString()}</div>
-          <div style="text-align:right;font-size:12px;color:var(--t3);">Paid off:<br><span style="color:var(--grn);font-weight:700;">${dateLabel}</span></div>
-        </div>
-        <button class="btn btng btnsm" style="margin-bottom:4px;" onclick="openModal('card-${ct.id}','Update ${ct.label} balance')">Update balance</button>
-        <button class="btn btno btnsm" style="margin-bottom:0;" onclick="openModal('snowball-pmt','Log extra payment')">💸 Log snowball payment</button>
-      </div>`;
-    }
   }
 
+  // Bills due before next paycheck
+  if(sur.due.length){
+    html+=`<div class="card">
+      <div class="ct">Bills due before ${sur.npcLabel}</div>`;
+    sur.due.forEach(e=>{
+      const ord=e.day%10===1&&e.day!==11?'st':e.day%10===2&&e.day!==12?'nd':e.day%10===3&&e.day!==13?'rd':'th';
+      html+=`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--br);font-size:13px;">
+        <span style="color:var(--t2);">${e.title} <span style="color:var(--t3);">· ${e.day}${ord}</span></span>
+        <span style="color:var(--red);font-weight:600;">-$${Math.abs(e.amt).toLocaleString()}</span>
+      </div>`;
+    });
+    html+=`<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:700;">
+      <span style="color:var(--t3);">Total due</span>
+      <span style="color:var(--red);">-$${Math.round(sur.totalDue).toLocaleString()}</span>
+    </div>`;
+    html+=`</div>`;
+  }
   // Next 7 days
   const evts=getMonthEvents(now.getFullYear(),now.getMonth());
   const weekEvts=evts.filter(e=>e.day>=today&&e.day<=today+7);
@@ -940,7 +955,16 @@ function renderWeek() {
   document.getElementById('week-content').innerHTML=html;
 }
 
-window.markPhaseDone=function(id){
+window.logSnowballPayment=function(amt){
+  if(!S.snowballLog)S.snowballLog=[];
+  const ct=SNOWBALL_TARGETS.find(t=>{const b=(S.cardBals&&S.cardBals[t.id]!==undefined)?S.cardBals[t.id]:t.startBal;return b>0;});
+  if(!ct)return;
+  if(!S.cardBals)S.cardBals={};
+  const prev=(S.cardBals[ct.id]!==undefined)?S.cardBals[ct.id]:ct.startBal;
+  S.cardBals[ct.id]=Math.max(0,prev-amt);
+  S.snowballLog.unshift({amt,target:ct.label,date:new Date().toLocaleDateString()});
+  save(S);renderAll();toast(`$${amt.toLocaleString()} paid to ${ct.label} ✓`);
+};
   if(!S.phaseDone)S.phaseDone={};
   S.phaseDone[id]=true;
   // Also mark repair buffer done automatically
