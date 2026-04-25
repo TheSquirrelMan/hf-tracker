@@ -473,6 +473,7 @@ function getDailyBills(year, month, day) {
 // ── ROADMAP ENGINE ──
 function calcRoadmap() {
   let bal=S.bal4496||0;
+  const _origCardBals=S.cardBals;
   const milestones={};
   const balLog={};
   const phaseDone=S.phaseDone||{};
@@ -533,11 +534,11 @@ function calcRoadmap() {
     }
 
     // Snowball payments on paycheck days
+    // Inject simulation cardBals so getDailyBills correctly skips paid-off minimums
+    if(snowballActive) S.cardBals={...(S.cardBals||{}),...cardBals};
+
     if((day===7||day===22||d.getDay()===4)&&snowballActive&&currentSnowIdx!==null){
       const target=SNOWBALL_TARGETS[currentSnowIdx];
-      // Reserve bills until next Jon paycheck, excluding current target's minimum
-      const _saved=S.cardBals;
-      S.cardBals={...(S.cardBals||{}),...cardBals};
       let reserve=300;
       const nextJonDay=day<7?7:day<22?22:7;
       const nextJonMonth=day>=22?month+1:month;
@@ -551,7 +552,6 @@ function calcRoadmap() {
           });
         rd.setDate(rd.getDate()+1);
       }
-      S.cardBals=_saved;
       const available=Math.max(0,bal-reserve);
       if(available>0&&cardBals[target.id]>0){
         const payment=Math.min(cardBals[target.id],available);
@@ -570,9 +570,11 @@ function calcRoadmap() {
     }
 
     balLog[dateStr]=Math.round(bal);
+    if(snowballActive) S.cardBals=_origCardBals;
     d.setDate(d.getDate()+1);
   }
 
+  S.cardBals=_origCardBals;
   return {milestones,balLog,finalCardBals:cardBals};
 }
 
