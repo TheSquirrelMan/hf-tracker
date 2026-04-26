@@ -489,6 +489,12 @@ function getDailyBills(year,month,day,cardBalOverride){
   const bills=[];
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dow=new Date(year,month,day).getDay();
+
+  const today = new Date();
+  today.setHours(0,0,0,0); 
+  const thisDate = new Date(year, month, day);
+  const isFuture = thisDate > today;
+  
 // Update the global variables for this specific calculation
   karenAmt = isFuture ? 810 : (S.karenLastPay || 810);
   jonAmt = isFuture ? 1641 : (S.jonLastPay || 1641);
