@@ -314,9 +314,9 @@ const PHASES=[
   {id:'glasses',    label:'Glasses — Jon + Karen', cost:1000},
 ];
 
-// ══ SNOWBALL TARGETS ══  (amazon updated to $76 after $130 payment)
+// ══ SNOWBALL TARGETS ══
 const TARGETS=[
-  {id:'amazon',  label:'Amazon Store Card',    startBal:76,   minPay:29,  apr:0.29},
+  {id:'amazon',  label:'Amazon Store Card',    startBal:235,  minPay:29,  apr:0.2949},
   {id:'merrick', label:'Merrick Bank',         startBal:926,  minPay:35,  apr:0.3195},
   {id:'cap3186', label:'Cap One #3186 (Karen)',startBal:491,  minPay:25,  apr:0.2824},
   {id:'kpaypal', label:"Karen's PayPal Credit",startBal:1958, minPay:100, apr:0.2964},
@@ -324,7 +324,7 @@ const TARGETS=[
   {id:'cap4565', label:'Cap One #4565 (Jon)',  startBal:726,  minPay:25,  apr:0.29},
   {id:'cap5592', label:'Cap One #5592 (Karen)',startBal:731,  minPay:25,  apr:0.2899},
   {id:'cap7988', label:'Cap One #7988 (Jon)',  startBal:843,  minPay:30,  apr:0.29},
-  {id:'chase',   label:'Chase/Amazon',         startBal:1000, minPay:26,  apr:0.24},
+  {id:'chase',   label:'Chase/Amazon',         startBal:951,  minPay:26,  apr:0.12},
   {id:'tn',      label:'TN Unemployment',      startBal:3653, minPay:153, apr:0},
   {id:'irs',     label:'IRS 2024',             startBal:4767, minPay:103, apr:0},
   {id:'mazda',   label:'Mazda CX-5',           startBal:20693,minPay:638, apr:0.1272},
@@ -522,7 +522,7 @@ function getDailyBills(year,month,day,cardBalOverride){
   if(day===7||day===21)push('Car wash',-11);
 
   // Fixed bills with payoff suppression -- amounts pulled from userBills if edited
-  if(day===1&&key<='2026-05'&&bal(cb,'amazon')>0)push('Amazon Store Card',-29);
+  if(day===1&&key<='2026-07'&&bal(cb,'amazon')>0)push('Amazon Store Card',-29);
   if(day===2)push('Amazon Prime',-ub('prime',15));
   if(day===2&&[0,3,6,9].includes(month))push('Real-Debrid',-11);
   if(day===4&&key<='2027-08')push('PayPal eBay',-43);
@@ -531,7 +531,7 @@ function getDailyBills(year,month,day,cardBalOverride){
   if(day===9&&bal(cb,'mazda')>0)push('Mazda CX-5',-ub('mazda',638));
   if(day===11&&bal(cb,'merrick')>0)push('Merrick Bank',-ub('merrick',35));
   if(day===11&&bal(cb,'cap3186')>0)push('Cap One #3186',-ub('cap3186',25));
-  if(day===13&&key<='2026-10')push('Affirm cluster',-131);
+  if(day===13&&key<='2028-02')push('Affirm cluster',-188);
   if(day===13&&key<='2027-01')push('PayPal Newegg',-61);
   if(day===13&&bal(cb,'kpaypal')>0)push('Karen PayPal Credit',-ub('karenpaypal',100));
   if(day===13)push('Claude.ai',-ub('claude',20));
@@ -741,7 +741,7 @@ function getMonthEvents(year,month,roadmap,balLog){
 
   // Fixed bills
   if([0,3,6,9].includes(month))add(2,'Real-Debrid',-11,'#5c5c58','Quarterly $11');
-  if(key<='2026-05'&&notDone('amazon',1))add(1,'Amazon Store Card',-29,'#e8836e','~29% APR');
+  if(key<='2026-07'&&notDone('amazon',1))add(1,'Amazon Store Card',-29,'#e8836e','29.49% APR · $235 balance');
   add(2,'Amazon Prime',-15,'#5c5c58','Subscription');
   if(key<='2027-08')add(4,'PayPal eBay',-43,'#d4922a','35.99% APR · done Aug 2027');
   add(4,'ChatGPT',-22,'#5c5c58','Karen subscription');
@@ -750,7 +750,7 @@ function getMonthEvents(year,month,roadmap,balLog){
   if(notDone('mazda',9))add(9,'Mazda CX-5',-638,'#d4922a','12.72% APR');
   if(notDone('merrick',11))add(11,'Merrick Bank',-35,'#e8836e','31.95% APR');
   if(notDone('cap3186',11))add(11,'Cap One #3186 (Karen)',-25,'#e8836e','28.24% APR');
-  if(key<='2026-10')add(13,'Affirm cluster',-131,'#a8a69f','0% APR');
+  if(key<='2028-02')add(13,'Affirm cluster',-188,'#a8a69f','0% APR · ~$188/mo total · ends Feb 2028');
   if(key<='2027-01')add(13,'PayPal Newegg',-61,'#d4922a','35.99% APR fixed');
   if(notDone('kpaypal',13))add(13,'Karen PayPal Credit',-100,'#e8836e','29.64% APR — MANUAL');
   add(13,'Claude.ai',-20,'#5c5c58','Subscription');
@@ -968,9 +968,11 @@ function renderWeek(){
   const rem=Math.max(0,200-spent);
   const pct=Math.min(100,(spent/200)*100);
   const sc=pct>80?'var(--red)':pct>50?'var(--amb)':'var(--grn)';
+  const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const daysLeft=daysInMonth-now.getDate();
   html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <div class="card-title" style="margin-bottom:0;">Discretionary · ${MN[now.getMonth()].substring(0,3)}</div>
+      <div class="card-title" style="margin-bottom:0;">Discretionary · ${MN[now.getMonth()].substring(0,3)} · <span style="color:var(--t2);font-weight:400;">${daysLeft} day${daysLeft!==1?'s':''} left</span></div>
       <div style="font-size:11px;color:var(--t3);">$200/mo soft cap</div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;">
@@ -1227,11 +1229,11 @@ const DEFAULT_BILLS=[
 // Locked bills -- hardcoded engine logic, shown read-only
 const LOCKED_BILLS=[
   {id:'realdebrid', name:'Real-Debrid',         amt:11,  note:'Quarterly · Apr/Jul/Oct/Jan 2nd'},
-  {id:'affirm',     name:'Affirm cluster',       amt:131, note:'0% APR · ends ~Oct 2026'},
-  {id:'newegg',     name:'PayPal Newegg',        amt:61,  note:'35.99% APR · ends Jan 2027'},
-  {id:'ebay',       name:'PayPal eBay',          amt:43,  note:'35.99% APR · ends Aug 2027'},
-  {id:'chinese',    name:'PayPal Chinese',       amt:95,  note:'24.99% APR · ends Mar 2027'},
-  {id:'amazon',     name:'Amazon Store Card',    amt:29,  note:'~29% APR · ends ~May 2026'},
+  {id:'affirm',     name:'Affirm cluster',       amt:188, note:'0% APR · Karen $151.81 + Jon $36.63 · ends Feb 2028'},
+  {id:'newegg',     name:'PayPal Newegg',        amt:61,  note:'35.99% APR · $546 remaining · ends Jan 2027'},
+  {id:'ebay',       name:'PayPal eBay',          amt:43,  note:'35.99% APR · $598 remaining · ends Aug 2027'},
+  {id:'chinese',    name:'PayPal Chinese',       amt:95,  note:'24.99% APR · $1,139 remaining · ends Mar 2027'},
+  {id:'amazon',     name:'Amazon Store Card',    amt:29,  note:'29.49% APR · $235 balance · ends ~Jul 2026'},
 ];
 
 function getUserBills(){
