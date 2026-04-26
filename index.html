@@ -261,7 +261,7 @@ select.minput option{background:var(--s2);}
 
 <div class="panel" id="p-month" style="display:none;">
   <div class="mnav">
-    <button class="mnavbtn" onclick="if(viewYear===2026 && viewMonth<=3){ toast('Start of records (April 2026)'); } else { changeMonth(-1); }">← Prev</button>
+    <button class="mnavbtn" onclick="changeMonth(-1)">← Prev</button>
     <div class="mnavtitle" id="month-title"></div>
     <button class="mnavbtn" onclick="changeMonth(1)">Next →</button>
   </div>
@@ -1089,21 +1089,7 @@ function renderWeek(){
 
 // ══ RENDER MONTH ══
 let vMonth=now.getMonth(),vYear=now.getFullYear();
-window.changeMonth = function(dir) {
-  let nm = m + dir;
-  let ny = y;
-  if (nm < 0) { nm = 11; ny--; }
-  if (nm > 11) { nm = 0; ny++; }
-
-  // STOP back button before April 2026
-  if (ny < 2026 || (ny === 2026 && nm < 3)) {
-    toast("Start of records (April 2026)");
-    return;
-  }
-
-  m = nm; y = ny;
-  renderMonth();
-};
+window.changeMonth=function(dir){vMonth+=dir;if(vMonth>11){vMonth=0;vYear++;}if(vMonth<0){vMonth=11;vYear--;}renderMonth();};
 
 function renderMonth(){
   document.getElementById('month-title').textContent=`${MN[vMonth]} ${vYear}`;
