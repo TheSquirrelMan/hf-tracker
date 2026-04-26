@@ -543,7 +543,7 @@ function getDailyBills(year,month,day,cardBalOverride){
   if(day===21&&bal(cb,'cap4565')>0)push('Cap One #4565',-ub('cap4565',25));
   if(day===21&&bal(cb,'cap5592')>0)push('Cap One #5592',-ub('cap5592',25));
   if(day===21&&bal(cb,'cap7988')>0)push('Cap One #7988',-ub('cap7988',30));
-  if(day===22)push('Jon PayPal Credit',-ub('jonpaypal',22));
+  if(day===22&&key<='2029-10')push('Jon PayPal Credit',-ub('jonpaypal',22));
   if(day===22)push('Spotify',-ub('spotify',22));
   if(day===22&&key<='2027-12'&&bal(cb,'tn')>0)push('TN unemployment',-ub('tn',153));
   if(day===23)push('State Farm',-ub('statefarm',190));
