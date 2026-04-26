@@ -775,18 +775,18 @@ function getMonthEvents(year,month,roadmap,balLog){
 
   // Jon Visuals
   if(7>=fromDay) {
-    let amt = checkFuture(7) ? Math.floor(S.jonAvgPay || 1641) : (S.jonLastPay || 1641);
+    let amt = checkFuture(7) ? 1641 : (S.jonLastPay || 1641);
     add(7, 'Jon paycheck', amt, '#7aad4e', pcNote, true);
   }
   if(22>=fromDay) {
-    let amt = checkFuture(22) ? Math.floor(S.jonAvgPay || 1641) : (S.jonLastPay || 1641);
+    let amt = checkFuture(22) ? 1641 : (S.jonLastPay || 1641);
     add(22, 'Jon paycheck', amt, '#7aad4e', pcNote, true);
   }
 
   // Karen Visuals
   for(let d=fromDay; d<=dim; d++) {
     if(new Date(year,month,d).getDay()===4) {
-      let amt = checkFuture(d) ? Math.floor(S.karenAvgPay || 810) : (S.karenLastPay || 810);
+      let amt = checkFuture(d) ? 810 : (S.karenLastPay || 810); // Hardcoded 810
       add(d, 'Karen paycheck — Copans', amt, '#7aad4e', 'Direct deposit to #4496', true);
     }
   }
