@@ -753,11 +753,16 @@ function getMonthEvents(year,month,roadmap,balLog){
   if(notDone('cap4565'))add(21,'Cap One #4565 (Jon)',-25,'#e8836e','29% APR');
   if(notDone('cap5592'))add(21,'Cap One #5592 (Karen)',-25,'#e8836e','28.99% APR');
   if(notDone('cap7988'))add(21,'Cap One #7988 (Jon)',-30,'#e8836e','29% APR');
-  add(22,'Jon PayPal Credit',-22,'#a8a69f','0% plan — do NOT overpay');
+  if(key<='2029-10')add(22,'Jon PayPal Credit',-22,'#a8a69f','0% plan — do NOT overpay · ends Oct 2029');
   add(22,'Spotify',-22,'#5c5c58','Subscription');
   if(notDone('tn')&&key<='2027-12')add(22,'TN unemployment',-153,'#d4922a','~$153/mo');
   add(23,'State Farm',-190,'#a8a69f','Auto insurance');
   if(notDone('chase'))add(26,'Chase/Amazon',-26,'#a8a69f','APR TBD');
+  if(key<='2027-03'&&!(year===2026&&month===3))add(30,'PayPal Chinese vendor',-95,'#d4922a','24.99% APR · ends Mar 2027');
+  if(year===2026&&month===3){
+    add(23,'Vehicle registration',-220,'#e8836e','One-time renewal');
+    add(30,'PayPal Chinese — FIRST PMT',-95,'#d4922a','First payment');
+  }
   if(key<='2027-03'&&!(year===2026&&month===3))add(30,'PayPal Chinese vendor',-95,'#d4922a','24.99% APR fixed');
   if(year===2026&&month===3)add(23,'Vehicle registration',-220,'#e8836e','One-time renewal');
 
