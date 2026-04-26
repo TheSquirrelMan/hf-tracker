@@ -287,7 +287,6 @@ const SECRET='1e4ce42d793ba967a33d1bb54dbc6faaed0aab5c115f0671e2ef77db1d66203e';
 const STATE=ref(db,`hft/${SECRET}/state`);
 
 // ══ CONSTANTS ══
-const PIN='0628';
 const PKEY='hft_auth';
 const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -410,23 +409,67 @@ async function loadFB(){
 }
 
 // ══ PIN ══
-let pinBuf='';
-function checkAuth(){if(sessionStorage.getItem(PKEY)==='ok'){document.getElementById('pin-screen').classList.add('hidden');loadFB();}}
-window.pinKey=k=>{
-  if(pinBuf.length>=4)return;
-  pinBuf+=k;updatePinDots();
-  if(pinBuf.length===4)setTimeout(checkPin,110);
-};
-window.pinDel=()=>{pinBuf=pinBuf.slice(0,-1);document.getElementById('pin-error').textContent='';updatePinDots(false);};
-function updatePinDots(err=false){for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);d.classList.toggle('filled',i<pinBuf.length&&!err);d.classList.toggle('error',err);}}
-function checkPin(){
-  if(pinBuf===PIN){sessionStorage.setItem(PKEY,'ok');document.getElementById('pin-screen').classList.add('hidden');loadFB();}
-  else{updatePinDots(true);document.getElementById('pin-error').textContent='Incorrect PIN';setTimeout(()=>{pinBuf='';updatePinDots(false);document.getElementById('pin-error').textContent='';},900);}
+let pinBuf = '';
+const HASHED_PIN = '1e4ce42d793ba967a33d1bb54dbc6faaed0aab5c115f0671e2ef77db1d66203e';
+
+function checkAuth() {
+  if (sessionStorage.getItem(PKEY) === 'ok') {
+    document.getElementById('pin-screen').classList.add('hidden');
+    loadFB();
+  }
 }
-document.addEventListener('keydown',e=>{
-  if(document.getElementById('pin-screen').classList.contains('hidden'))return;
-  if(e.key>='0'&&e.key<='9')window.pinKey(e.key);
-  if(e.key==='Backspace')window.pinDel();
+
+// Fixed pinKey to handle the async check
+window.pinKey = k => {
+  if (pinBuf.length >= 4) return;
+  pinBuf += k;
+  updatePinDots();
+  if (pinBuf.length === 4) {
+    // Small delay so the 4th dot turns blue before the check happens
+    setTimeout(checkPin, 110);
+  }
+};
+
+window.pinDel = () => {
+  pinBuf = pinBuf.slice(0, -1);
+  document.getElementById('pin-error').textContent = '';
+  updatePinDots(false);
+};
+
+function updatePinDots(err = false) {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('pd' + i);
+    d.classList.toggle('filled', i < pinBuf.length && !err);
+    d.classList.toggle('error', err);
+  }
+}
+
+// NEW SECURE ASYNC CHECK
+async function checkPin() {
+  const msgUint8 = new TextEncoder().encode(pinBuf);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashedInput = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  if (hashedInput === HASHED_PIN) {
+    sessionStorage.setItem(PKEY, 'ok');
+    document.getElementById('pin-screen').classList.add('hidden');
+    loadFB();
+  } else {
+    updatePinDots(true);
+    document.getElementById('pin-error').textContent = 'Incorrect PIN';
+    setTimeout(() => {
+      pinBuf = '';
+      updatePinDots(false);
+      document.getElementById('pin-error').textContent = '';
+    }, 900);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('pin-screen').classList.contains('hidden')) return;
+  if (e.key >= '0' && e.key <= '9') window.pinKey(e.key);
+  if (e.key === 'Backspace') window.pinDel();
 });
 
 // ══ ROUTING ══
