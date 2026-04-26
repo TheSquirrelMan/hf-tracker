@@ -292,6 +292,8 @@ const PKEY='hft_auth';
 const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 //const JON_PAY=1641;
+let karenAmt = 810; 
+let jonAmt = 1641;
 const now=new Date();
 const mKey=`${now.getFullYear()}-${now.getMonth()}`;
 
@@ -487,18 +489,14 @@ function getDailyBills(year,month,day,cardBalOverride){
   const bills=[];
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dow=new Date(year,month,day).getDay();
-  //const karenAmt=S.karenLastPay||S.karenAvgPay||762;
-  // ── THE ACCURACY LOGIC ──
-  // 1. Define 'now' once to compare against
-  const today = new Date();
-  today.setHours(0,0,0,0); 
-  const thisDate = new Date(year, month, day);
-  const isFuture = thisDate > today;
-
-  // 3. Karen: Use Actual Sync for current week, use Conservative $810 for Roadmap
-  const karenAmt = isFuture ? (S.karenAvgPay || 810) : (S.karenLastPay || 810);
-  // Use the 'isFuture' logic you just built for Karen
-  const jonAmt = isFuture ? (S.jonAvgPay || 1641) : (S.jonLastPay || 1641);
+// Update the global variables for this specific calculation
+  karenAmt = isFuture ? 810 : (S.karenLastPay || 810);
+  jonAmt = isFuture ? 1641 : (S.jonLastPay || 1641);
+  
+  // Kill the cents for roadmap view
+  if (isFuture) {
+    karenAmt = Math.floor(karenAmt);
+    jonAmt = Math.floor(jonAmt);
   const cb=cardBalOverride||(S.cardBals||{});
 
   const push=(label,amt,isIncome=false)=>bills.push({label,amt,isIncome});
