@@ -147,8 +147,8 @@ select.minput option{background:var(--s2);}
 .ms-info{flex:1;}
 .ms-label{font-size:13px;}
 .ms-sub{font-size:11px;color:var(--t3);margin-top:1px;}
-.ms-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.ms-date{font-size:13px;font-weight:700;}
+.ms-right{display:flex;align-items:center;gap:8px;flex-shrink:0;min-width:max-content;}
+.ms-date{font-size:13px;font-weight:700;white-space:nowrap;}
 
 /* ── SPEND LOG ── */
 .slog-entry{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--br);font-size:12px;}
@@ -717,8 +717,13 @@ function getMonthEvents(year,month,roadmap,balLog){
   if(22>=fromDay)add(22,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
   for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===4)add(d,'Karen paycheck — Copans',karenAmt,'#7aad4e','Direct deposit to #4496',true);}
 
-  // Groceries
-  for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===0)add(d,'Fresh Market',-200,'#6b9fd4','$200/wk hard limit');}
+  // Groceries and discretionary (Sunday)
+  for(let d=fromDay;d<=dim;d++){
+    if(new Date(year,month,d).getDay()===0){
+      add(d,'Fresh Market',-200,'#6b9fd4','$200/wk hard limit');
+      add(d,'Discretionary',-50,'#5c5c58','$50/wk spending allowance');
+    }
+  }
 
   // Transport
   if(1>=fromDay){add(1,'SunPass',-20,'#5c5c58','Tolls');add(1,'Gas',-60,'#5c5c58','Gasoline');}
@@ -882,8 +887,7 @@ function renderWeek(){
     getDailyBills(ed.getFullYear(),ed.getMonth(),ed.getDate()).forEach(b=>{
       addWE(dd,b.label,b.amt,b.isIncome,b.isIncome?'var(--grn)':'var(--t3)');
     });
-  }
-  // Roadmap milestones in next 7 days
+  }  // Roadmap milestones in next 7 days
   const todayDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   const in7=new Date(todayDate);in7.setDate(in7.getDate()+8);
   PHASES.forEach(p=>{
