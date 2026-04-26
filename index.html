@@ -291,7 +291,8 @@ const PIN='0628';
 const PKEY='hft_auth';
 const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const JON_PAY=1641;
+//const JON_PAY=1641;
+const jonAmt = isFuture ? 1641 : (S.jonLastPay || 1641);
 const now=new Date();
 const mKey=`${now.getFullYear()}-${now.getMonth()}`;
 
@@ -726,7 +727,8 @@ function getMonthEvents(year,month,roadmap,balLog){
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dim=new Date(year,month+1,0).getDate();
   const fromDay=(year===2026&&month===3)?22:1;
-  const karenAmt=S.karenLastPay||S.karenAvgPay||762;
+  //const karenAmt=S.karenLastPay||S.karenAvgPay||762;
+  const karenAmt = isFuture ? 810 : (S.karenLastPay || 810);
   const phaseDone=S.phaseDone||{};
   const cb=S.cardBals||{};
 
@@ -747,8 +749,11 @@ function getMonthEvents(year,month,roadmap,balLog){
   // Paychecks
   const nextP=PHASES.find(p=>!phaseDone[p.id]);
   const pcNote=nextP?`→ Saving for ${nextP.label} ($${nextP.cost.toLocaleString()})`:'→ Surplus to snowball target same day';
-  if(7>=fromDay)add(7,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
-  if(22>=fromDay)add(22,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
+  //if(7>=fromDay)add(7,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
+  //if(22>=fromDay)add(22,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
+  // 2. Use the dynamic 'jonAmt' in your existing add() lines
+  if(7 >= fromDay) add(7, 'Jon paycheck', jonAmt, '#7aad4e', pcNote, true);
+  if(22 >= fromDay) add(22, 'Jon paycheck', jonAmt, '#7aad4e', pcNote, true);
   for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===4)add(d,'Karen paycheck — Copans',karenAmt,'#7aad4e','Direct deposit to #4496',true);}
 
   // Groceries and discretionary (Sunday)
