@@ -736,10 +736,8 @@ function getMonthEvents(year,month,roadmap,balLog){
   }
 
   // Transport
-  if(1>=fromDay){add(1,'SunPass',-20,'#5c5c58','Tolls');add(1,'Gas',-60,'#5c5c58','Gasoline');}
+  if(1>=fromDay)add(1,'Gas',-60,'#5c5c58','Gasoline');
   add(15,'Gas',-60,'#5c5c58','Gasoline');
-  if(7>=fromDay)add(7,'Car wash',-11,'#5c5c58','Biweekly');
-  add(21,'Car wash',-11,'#5c5c58','Biweekly');
 
   // Fixed bills
   if([0,3,6,9].includes(month))add(2,'Real-Debrid',-11,'#5c5c58','Quarterly $11');
