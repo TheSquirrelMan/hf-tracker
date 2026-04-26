@@ -169,7 +169,6 @@ select.minput option{background:var(--s2);}
 </head>
 <body>
 
-<!-- PIN -->
 <div class="overlay" id="pin-screen">
   <div class="pin-logo">💰</div>
   <div class="pin-title">HF Tracker</div>
@@ -195,16 +194,13 @@ select.minput option{background:var(--s2);}
   <div class="pin-error" id="pin-error"></div>
 </div>
 
-<!-- LOADING -->
 <div class="overlay hidden" id="load-screen">
   <div class="spinner"></div>
   <div style="font-size:13px;color:var(--t3);margin-top:14px;">Loading...</div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- MODAL -->
 <div class="mbg" id="mbg" onclick="closeModal()">
   <div class="mbox" onclick="event.stopPropagation()">
     <div class="mtitle" id="mtitle"></div>
@@ -220,7 +216,6 @@ select.minput option{background:var(--s2);}
   </div>
 </div>
 
-<!-- BILL MODAL -->
 <div class="mbg" id="bill-modal" onclick="closeBillModal()">
   <div class="mbox" onclick="event.stopPropagation()">
     <div class="mtitle" id="bm-title">Edit bill</div>
@@ -233,7 +228,6 @@ select.minput option{background:var(--s2);}
   </div>
 </div>
 
-<!-- NAV -->
 <nav class="nav" style="display:none;" id="main-nav">
   <button class="nb on" onclick="sw('week',this)">This Week</button>
   <button class="nb" onclick="sw('month',this)">Month Plan</button>
@@ -241,7 +235,6 @@ select.minput option{background:var(--s2);}
   <button class="nb" onclick="sw('bills',this)">Bills</button>
 </nav>
 
-<!-- THIS WEEK -->
 <div class="panel on" id="p-week" style="display:none;">
   <div class="bstrip">
     <div class="bitem" onclick="editBal('4496')">
@@ -266,7 +259,6 @@ select.minput option{background:var(--s2);}
   <div id="week-content"></div>
 </div>
 
-<!-- MONTH PLAN -->
 <div class="panel" id="p-month" style="display:none;">
   <div class="mnav">
     <button class="mnavbtn" onclick="changeMonth(-1)">← Prev</button>
@@ -276,12 +268,10 @@ select.minput option{background:var(--s2);}
   <div id="month-content"></div>
 </div>
 
-<!-- SNOWBALL -->
 <div class="panel" id="p-snowball" style="display:none;">
   <div id="snowball-content"></div>
 </div>
 
-<!-- BILLS -->
 <div class="panel" id="p-bills" style="display:none;">
   <div id="bills-content"></div>
 </div>
@@ -329,6 +319,16 @@ const TARGETS=[
   {id:'irs',     label:'IRS 2024',             startBal:4767, minPay:103, apr:0},
   {id:'mazda',   label:'Mazda CX-5',           startBal:20693,minPay:638, apr:0.1272},
 ];
+
+function getAffirmAmt(key) {
+  if (key <= '2026-06') return 188;
+  if (key <= '2026-07') return 152;
+  if (key <= '2026-09') return 108;
+  if (key <= '2026-10') return 95;
+  if (key <= '2027-02') return 82;
+  if (key <= '2028-01') return 59;
+  return 0;
+}
 
 // ══ STATE ══
 let S={};
@@ -531,7 +531,10 @@ function getDailyBills(year,month,day,cardBalOverride){
   if(day===9&&bal(cb,'mazda')>0)push('Mazda CX-5',-ub('mazda',638));
   if(day===11&&bal(cb,'merrick')>0)push('Merrick Bank',-ub('merrick',35));
   if(day===11&&bal(cb,'cap3186')>0)push('Cap One #3186',-ub('cap3186',25));
-  if(day===13&&key<='2028-02')push('Affirm cluster',-188);
+  if(day===13) {
+    const affirmAmt = getAffirmAmt(key);
+    if(affirmAmt > 0) push('Affirm cluster', -affirmAmt);
+  }
   if(day===13&&key<='2027-01')push('PayPal Newegg',-61);
   if(day===13&&bal(cb,'kpaypal')>0)push('Karen PayPal Credit',-ub('karenpaypal',100));
   if(day===13)push('Claude.ai',-ub('claude',20));
@@ -750,7 +753,10 @@ function getMonthEvents(year,month,roadmap,balLog){
   if(notDone('mazda',9))add(9,'Mazda CX-5',-638,'#d4922a','12.72% APR');
   if(notDone('merrick',11))add(11,'Merrick Bank',-35,'#e8836e','31.95% APR');
   if(notDone('cap3186',11))add(11,'Cap One #3186 (Karen)',-25,'#e8836e','28.24% APR');
-  if(key<='2028-02')add(13,'Affirm cluster',-188,'#a8a69f','0% APR · ~$188/mo total · ends Feb 2028');
+  const affirmAmt = getAffirmAmt(key);
+  if(affirmAmt > 0) {
+    add(13, 'Affirm cluster', -affirmAmt, '#a8a69f', '0% APR · steps down over time · ends Jan 2028');
+  }
   if(key<='2027-01')add(13,'PayPal Newegg',-61,'#d4922a','35.99% APR fixed');
   if(notDone('kpaypal',13))add(13,'Karen PayPal Credit',-100,'#e8836e','29.64% APR — MANUAL');
   add(13,'Claude.ai',-20,'#5c5c58','Subscription');
@@ -1181,7 +1187,13 @@ function renderSnowball(){
 
   // Self-liquidating accounts
   const SELF_LIQ=[
-    {label:'Affirm cluster',    bal:1651, pmt:188, end:'Feb 2028', note:'Karen $151.81 + Jon $36.63 · 0% APR'},
+    {
+      label:'Affirm cluster', 
+      bal:1651, 
+      pmt: getAffirmAmt(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`), 
+      end:'Jan 2028', 
+      note:'0% APR · Payment steps down over time'
+    },
     {label:'PayPal Chinese',    bal:1139, pmt:95,  end:'Mar 2027', note:'24.99% APR · autopay #4496'},
     {label:'PayPal eBay',       bal:598,  pmt:43,  end:'Aug 2027', note:'35.99% APR · autopay #4496'},
     {label:'PayPal Newegg',     bal:546,  pmt:61,  end:'Jan 2027', note:'35.99% APR · autopay #4496'},
@@ -1254,7 +1266,12 @@ const DEFAULT_BILLS=[
 // Locked bills -- hardcoded engine logic, shown read-only
 const LOCKED_BILLS=[
   {id:'realdebrid', name:'Real-Debrid',         amt:11,  note:'Quarterly · Apr/Jul/Oct/Jan 2nd'},
-  {id:'affirm',     name:'Affirm cluster',       amt:188, note:'0% APR · Karen $151.81 + Jon $36.63 · ends Feb 2028'},
+  {
+    id:'affirm', 
+    name:'Affirm cluster', 
+    amt: getAffirmAmt(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`), 
+    note:'0% APR · Payment steps down over time · ends Jan 2028'
+  },
   {id:'newegg',     name:'PayPal Newegg',        amt:61,  note:'35.99% APR · $546 remaining · ends Jan 2027'},
   {id:'ebay',       name:'PayPal eBay',          amt:43,  note:'35.99% APR · $598 remaining · ends Aug 2027'},
   {id:'chinese',    name:'PayPal Chinese',       amt:95,  note:'24.99% APR · $1,139 remaining · ends Mar 2027'},
