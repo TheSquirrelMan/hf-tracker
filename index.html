@@ -496,7 +496,7 @@ function getDailyBills(year,month,day,cardBalOverride){
   const isFuture = thisDate > today;
 
   // 3. Karen: Use Actual Sync for current week, use Conservative $810 for Roadmap
-  const karenAmt = isFuture ? (S.karenAvgPay || 810) : (S.karenLastPay || 810);
+  const karenAmt = isFuture ? 810 : (S.karenLastPay || 810);
   // Use the 'isFuture' logic you just built for Karen
   const jonAmt = isFuture ? (S.jonAvgPay || 1641) : (S.jonLastPay || 1641);
   const cb=cardBalOverride||(S.cardBals||{});
