@@ -237,7 +237,7 @@ select.minput option{background:var(--s2);}
 <nav class="nav" style="display:none;" id="main-nav">
   <button class="nb on" onclick="sw('week',this)">This Week</button>
   <button class="nb" onclick="sw('month',this)">Month Plan</button>
-  <button class="nb" onclick="sw('snowball',this)">Snowball</button>
+  <button class="nb" onclick="sw('snowball',this)">Roadmap</button>
   <button class="nb" onclick="sw('bills',this)">Bills</button>
 </nav>
 
@@ -1141,7 +1141,7 @@ function renderSnowball(){
     html+=`<div class="ms">
       <div class="ms-info">
         <div class="ms-label" style="font-weight:600;${done?'text-decoration:line-through;color:var(--t3);':''}">${p.label}</div>
-        <div class="ms-sub">$${p.cost.toLocaleString()} · ${p.isSavings?'stays in savings':'from #4496'}</div>
+        <div class="ms-sub">$${p.cost.toLocaleString()} · ${p.isSavings?'transfers to savings':'from #4496'}</div>
       </div>
       <div class="ms-right">
         <div class="ms-date" style="color:${done?'var(--grn)':'var(--amb)'};">${dateLabel}</div>
@@ -1175,6 +1175,31 @@ function renderSnowball(){
         <button class="btn btng btnsm" style="flex:1;" onclick="openModal('card-${t.id}','Update ${t.label} balance')">Update balance</button>
         <button class="btn btna btnsm" style="flex:1;" onclick="openModal('snowball-pmt','Log payment to ${t.label}')">💸 Log payment</button>
       </div>`:''}
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // Self-liquidating accounts
+  const SELF_LIQ=[
+    {label:'Affirm cluster',    bal:1651, pmt:188, end:'Feb 2028', note:'Karen $151.81 + Jon $36.63 · 0% APR'},
+    {label:'PayPal Chinese',    bal:1139, pmt:95,  end:'Mar 2027', note:'24.99% APR · autopay #4496'},
+    {label:'PayPal eBay',       bal:598,  pmt:43,  end:'Aug 2027', note:'35.99% APR · autopay #4496'},
+    {label:'PayPal Newegg',     bal:546,  pmt:61,  end:'Jan 2027', note:'35.99% APR · autopay #4496'},
+    {label:'Jon PayPal Credit', bal:933,  pmt:22,  end:'Oct 2029', note:'0% Customer Assistance — do NOT overpay'},
+  ];
+  html+=`<div class="card"><div class="card-title">Self-liquidating · no action needed</div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:10px;">These pay off automatically on fixed plans. Do not overpay.</div>`;
+  SELF_LIQ.forEach(a=>{
+    const pct=Math.min(100,Math.round(((a.bal-(a.pmt*Math.ceil(a.bal/a.pmt)))/a.bal+1)*100));
+    html+=`<div class="ms" style="flex-direction:column;align-items:flex-start;gap:4px;">
+      <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+        <div style="font-size:14px;font-weight:600;">${a.label}</div>
+        <div style="text-align:right;">
+          <div style="font-size:14px;font-weight:700;color:var(--blu);">$${a.bal.toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--t3);">ends ${a.end}</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--t3);">$${a.pmt}/mo · ${a.note}</div>
     </div>`;
   });
   html+=`</div>`;
