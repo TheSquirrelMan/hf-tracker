@@ -447,15 +447,23 @@ function updatePinDots(err = false) {
 // NEW SECURE ASYNC CHECK
 async function checkPin() {
   try {
+    // 1. Fetch the correct hash from Firebase
+    const snapshot = await get(ref(db, 'app_config/pinHash'));
+    const serverHash = snapshot.val();
+
+    if (!serverHash) {
+      toast("Error: PIN config not found");
+      return;
+    }
+
+    // 2. Hash the user's input
     const msgUint8 = new TextEncoder().encode(pinBuf);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashedInput = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    // Debugging: This will show in the console if it's still failing
-    console.log("Input Hash:", hashedInput);
-
-    if (hashedInput === HASHED_PIN) {
+    // 3. Compare
+    if (hashedInput === serverHash) {
       sessionStorage.setItem(PKEY, 'ok');
       document.getElementById('pin-screen').classList.add('hidden');
       loadFB();
@@ -470,7 +478,7 @@ async function checkPin() {
     }
   } catch (e) {
     console.error("Auth Error:", e);
-    toast("Security Error. Refresh page.");
+    toast("Check connection");
   }
 }
 
