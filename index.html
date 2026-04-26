@@ -732,7 +732,8 @@ function getMonthEvents(year,month,roadmap,balLog){
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dim=new Date(year,month+1,0).getDate();
   const fromDay=(year===2026&&month===3)?22:1;
-  const karenAmt=S.karenLastPay||S.karenAvgPay||762;
+  //const karenAmt=S.karenLastPay||S.karenAvgPay||762;
+  
   const phaseDone=S.phaseDone||{};
   const cb=S.cardBals||{};
 
@@ -750,15 +751,40 @@ function getMonthEvents(year,month,roadmap,balLog){
     return day<=payoffDay;
   };
 
+  // Paychecks 
+  //const nextP=PHASES.find(p=>!phaseDone[p.id]);
+  //const pcNote=nextP?`→ Saving for ${nextP.label} ($${nextP.cost.toLocaleString()})`:'→ Surplus to snowball target same day';
+  //if(7>=fromDay)add(7,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
+  //if(22>=fromDay)add(22,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
+  //if(7>=fromDay)add(7,'Jon paycheck',jonAmt,'#7aad4e',pcNote,true);
+  //if(22>=fromDay)add(22,'Jon paycheck',jonAmt,'#7aad4e',pcNote,true);
+  //for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===4)add(d,'Karen paycheck — Copans',karenAmt,'#7aad4e','Direct deposit to #4496',true);}
+// Helper to check if a specific day is in the future
+  const todayDate = new Date();
+  todayDate.setHours(0,0,0,0);
+  const checkFuture = (d) => new Date(year, month, d) > todayDate;
+
   // Paychecks
   const nextP=PHASES.find(p=>!phaseDone[p.id]);
   const pcNote=nextP?`→ Saving for ${nextP.label} ($${nextP.cost.toLocaleString()})`:'→ Surplus to snowball target same day';
-  //if(7>=fromDay)add(7,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
-  //if(22>=fromDay)add(22,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
-  if(7>=fromDay)add(7,'Jon paycheck',jonAmt,'#7aad4e',pcNote,true);
-  if(22>=fromDay)add(22,'Jon paycheck',jonAmt,'#7aad4e',pcNote,true);
-  for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===4)add(d,'Karen paycheck — Copans',karenAmt,'#7aad4e','Direct deposit to #4496',true);}
 
+  // Jon Visuals
+  if(7>=fromDay) {
+    let amt = checkFuture(7) ? Math.floor(S.jonAvgPay || 1641) : (S.jonLastPay || 1641);
+    add(7, 'Jon paycheck', amt, '#7aad4e', pcNote, true);
+  }
+  if(22>=fromDay) {
+    let amt = checkFuture(22) ? Math.floor(S.jonAvgPay || 1641) : (S.jonLastPay || 1641);
+    add(22, 'Jon paycheck', amt, '#7aad4e', pcNote, true);
+  }
+
+  // Karen Visuals
+  for(let d=fromDay; d<=dim; d++) {
+    if(new Date(year,month,d).getDay()===4) {
+      let amt = checkFuture(d) ? Math.floor(S.karenAvgPay || 810) : (S.karenLastPay || 810);
+      add(d, 'Karen paycheck — Copans', amt, '#7aad4e', 'Direct deposit to #4496', true);
+    }
+  }
   // Groceries and discretionary (Sunday)
   for(let d=fromDay;d<=dim;d++){
     if(new Date(year,month,d).getDay()===0){
