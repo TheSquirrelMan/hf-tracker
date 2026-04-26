@@ -517,9 +517,8 @@ function getDailyBills(year,month,day,cardBalOverride){
   if(dow===0)push('Discretionary',-50);
 
   // Transport
-  if(day===1){push('SunPass',-20);push('Gas',-60);}
+  if(day===1){push('Gas',-60);}
   if(day===15)push('Gas',-60);
-  if(day===7||day===21)push('Car wash',-11);
 
   // Fixed bills with payoff suppression -- amounts pulled from userBills if edited
   if(day===1&&key<='2026-07'&&bal(cb,'amazon')>0)push('Amazon Store Card',-29);
