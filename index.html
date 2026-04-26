@@ -713,8 +713,8 @@ function getMonthEvents(year,month,roadmap,balLog){
   const dim=new Date(year,month+1,0).getDate();
   const fromDay=(year===2026&&month===3)?22:1;
   //const karenAmt=S.karenLastPay||S.karenAvgPay||762;
-  // Step 1: Fix the Karen amount logic
-  const isFuture = d.getTime() > Date.now();
+  const checkDate = new Date(year, month, day);
+  const isFuture = checkDate.getTime() > Date.now();
   const karenAmt = isFuture ? (S.karenAvgPay || 810) : (S.karenLastPay || 810);
   const phaseDone=S.phaseDone||{};
   const cb=S.cardBals||{};
