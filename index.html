@@ -411,7 +411,6 @@ async function loadFB(){
 // ══ PIN ══
 let pinBuf = '';
 const HASHED_PIN = '1e4ce42d793ba967a33d1bb54dbc6faaed0aab5c115f0671e2ef77db1d66203e';
-
 function checkAuth() {
   if (sessionStorage.getItem(PKEY) === 'ok') {
     document.getElementById('pin-screen').classList.add('hidden');
@@ -424,7 +423,7 @@ window.pinKey = k => {
   pinBuf += k;
   updatePinDots();
   if (pinBuf.length === 4) {
-    // Corrected to handle the async checkPin function
+    // We must use 'async' here so the checkPin can do its work
     setTimeout(async () => {
       await checkPin();
     }, 110);
@@ -447,23 +446,31 @@ function updatePinDots(err = false) {
 
 // NEW SECURE ASYNC CHECK
 async function checkPin() {
-  const msgUint8 = new TextEncoder().encode(pinBuf);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashedInput = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  try {
+    const msgUint8 = new TextEncoder().encode(pinBuf);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashedInput = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-  if (hashedInput === HASHED_PIN) {
-    sessionStorage.setItem(PKEY, 'ok');
-    document.getElementById('pin-screen').classList.add('hidden');
-    loadFB();
-  } else {
-    updatePinDots(true);
-    document.getElementById('pin-error').textContent = 'Incorrect PIN';
-    setTimeout(() => {
-      pinBuf = '';
-      updatePinDots(false);
-      document.getElementById('pin-error').textContent = '';
-    }, 900);
+    // Debugging: This will show in the console if it's still failing
+    console.log("Input Hash:", hashedInput);
+
+    if (hashedInput === HASHED_PIN) {
+      sessionStorage.setItem(PKEY, 'ok');
+      document.getElementById('pin-screen').classList.add('hidden');
+      loadFB();
+    } else {
+      updatePinDots(true);
+      document.getElementById('pin-error').textContent = 'Incorrect PIN';
+      setTimeout(() => {
+        pinBuf = '';
+        updatePinDots(false);
+        document.getElementById('pin-error').textContent = '';
+      }, 900);
+    }
+  } catch (e) {
+    console.error("Auth Error:", e);
+    toast("Security Error. Refresh page.");
   }
 }
 
