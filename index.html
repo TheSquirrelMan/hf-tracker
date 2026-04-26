@@ -1092,20 +1092,20 @@ function renderWeek(){
 // ══ RENDER MONTH ══
 let vMonth=now.getMonth(),vYear=now.getFullYear();
 window.changeMonth = function(dir) {
-  let nm = window.m + dir;
-  let ny = window.y;
+  let nm = m + dir;
+  let ny = y;
 
   if (nm < 0) { nm = 11; ny--; }
   if (nm > 11) { nm = 0; ny++; }
 
-  // LOCK: Prevent going before April (index 3) 2026
+  // THE LOCK: Prevent going before April (Index 3) 2026
   if (ny < 2026 || (ny === 2026 && nm < 3)) {
     toast("Start of records (April 2026)");
     return;
   }
 
-  window.m = nm; 
-  window.y = ny;
+  m = nm; 
+  y = ny;
   renderMonth();
 };
 
