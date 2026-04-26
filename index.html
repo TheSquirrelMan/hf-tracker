@@ -490,25 +490,26 @@ function getDailyBills(year,month,day,cardBalOverride){
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dow=new Date(year,month,day).getDay();
 
+  // 1. Time Gate Logic
   const today = new Date();
   today.setHours(0,0,0,0); 
   const thisDate = new Date(year, month, day);
   const isFuture = thisDate > today;
-  
-// Update the global variables for this specific calculation
-  karenAmt = isFuture ? 810 : (S.karenLastPay || 810);
-  jonAmt = isFuture ? 1641 : (S.jonLastPay || 1641);
-  
-  // Kill the cents for roadmap view
-  if (isFuture) {
-    karenAmt = Math.floor(karenAmt);
-    jonAmt = Math.floor(jonAmt);
-  }
-  
-  const cb=cardBalOverride||(S.cardBals||{});
-  const push=(label,amt,isIncome=false)=>bills.push({label,amt,isIncome});
 
-  // Helper: get bill amount from userBills if edited, else default
+  // 2. Paycheck amounts (Clean numbers for Roadmap)
+  let currentKaren = isFuture ? (S.karenAvgPay || 810) : (S.karenLastPay || 810);
+  let currentJon = isFuture ? (S.jonAvgPay || 1641) : (S.jonLastPay || 1641);
+
+  if (isFuture) {
+    currentKaren = Math.floor(currentKaren);
+    currentJon = Math.floor(currentJon);
+  }
+
+  // 3. DEFINE CB HERE (This fixes your current error)
+  const cb = cardBalOverride || (S.cardBals || {});
+  
+  // 4. Define the push helper
+  const push=(label,amt,isIncome=false)=>bills.push({label,amt,isIncome});  // Helper: get bill amount from userBills if edited, else default
   const ub=(id,def)=>{
     if(S.userBills){const b=S.userBills.find(x=>x.id===id);if(b)return b.amt;}
     return def;
@@ -528,8 +529,6 @@ function getDailyBills(year,month,day,cardBalOverride){
   if(day===7 || day===22) push('Jon paycheck', jonAmt, true);
   if(dow===4)push('Karen paycheck',karenAmt,true);
   
-  
-
   // Groceries (Sunday)
   if(dow===0)push('Fresh Market',-200);
 
