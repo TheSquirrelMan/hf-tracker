@@ -487,7 +487,16 @@ function getDailyBills(year,month,day,cardBalOverride){
   const bills=[];
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dow=new Date(year,month,day).getDay();
-  const karenAmt=S.karenLastPay||S.karenAvgPay||762;
+  //const karenAmt=S.karenLastPay||S.karenAvgPay||762;
+  // ── THE ACCURACY LOGIC ──
+  // 1. Define 'now' once to compare against
+  const today = new Date();
+  today.setHours(0,0,0,0); 
+  const thisDate = new Date(year, month, day);
+  const isFuture = thisDate > today;
+
+  // 2. Karen: Use Actual Sync for current week, use Conservative $810 for Roadmap
+  const karenAmt = isFuture ? (S.karenAvgPay || 810) : (S.karenLastPay || 810);
   const cb=cardBalOverride||(S.cardBals||{});
 
   const push=(label,amt,isIncome=false)=>bills.push({label,amt,isIncome});
