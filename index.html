@@ -294,8 +294,10 @@ const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 //const JON_PAY=1641;
 let karenAmt = 810; 
 let jonAmt = 1641;
-const now=new Date();
-const mKey=`${now.getFullYear()}-${now.getMonth()}`;
+window.now = new Date();
+window.y = window.now.getFullYear();
+window.m = window.now.getMonth();
+const mKey = `${window.y}-${window.m}`;
 
 // ══ EXPENSE PHASES ══
 const PHASES=[
@@ -1089,7 +1091,23 @@ function renderWeek(){
 
 // ══ RENDER MONTH ══
 let vMonth=now.getMonth(),vYear=now.getFullYear();
-window.changeMonth=function(dir){vMonth+=dir;if(vMonth>11){vMonth=0;vYear++;}if(vMonth<0){vMonth=11;vYear--;}renderMonth();};
+window.changeMonth = function(dir) {
+  let nm = window.m + dir;
+  let ny = window.y;
+
+  if (nm < 0) { nm = 11; ny--; }
+  if (nm > 11) { nm = 0; ny++; }
+
+  // LOCK: Prevent going before April (index 3) 2026
+  if (ny < 2026 || (ny === 2026 && nm < 3)) {
+    toast("Start of records (April 2026)");
+    return;
+  }
+
+  window.m = nm; 
+  window.y = ny;
+  renderMonth();
+};
 
 function renderMonth(){
   document.getElementById('month-title').textContent=`${MN[vMonth]} ${vYear}`;
