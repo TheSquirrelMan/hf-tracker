@@ -467,7 +467,9 @@ window.submitModal=function(){
   if(mMode==='bal4496'){S.bal4496=amt;save(S);renderWeek();toast('#4496 updated');}
   if(mMode==='bal6764'){S.bal6764=amt;save(S);renderWeek();toast('#6764 updated');}
   if(mMode==='bal0725'){S.bal0725=amt;save(S);renderWeek();toast('Savings updated');}
-  if(mMode==='karen-pay'){S.karenLastPay=amt;S.karenAvgPay=amt;save(S);renderWeek();toast(`Karen pay $${amt} saved`);}
+  if(mMode==='karen-pay'){S.karenLastPay=amt;
+    //S.karenAvgPay=amt;
+    save(S);renderWeek();toast(`Karen pay $${amt} saved`);}
   if(mMode==='spend'){addSpend(amt,label);}
   if(mMode==='snowball-pmt'){logSnowballPmt(amt);}
   if(mMode.startsWith('card-')){
