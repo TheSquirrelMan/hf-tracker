@@ -410,10 +410,24 @@ async function loadFB(){
 
 // ══ PIN ══
 let pinBuf = '';
-function checkAuth() {
+async function checkAuth() {
   if (sessionStorage.getItem(PKEY) === 'ok') {
-    document.getElementById('pin-screen').classList.add('hidden');
-    loadFB();
+    try {
+      // We still need to fetch the secret folder name even on refresh
+      const configSnap = await get(ref(db, 'app_config'));
+      const config = configSnap.val();
+      
+      SECRET = config.dataSecret;
+      STATE = ref(db, `hft/${SECRET}/state`);
+
+      document.getElementById('pin-screen').classList.add('hidden');
+      loadFB();
+    } catch (e) {
+      console.error("Auth Refresh Error:", e);
+      // If refresh fails, clear session so they can try the PIN again
+      sessionStorage.removeItem(PKEY);
+      location.reload();
+    }
   }
 }
 
