@@ -514,25 +514,8 @@ function getDailyBills(year,month,day,cardBalOverride){
   if(dow===0)push('Fresh Market',-200);
 
   // Discretionary allowance -- $50/wk every Sunday baked into projection
-  //if(dow===0)push('Discretionary',-50); // from claude
-  // Smart Discretionary Logic: Exactly $200 per month (from gemini)
-  if (d.getDay() === 0) { // It's Sunday
-    const currentMonth = d.getMonth();
-    const currentYear = d.getFullYear();
-    let spentThisMonth = 0;
-  
-    // Look back at previous days in THIS month to see what we already "spent"
-    for (let i = 1; i < day; i++) {
-      let checkDate = new Date(currentYear, currentMonth, i);
-      if (checkDate.getDay() === 0) spentThisMonth += 50;
-    }
-  
-    // Only deduct if we haven't hit the $200 cap
-    if (spentThisMonth < 200) {
-      let amountToDeduct = Math.min(50, 200 - spentThisMonth);
-      push('Discretionary', -amountToDeduct);
-    };
-  }
+  if(dow===0)push('Discretionary',-50);
+
   // Transport
   if(day===1){push('Gas',-60);}
   if(day===15)push('Gas',-60);
