@@ -763,12 +763,14 @@ function getMonthEvents(year,month,roadmap,balLog){
 
   // Expense phase events from roadmap
   PHASES.forEach(phase=>{
-    if(phaseDone[phase.id]||phase.isSavings)return;
+    if(phaseDone[phase.id])return;
     const m=roadmap[phase.id];
     if(!m)return;
     const ed=new Date(m.date+'T12:00:00');
     if(ed.getFullYear()===year&&ed.getMonth()===month)
-      add(ed.getDate(),phase.label.toUpperCase(),-phase.cost,'#d4922a',`$${phase.cost.toLocaleString()} budget · calculated date`,false,true);
+      const label=phase.isSavings?'TRANSFER → Savings #0725':phase.label.toUpperCase();
+      const note=phase.isSavings?`$${phase.cost.toLocaleString()} · transfer to savings then tap ✓`:`$${phase.cost.toLocaleString()} budget · calculated date`;
+      add(ed.getDate(),label,-phase.cost,'#9b82e8',note,false,true);
   });
 
   // Snowball payment events
@@ -891,7 +893,7 @@ function renderWeek(){
   const todayDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   const in7=new Date(todayDate);in7.setDate(in7.getDate()+8);
   PHASES.forEach(p=>{
-    if(phaseDone[p.id]||p.isSavings)return;
+    if(phaseDone[p.id])return;
     const m=roadmap[p.id];if(!m)return;
     const md=new Date(m.date+'T12:00:00');
     if(md>=todayDate&&md<in7){
