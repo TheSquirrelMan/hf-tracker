@@ -419,14 +419,15 @@ function checkAuth() {
   }
 }
 
-// Fixed pinKey to handle the async check
 window.pinKey = k => {
   if (pinBuf.length >= 4) return;
   pinBuf += k;
   updatePinDots();
   if (pinBuf.length === 4) {
-    // Small delay so the 4th dot turns blue before the check happens
-    setTimeout(checkPin, 110);
+    // Corrected to handle the async checkPin function
+    setTimeout(async () => {
+      await checkPin();
+    }, 110);
   }
 };
 
