@@ -1089,7 +1089,21 @@ function renderWeek(){
 
 // ══ RENDER MONTH ══
 let vMonth=now.getMonth(),vYear=now.getFullYear();
-window.changeMonth=function(dir){vMonth+=dir;if(vMonth>11){vMonth=0;vYear++;}if(vMonth<0){vMonth=11;vYear--;}renderMonth();};
+window.changeMonth = function(dir) {
+  let nm = m + dir;
+  let ny = y;
+  if (nm < 0) { nm = 11; ny--; }
+  if (nm > 11) { nm = 0; ny++; }
+
+  // STOP back button before April 2026
+  if (ny < 2026 || (ny === 2026 && nm < 3)) {
+    toast("Start of records (April 2026)");
+    return;
+  }
+
+  m = nm; y = ny;
+  renderMonth();
+};
 
 function renderMonth(){
   document.getElementById('month-title').textContent=`${MN[vMonth]} ${vYear}`;
