@@ -760,7 +760,32 @@ function getMonthEvents(year,month,roadmap,balLog){
   if(notDone('mazda',9))add(9,'Mazda CX-5',-638,'#d4922a','12.72% APR');
   if(notDone('merrick',11))add(11,'Merrick Bank',-35,'#e8836e','31.95% APR');
   if(notDone('cap3186',11))add(11,'Cap One #3186 (Karen)',-25,'#e8836e','28.24% APR');
-  if(key<='2028-02')add(13,'Affirm cluster',-188,'#a8a69f','0% APR · ~$188/mo total · ends Feb 2028');
+  if (day === 13) {
+      let affirmAmt = 0;
+      let affirmNote = '';
+      if (key <= '2026-06') {
+          affirmAmt = 188;
+          affirmNote = 'Full Cluster · $188';
+      } else if (key <= '2026-07') {
+          affirmAmt = 152;
+          affirmNote = 'Step 1 · $152';
+      } else if (key <= '2026-09') {
+          affirmAmt = 108;
+          affirmNote = 'Step 2 · $108';
+      } else if (key <= '2026-10') {
+          affirmAmt = 95;
+          affirmNote = 'Step 3 · $95';
+      } else if (key <= '2027-02') {
+          affirmAmt = 82;
+          affirmNote = 'Step 4 · $82';
+      } else if (key <= '2028-01') {
+          affirmAmt = 59;
+          affirmNote = 'Final Plan · $59';
+      }
+      if (affirmAmt > 0) {
+          add(13, 'Affirm Cluster', -affirmAmt, '#a8a69f', affirmNote);
+      }
+  }
   if(key<='2027-01')add(13,'PayPal Newegg',-61,'#d4922a','35.99% APR fixed');
   if(notDone('kpaypal',13))add(13,'Karen PayPal Credit',-100,'#e8836e','29.64% APR — MANUAL');
   add(13,'Claude.ai',-20,'#5c5c58','Subscription');
