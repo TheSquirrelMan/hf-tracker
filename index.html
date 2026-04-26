@@ -531,7 +531,7 @@ function getDailyBills(year,month,day,cardBalOverride){
     if (spentThisMonth < 200) {
       let amountToDeduct = Math.min(50, 200 - spentThisMonth);
       push('Discretionary', -amountToDeduct);
-    }
+    };
   }
   // Transport
   if(day===1){push('Gas',-60);}
