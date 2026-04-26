@@ -531,7 +531,17 @@ function getDailyBills(year,month,day,cardBalOverride){
   if(day===9&&bal(cb,'mazda')>0)push('Mazda CX-5',-ub('mazda',638));
   if(day===11&&bal(cb,'merrick')>0)push('Merrick Bank',-ub('merrick',35));
   if(day===11&&bal(cb,'cap3186')>0)push('Cap One #3186',-ub('cap3186',25));
-  if(day===13&&key<='2028-02')push('Affirm cluster',-188);
+  // Affirm cluster -- steps down as plans expire
+  if(day===13){
+    let affirmAmt=0;
+    if(key<='2026-06') affirmAmt=188;
+    else if(key<='2026-07') affirmAmt=152;
+    else if(key<='2026-09') affirmAmt=108;
+    else if(key<='2026-10') affirmAmt=95;  // ~$95 rounding
+    else if(key<='2027-02') affirmAmt=82;
+    else if(key<='2028-01') affirmAmt=59;
+    if(affirmAmt>0) push('Affirm cluster',-affirmAmt);
+  }
   if(day===13&&key<='2027-01')push('PayPal Newegg',-61);
   if(day===13&&bal(cb,'kpaypal')>0)push('Karen PayPal Credit',-ub('karenpaypal',100));
   if(day===13)push('Claude.ai',-ub('claude',20));
