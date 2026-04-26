@@ -283,8 +283,8 @@ import{getDatabase,ref,onValue,set,get}from'https://www.gstatic.com/firebasejs/1
 // ══ FIREBASE ══
 const FB=initializeApp({apiKey:"AIzaSyDsd7Pr0AEQ3j6n-bKXv7n06vYf9Hvew7Y",authDomain:"hf-tracker-81e76.firebaseapp.com",databaseURL:"https://hf-tracker-81e76-default-rtdb.firebaseio.com",projectId:"hf-tracker-81e76",storageBucket:"hf-tracker-81e76.firebasestorage.app",messagingSenderId:"810272700127",appId:"1:810272700127:web:f72c67e2a9d839a8049b6a"});
 const db=getDatabase(FB);
-const SECRET='1e4ce42d793ba967a33d1bb54dbc6faaed0aab5c115f0671e2ef77db1d66203e';
-const STATE=ref(db,`hft/${SECRET}/state`);
+let SECRET = '';
+let STATE = null;
 
 // ══ CONSTANTS ══
 const PKEY='hft_auth';
@@ -447,38 +447,27 @@ function updatePinDots(err = false) {
 // NEW SECURE ASYNC CHECK
 async function checkPin() {
   try {
-    // 1. Fetch the correct hash from Firebase
-    const snapshot = await get(ref(db, 'app_config/pinHash'));
-    const serverHash = snapshot.val();
+    const configSnap = await get(ref(db, 'app_config'));
+    const config = configSnap.val();
 
-    if (!serverHash) {
-      toast("Error: PIN config not found");
-      return;
-    }
-
-    // 2. Hash the user's input
     const msgUint8 = new TextEncoder().encode(pinBuf);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashedInput = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    // 3. Compare
-    if (hashedInput === serverHash) {
+    if (hashedInput === config.pinHash) {
+      SECRET = config.dataSecret; // Load your old folder name from Firebase
+      STATE = ref(db, `hft/${SECRET}/state`); // Set the data path
       sessionStorage.setItem(PKEY, 'ok');
       document.getElementById('pin-screen').classList.add('hidden');
       loadFB();
     } else {
       updatePinDots(true);
       document.getElementById('pin-error').textContent = 'Incorrect PIN';
-      setTimeout(() => {
-        pinBuf = '';
-        updatePinDots(false);
-        document.getElementById('pin-error').textContent = '';
-      }, 900);
+      setTimeout(() => { pinBuf = ''; updatePinDots(false); }, 900);
     }
   } catch (e) {
-    console.error("Auth Error:", e);
-    toast("Check connection");
+    toast("Config Error");
   }
 }
 
