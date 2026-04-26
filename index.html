@@ -503,8 +503,9 @@ function getDailyBills(year,month,day,cardBalOverride){
   if (isFuture) {
     karenAmt = Math.floor(karenAmt);
     jonAmt = Math.floor(jonAmt);
-  const cb=cardBalOverride||(S.cardBals||{});
   }
+  
+  const cb=cardBalOverride||(S.cardBals||{});
   const push=(label,amt,isIncome=false)=>bills.push({label,amt,isIncome});
 
   // Helper: get bill amount from userBills if edited, else default
