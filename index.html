@@ -490,16 +490,19 @@ function getDailyBills(year,month,day,cardBalOverride){
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dow=new Date(year,month,day).getDay();
 
-  // 1. Time Gate Logic
+// 1. Time Gate
   const today = new Date();
   today.setHours(0,0,0,0); 
   const thisDate = new Date(year, month, day);
   const isFuture = thisDate > today;
 
-  // 2. Paycheck amounts (Clean numbers for Roadmap)
-  let currentKaren = isFuture ? (S.karenAvgPay || 810) : (S.karenLastPay || 810);
-  let currentJon = isFuture ? (S.jonAvgPay || 1641) : (S.jonLastPay || 1641);
+  // 2. Karen's Logic: Future gets clean 810, Today/Past gets real sync data
+  let currentKaren = isFuture ? 810 : (S.karenLastPay || 810);
+  
+  // 3. Jon's Logic: Future gets clean 1641, Today/Past gets real sync data
+  let currentJon = isFuture ? 1641 : (S.jonLastPay || 1641);
 
+  // 4. Force clean whole numbers ONLY for future Roadmap dates
   if (isFuture) {
     currentKaren = Math.floor(currentKaren);
     currentJon = Math.floor(currentJon);
