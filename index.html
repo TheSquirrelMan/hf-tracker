@@ -494,8 +494,9 @@ function getDailyBills(year,month,day,cardBalOverride){
   today.setHours(0,0,0,0); 
   const thisDate = new Date(year, month, day);
   const isFuture = thisDate > today;
-
-  // 2. Karen: Use Actual Sync for current week, use Conservative $810 for Roadmap
+  // 2. Use S.jonAvgPay if you set it in the app, otherwise default to 1641
+  const jonAmt = isFuture ? (S.jonAvgPay || 1641) : (S.jonLastPay || 1641);
+  // 3. Karen: Use Actual Sync for current week, use Conservative $810 for Roadmap
   const karenAmt = isFuture ? (S.karenAvgPay || 810) : (S.karenLastPay || 810);
   const cb=cardBalOverride||(S.cardBals||{});
 
@@ -516,8 +517,10 @@ function getDailyBills(year,month,day,cardBalOverride){
   }
 
   // Income
+  if(day===7 || day===22) push('Jon paycheck', jonAmt, true);
   if(day===7||day===22)push('Jon paycheck',JON_PAY,true);
   if(dow===4)push('Karen paycheck',karenAmt,true);
+  
   
 
   // Groceries (Sunday)
