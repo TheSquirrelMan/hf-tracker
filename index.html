@@ -526,8 +526,10 @@ function getDailyBills(year,month,day,cardBalOverride){
   // Income
   //OLD
   //if(day===7||day===22)push('Jon paycheck',JON_PAY,true);
-  if(day===7 || day===22) push('Jon paycheck', jonAmt, true);
-  if(dow===4)push('Karen paycheck',karenAmt,true);
+  //if(day===7 || day===22) push('Jon paycheck', jonAmt, true);
+  //if(dow===4)push('Karen paycheck',karenAmt,true);
+  if(day===7 || day===22) push('Jon paycheck', currentJon, true);
+  if(dow===4)push('Karen paycheck',currentKaren,true);
   
   // Groceries (Sunday)
   if(dow===0)push('Fresh Market',-200);
