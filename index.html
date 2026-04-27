@@ -397,12 +397,23 @@ async function loadFB(){
   document.getElementById('p-week').classList.add('on');
   appReady=true;
   renderAll();
-  // Real-time listener -- only apply if no pending local save
-  fbListener=onValue(STATE,snap=>{
-    if(!snap.exists()||saveTimer)return;
-    const remote=snap.val();
-    S={...defaultState(),...remote};
-    if(S.mKey!==mKey)S=resetMonthly(S);
+// Real-time listener
+  fbListener = onValue(STATE, snap => {
+    if (!snap.exists()) return;
+    const remote = snap.val();
+
+    if (saveTimer) {
+      // If we are currently waiting to save local edits, 
+      // ONLY pull in the bank balances so they don't get lost/overwritten
+      S.bal4496 = remote.bal4496;
+      S.bal6764 = remote.bal6764;
+      S.bal0725 = remote.bal0725;
+    } else {
+      // Otherwise, take the full update
+      S = {...defaultState(), ...remote};
+      if (S.mKey !== mKey) S = resetMonthly(S);
+    }
+
     setSS('ok');
     renderAll();
   });
