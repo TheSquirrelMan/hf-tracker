@@ -842,8 +842,30 @@ function getMonthEvents(year,month,roadmap,balLog){
   const checkFuture = (d) => new Date(year, month, d) > todayDate;
 
   // Paychecks
-  const nextP=PHASES.find(p=>!phaseDone[p.id]);
-  const pcNote=nextP?`→ Saving for ${nextP.label} ($${nextP.cost.toLocaleString()})`:'→ Surplus to snowball target same day';
+ // const nextP=PHASES.find(p=>!phaseDone[p.id]);
+ // const pcNote=nextP?`→ Saving for ${nextP.label} ($${nextP.cost.toLocaleString()})`:'→ Surplus to snowball target same day';
+
+// Paychecks - Smart Labels
+  function getSmartNote(m, y) {
+    // Check the database for the first goal NOT marked done
+    const currentGoalIndex = PHASES.findIndex(p => !(S.phaseDone && S.phaseDone[p.id]));
+    
+    // If all goals are done
+    if (currentGoalIndex === -1) return '→ Surplus to snowball target';
+    
+    const p = PHASES[currentGoalIndex];
+    
+    // If looking at a month in the past
+    if (y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth())) {
+      return 'Paycheck'; 
+    }
+
+    // Return the current active goal
+    return `→ Saving for ${p.label} ($${p.cost.toLocaleString()})`;
+  }
+
+  // Generate the note for the current month being viewed
+  const pcNote = getSmartNote(month, year);
 
   // Jon Visuals
   if(7>=fromDay) {
