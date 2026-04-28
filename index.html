@@ -612,7 +612,7 @@ function getDailyBills(year,month,day,cardBalOverride){
   const isFuture = thisDate > today;
 
   // 2. Karen's Logic: Future gets clean 810, Today/Past gets real sync data
-  let currentKaren = isFuture ? 810 : (S.karenLastPay || 810);
+  let currentKaren = isFuture ? (S.karenAvgPay || S.karenLastPay || 810) : (S.karenLastPay || 810);
   
   // 3. Jon's Logic: Future gets clean 1641, Today/Past gets real sync data
   let currentJon = isFuture ? 1641 : (S.jonLastPay || 1641);
