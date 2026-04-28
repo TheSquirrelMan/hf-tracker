@@ -581,8 +581,9 @@ window.submitModal=function(){
   if(mMode==='bal6764'){S.bal6764=amt;save(S);renderWeek();toast('#6764 updated');}
   if(mMode==='bal0725'){S.bal0725=amt;save(S);renderWeek();toast('Savings updated');}
   if(mMode==='karen-pay'){S.karenLastPay=amt;
-    //S.karenAvgPay=amt;
     save(S);renderWeek();toast(`Karen pay $${amt} saved`);}
+if(mMode==='karen-avg'){S.karenAvgPay=amt;
+    save(S);renderAll();toast(`Karen avg pay $${amt} saved`);}
   if(mMode==='spend'){addSpend(amt,label);}
   if(mMode==='snowball-pmt'){logSnowballPmt(amt);}
   if(mMode.startsWith('card-')){
@@ -1254,14 +1255,15 @@ function renderWeek(){
   }
 
   // ── Karen pay ──
-  html+=`<div class="card">
+  const karenAvg = S.karenAvgPay || S.karenLastPay || 810;
+html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <div class="card-title" style="margin-bottom:2px;">Karen's last pay</div>
-        <div style="font-size:18px;font-weight:700;color:var(--amb);">$${S.karenLastPay||762}</div>
-        <div style="font-size:11px;color:var(--t3);">Auto-updated every Thursday · affects projections</div>
+        <div class="card-title" style="margin-bottom:2px;">Karen's pay</div>
+        <div style="font-size:13px;font-weight:700;color:var(--amb);">Average: $${karenAvg.toLocaleString()} · Last: $${(S.karenLastPay||810).toLocaleString()}</div>
+        <div style="font-size:11px;color:var(--t3);">Updates projections · tap to adjust average</div>
       </div>
-      <button class="btn btna btnsm" style="width:auto;padding:8px 14px;" onclick="openModal('karen-pay','Karen\\'s actual pay')">Update</button>
+      <button class="btn btna btnsm" style="width:auto;padding:8px 14px;" onclick="openModal('karen-avg','Karen\\'s average pay')">Update</button>
     </div>
   </div>`;
 
