@@ -149,6 +149,12 @@ select.minput option{background:var(--s2);}
 .ms-sub{font-size:11px;color:var(--t3);margin-top:1px;}
 .ms-right{display:flex;align-items:center;gap:8px;flex-shrink:0;min-width:max-content;}
 .ms-date{font-size:13px;font-weight:700;white-space:nowrap;}
+/* ── REORDER BUTTONS ── */
+.reorder-btns{display:flex;flex-direction:column;gap:2px;margin-right:4px;}
+.reorder-btn{background:var(--s3);border:0.5px solid var(--br);border-radius:4px;color:var(--t2);cursor:pointer;font-size:14px;padding:2px 6px;line-height:1;transition:all 0.15s;}
+.reorder-btn:hover{background:var(--s4);color:var(--tx);}
+.reorder-btn:active{transform:scale(0.95);}
+.reorder-btn:disabled{opacity:0.3;cursor:not-allowed;}
 
 /* ── SPEND LOG ── */
 .slog-entry{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--br);font-size:12px;}
@@ -296,14 +302,19 @@ let jonAmt = 1641;
 const now=new Date();
 const mKey=`${now.getFullYear()}-${now.getMonth()}`;
 
-// ══ EXPENSE PHASES ══
-const PHASES=[
+// ══ DEFAULT EXPENSE PHASES (moved to state for reordering) ══
+const DEFAULT_PHASES=[
   {id:'jon-tires',  label:"Jon's tires + oil",    cost:1500},
   {id:'repair-buf', label:'Repair buffer (savings)',cost:1000,isSavings:true},
   {id:'karen-tires',label:"Karen's tires",         cost:1000},
   {id:'dental',     label:'Dental — Jon + Karen',  cost:500},
   {id:'glasses',    label:'Glasses — Jon + Karen', cost:1000},
 ];
+
+// Helper function to get current phases from state
+function getPhases() {
+  return (S && S.phases && S.phases.length > 0) ? S.phases : DEFAULT_PHASES;
+}
 
 // ══ SNOWBALL TARGETS ══
 const TARGETS=[
@@ -347,6 +358,7 @@ function defaultState(){
     randySessions:[],
     billChecks:{},
     phaseDone:{},
+    phases: JSON.parse(JSON.stringify(DEFAULT_PHASES)),
     cardBals:{},
     snowballLog:[],
     confirmed:{},
@@ -385,6 +397,9 @@ async function loadFB(){
     const snap=await get(STATE);
     S=snap.exists()?{...defaultState(),...snap.val()}:defaultState();
     if(S.mKey!==mKey)S=resetMonthly(S);
+    if(!S.phases || S.phases.length === 0) {
+      S.phases = JSON.parse(JSON.stringify(DEFAULT_PHASES));
+    }
     setSS('ok');
   }catch(e){
     console.warn('load fail',e);
@@ -408,10 +423,14 @@ async function loadFB(){
       S.bal4496 = remote.bal4496;
       S.bal6764 = remote.bal6764;
       S.bal0725 = remote.bal0725;
+      if(remote.phases) S.phases = remote.phases;
     } else {
       // Otherwise, take the full update
       S = {...defaultState(), ...remote};
       if (S.mKey !== mKey) S = resetMonthly(S);
+      if(!S.phases || S.phases.length === 0) {
+        S.phases = JSON.parse(JSON.stringify(DEFAULT_PHASES));
+      }
     }
 
     setSS('ok');
@@ -688,7 +707,7 @@ function calcRoadmap(){
   TARGETS.forEach(t=>{cardBals[t.id]=bal(S.cardBals||{},t.id);});
 
   // Pending expense phases (not done, not savings)
-  const pendingPhases=PHASES.filter(p=>!phaseDone[p.id]);
+  const pendingPhases=getPhases().filter(p=>!phaseDone[p.id]);
   let lastPhaseDate=null;
   let snowballActive=pendingPhases.length===0;
   let snowIdx=TARGETS.findIndex(t=>cardBals[t.id]>0);
@@ -842,18 +861,18 @@ function getMonthEvents(year,month,roadmap,balLog){
   const checkFuture = (d) => new Date(year, month, d) > todayDate;
 
   // Paychecks
- // const nextP=PHASES.find(p=>!phaseDone[p.id]);
+ // const nextP=getPhases().find(p=>!phaseDone[p.id]);
  // const pcNote=nextP?`→ Saving for ${nextP.label} ($${nextP.cost.toLocaleString()})`:'→ Surplus to snowball target same day';
 
 // Paychecks - Smart Labels
   function getSmartNote(m, y) {
     // Check the database for the first goal NOT marked done
-    const currentGoalIndex = PHASES.findIndex(p => !(S.phaseDone && S.phaseDone[p.id]));
+    const currentGoalIndex = getPhases().findIndex(p => !(S.phaseDone && S.phaseDone[p.id]));
     
     // If all goals are done
     if (currentGoalIndex === -1) return '→ Surplus to snowball target';
     
-    const p = PHASES[currentGoalIndex];
+    const p = getPhases()[currentGoalIndex];
     
     // If looking at a month in the past
     if (y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth())) {
@@ -934,7 +953,7 @@ function getMonthEvents(year,month,roadmap,balLog){
   if(year===2026&&month===3)add(23,'Vehicle registration',-220,'#e8836e','One-time renewal');
 
   // Expense phase events from roadmap
-  PHASES.forEach(phase=>{
+  getPhases().forEach(phase=>{
     if(phaseDone[phase.id])return;
     const m=roadmap[phase.id];
     if(!m)return;
@@ -994,8 +1013,8 @@ function renderWeek(){
   const todayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(today).padStart(2,'0')}`;
   const {milestones:roadmap}=calcRoadmap();
   const phaseDone=S.phaseDone||{};
-  const nextP=PHASES.find(p=>!phaseDone[p.id]);
-  const allPhasesDone=PHASES.every(p=>phaseDone[p.id]);
+  const nextP=getPhases().find(p=>!phaseDone[p.id]);
+  const allPhasesDone=getPhases().every(p=>phaseDone[p.id]);
   const sur=calcSurplus();
 
   // ── Today header ──
@@ -1065,7 +1084,7 @@ function renderWeek(){
   }  // Roadmap milestones in next 7 days
   const todayDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   const in7=new Date(todayDate);in7.setDate(in7.getDate()+8);
-  PHASES.forEach(p=>{
+  getPhases().forEach(p=>{
     if(phaseDone[p.id])return;
     const m=roadmap[p.id];if(!m)return;
     const md=new Date(m.date+'T12:00:00');
@@ -1285,15 +1304,16 @@ function renderMonth(){
 function renderSnowball(){
   const{milestones:roadmap}=calcRoadmap();
   const phaseDone=S.phaseDone||{};
-  const allExpDone=PHASES.every(p=>phaseDone[p.id]);
+  const allExpDone=getPhases().every(p=>phaseDone[p.id]);
   const cb=S.cardBals||{};
 
   let html=`<div style="font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:2px;">Debt roadmap</div>
     <div style="font-size:12px;color:var(--t3);margin-bottom:10px;">All dates calculated from your actual balance</div>`;
 
   // Expense phases
-  html+=`<div class="card"><div class="card-title">Expense phases</div>`;
-  PHASES.forEach(p=>{
+  html+=`<div class="card"><div class="card-title">Expense phases (reorder with ▲▼)</div>`;
+  const phasesList = getPhases();
+  phasesList.forEach((p, index)=>{
     const done=phaseDone[p.id];
     const m=roadmap[p.id];
     const dateLabel=done?'DONE':m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'calculating...';
@@ -1303,6 +1323,10 @@ function renderSnowball(){
         <div class="ms-sub">$${p.cost.toLocaleString()} · ${p.isSavings?'transfers to savings':'from #4496'}</div>
       </div>
       <div class="ms-right">
+        <div class="reorder-btns">
+          <button class="reorder-btn" onclick="movePhase(${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
+          <button class="reorder-btn" onclick="movePhase(${index}, 1)" ${index === phasesList.length - 1 ? 'disabled' : ''}>▼</button>
+        </div>
         <div class="ms-date" style="color:${done?'var(--grn)':'var(--amb)'};">${dateLabel}</div>
         ${!done?`<button class="btn btng btnsm" style="padding:4px 9px;font-size:11px;" onclick="markPhaseDone('${p.id}')">✓</button>`:''}
       </div>
@@ -1591,6 +1615,25 @@ function logSnowballPmt(amt){
   S.snowballLog.unshift({amt,target:ct.label,date:new Date().toLocaleDateString()});
   save(S);renderSnowball();toast(`$${amt.toLocaleString()} paid to ${ct.label} ✓`);
 }
+
+// ══ PHASE REORDERING ══
+window.movePhase = function(index, direction) {
+  const phasesList = [...getPhases()];
+  const newIndex = index + direction;
+  
+  if (newIndex < 0 || newIndex >= phasesList.length) return;
+  
+  const temp = phasesList[index];
+  phasesList[index] = phasesList[newIndex];
+  phasesList[newIndex] = temp;
+  
+  S.phases = phasesList;
+  save(S);
+  
+  renderAll();
+  toast('Phases reordered');
+};
+
 window.markPhaseDone=function(id){
   if(!S.phaseDone)S.phaseDone={};
   S.phaseDone[id]=true;
@@ -1607,6 +1650,13 @@ window.confirmAction=function(id){if(!S.confirmed)S.confirmed={};S.confirmed[id]
 window.getDailyBills=getDailyBills;
 window.calcRoadmap=()=>calcRoadmap();
 window.getS=()=>S;
+window.getPhases=()=>getPhases();
+window.resetPhases=()=>{
+  S.phases = JSON.parse(JSON.stringify(DEFAULT_PHASES));
+  save(S);
+  renderAll();
+  toast('Phases reset to default order');
+};
 
 // ══ INIT ══
 checkAuth();
