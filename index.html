@@ -1227,28 +1227,6 @@ function renderWeek(){
     <button class="btn btnr btnsm" onclick="openModal('spend','Log discretionary spend',true)">➕ Log spend</button>
   </div>`;
 
-  // ── Spend log ──
-  const log=S.discLog||[];
-  if(log.length){
-    html+=`<div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div class="card-title" style="margin-bottom:0;">Spend log</div>
-        <button class="btn btno btnsm" style="padding:4px 10px;font-size:11px;" onclick="resetDisc()">Reset month</button>
-      </div>`;
-    log.forEach((e,i)=>{
-      html+=`<div class="slog-entry">
-        <div class="slog-left">
-          <div class="slog-label">${e.label}</div>
-          <div class="slog-meta">${e.date}</div>
-        </div>
-        <div class="slog-right">
-          <span class="slog-amt">-$${e.amt.toFixed(2)}</span>
-          <button class="slog-del" onclick="deleteSpend(${i})">×</button>
-        </div>
-      </div>`;
-    });
-    html+=`</div>`;
-  }  // ── Spend log ──
   const log=S.discLog||[];
   if(log.length){
     html+=`<div class="card">
