@@ -1215,7 +1215,14 @@ function renderWeek(){
 
 // ══ RENDER MONTH ══
 let vMonth=now.getMonth(),vYear=now.getFullYear();
-window.changeMonth=function(dir){vMonth+=dir;if(vMonth>11){vMonth=0;vYear++;}if(vMonth<0){vMonth=11;vYear--;}renderMonth();};
+window.changeMonth=function(dir){
+  vMonth+=dir;
+  if(vMonth>11){vMonth=0;vYear++;}
+  if(vMonth<0){vMonth=11;vYear--;}
+  // Prevent going before April 2026
+  if(vYear<2026||(vYear===2026&&vMonth<3)){vMonth=3;vYear=2026;}
+  renderMonth();
+};
 
 function renderMonth(){
   document.getElementById('month-title').textContent=`${MN[vMonth]} ${vYear}`;
@@ -1306,7 +1313,7 @@ function renderMonth(){
   const prevM=(vMonth-1+12)%12,prevY=vMonth===0?vYear-1:vYear;
   const nextM=(vMonth+1)%12,nextY=vMonth===11?vYear+1:vYear;
   html+=`<div style="display:flex;gap:8px;margin-top:4px;">
-    <button class="btn btno" style="flex:1;" onclick="changeMonth(-1)">← ${MN[prevM].substring(0,3)} '${String(prevY).slice(2)}</button>
+    <button class="btn btno" style="flex:1;" onclick="changeMonth(-1)" ${vYear===2026&&vMonth===3?'disabled':''}>← ${MN[prevM].substring(0,3)} '${String(prevY).slice(2)}</button>
     <button class="btn btno" style="flex:1;" onclick="changeMonth(1)">${MN[nextM].substring(0,3)} '${String(nextY).slice(2)} →</button>
   </div>`;
 
