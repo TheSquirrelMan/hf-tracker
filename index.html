@@ -167,6 +167,13 @@ select.minput option{background:var(--s2);}
 .slog-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;}
 .slog-del:active{color:var(--red);}
 
+/* ── COLLAPSIBLE ── */
+.spendlog-header{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;}
+.spendlog-arrow{font-size:14px;transition:transform 0.2s;color:var(--t3);}
+.spendlog-arrow.open{transform:rotate(180deg);}
+.spendlog-body{display:none;}
+.spendlog-body.open{display:block;}
+
 /* ── MONTH NAV ── */
 .mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .mnavtitle{font-size:17px;font-weight:700;letter-spacing:-.3px;}
@@ -1241,6 +1248,31 @@ function renderWeek(){
       </div>`;
     });
     html+=`</div>`;
+  }  // ── Spend log ──
+  const log=S.discLog||[];
+  if(log.length){
+    html+=`<div class="card">
+      <div class="spendlog-header" onclick="toggleSpendLog()">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="spendlog-arrow" id="spendlog-arrow">▼</span>
+          <div class="card-title" style="margin-bottom:0;">Spend log (${log.length})</div>
+        </div>
+        <button class="btn btno btnsm" style="padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();resetDisc()">Reset month</button>
+      </div>
+      <div class="spendlog-body" id="spendlog-body">`;
+    log.forEach((e,i)=>{
+      html+=`<div class="slog-entry">
+        <div class="slog-left">
+          <div class="slog-label">${e.label}</div>
+          <div class="slog-meta">${e.date}</div>
+        </div>
+        <div class="slog-right">
+          <span class="slog-amt">-$${e.amt.toFixed(2)}</span>
+          <button class="slog-del" onclick="deleteSpend(${i})">×</button>
+        </div>
+      </div>`;
+    });
+    html+=`</div></div>`;
   }
 
   // ── Karen pay ──
@@ -1666,6 +1698,13 @@ window.deleteSpend=function(i){
   S.discSpent=Math.max(0,(S.discSpent||0)-entry.amt);
   S.discLog.splice(i,1);
   save(S);renderWeek();toast('Entry removed');
+};
+window.toggleSpendLog = function() {
+  const body = document.getElementById('spendlog-body');
+  const arrow = document.getElementById('spendlog-arrow');
+  if (!body || !arrow) return;
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
 };
 window.resetDisc=function(){
   if(!confirm('Reset discretionary log for this month?'))return;
