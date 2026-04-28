@@ -1748,22 +1748,6 @@ window.movePhase = function(index, direction) {
 };
 
 window.saveDiscSettings = function() {
-  const weekly = parseInt(document.getElementById('disc-weekly').value);
-  const cap = parseInt(document.getElementById('disc-cap').value);
-  
-  if (isNaN(weekly) || weekly < 0 || isNaN(cap) || cap < 0) {
-    toast('Enter valid amounts');
-    return;
-  }
-  
-  S.discWeekly = weekly;
-  S.discMonthlyCap = cap;
-  save(S);
-  renderAll();
-  toast(`Discretionary: $${weekly}/wk · $${cap}/mo cap`);
-};
-
-window.saveDiscSettings = function() {
   const cap = parseInt(document.getElementById('disc-cap').value);
   
   if (isNaN(cap) || cap < 0) {
