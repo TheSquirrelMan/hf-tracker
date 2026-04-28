@@ -936,8 +936,20 @@ function getMonthEvents(year,month,roadmap,balLog){
   // Groceries and discretionary (Sunday)
   for(let d=fromDay;d<=dim;d++){
     if(new Date(year,month,d).getDay()===0){
+      const wkAmt = S.discWeekly || 50;
+      const moCap = S.discMonthlyCap || 200;
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const isLastSun = (d + 7) > lastDay;
+      
+      // Calculate today's discretionary amount
+      let spentBefore = 0;
+      for (let i = 1; i < d; i++) {
+        if (new Date(year, month, i).getDay() === 0) spentBefore += wkAmt;
+      }
+      const discAmt = isLastSun ? Math.min(moCap - spentBefore, moCap) : Math.min(wkAmt, moCap - spentBefore);
+      
       add(d,'Fresh Market',-200,'#6b9fd4','$200/wk hard limit');
-      add(d,'Discretionary',-50,'#5c5c58','$50/wk spending allowance');
+      add(d,'Discretionary',-discAmt,'#5c5c58',`$${wkAmt}/wk · $${moCap}/mo cap`);
     }
   }
 
