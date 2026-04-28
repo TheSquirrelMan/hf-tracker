@@ -1184,9 +1184,10 @@ function renderWeek(){
 
 
   // ── Discretionary ──
+  const cap = S.discMonthlyCap || 200;
   const spent=S.discSpent||0;
-  const rem=Math.max(0,200-spent);
-  const pct=Math.min(100,(spent/200)*100);
+  const rem=Math.max(0,cap-spent);
+  const pct=Math.min(100,(spent/cap)*100);
   const sc=pct>80?'var(--red)':pct>50?'var(--amb)':'var(--grn)';
   const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
   const daysLeft=daysInMonth-now.getDate();
