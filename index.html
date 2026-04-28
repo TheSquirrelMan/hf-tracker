@@ -581,9 +581,8 @@ window.submitModal=function(){
   if(mMode==='bal6764'){S.bal6764=amt;save(S);renderWeek();toast('#6764 updated');}
   if(mMode==='bal0725'){S.bal0725=amt;save(S);renderWeek();toast('Savings updated');}
   if(mMode==='karen-pay'){S.karenLastPay=amt;
+    //S.karenAvgPay=amt;
     save(S);renderWeek();toast(`Karen pay $${amt} saved`);}
-if(mMode==='karen-avg'){S.karenAvgPay=amt;
-    save(S);renderAll();toast(`Karen avg pay $${amt} saved`);}
   if(mMode==='spend'){addSpend(amt,label);}
   if(mMode==='snowball-pmt'){logSnowballPmt(amt);}
   if(mMode.startsWith('card-')){
@@ -613,7 +612,7 @@ function getDailyBills(year,month,day,cardBalOverride){
   const isFuture = thisDate > today;
 
   // 2. Karen's Logic: Future gets clean 810, Today/Past gets real sync data
-  let currentKaren = isFuture ? (S.karenAvgPay || S.karenLastPay || 810) : (S.karenLastPay || 810);
+  let currentKaren = isFuture ? 810 : (S.karenLastPay || 810);
   
   // 3. Jon's Logic: Future gets clean 1641, Today/Past gets real sync data
   let currentJon = isFuture ? 1641 : (S.jonLastPay || 1641);
@@ -952,7 +951,7 @@ function getMonthEvents(year,month,roadmap,balLog){
   // Karen Visuals
   for(let d=fromDay; d<=dim; d++) {
     if(new Date(year,month,d).getDay()===4) {
-      let amt = checkFuture(d) ? (S.karenAvgPay || S.karenLastPay || 810) : (S.karenLastPay || 810); // Hardcoded 810
+      let amt = checkFuture(d) ? 810 : (S.karenLastPay || 810); // Hardcoded 810
       add(d, 'Karen paycheck — Copans', amt, '#7aad4e', 'Direct deposit to #4496', true);
     }
   }
@@ -1255,17 +1254,7 @@ function renderWeek(){
   }
 
   // ── Karen pay ──
-  html+=`<div class="card">const karenAvg = S.karenAvgPay || S.karenLastPay || 810;
-html+=`<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div class="card-title" style="margin-bottom:2px;">Karen's pay</div>
-        <div style="font-size:13px;font-weight:700;color:var(--amb);">Average: $${karenAvg.toLocaleString()} · Last: $${(S.karenLastPay||810).toLocaleString()}</div>
-        <div style="font-size:11px;color:var(--t3);">Updates projections · tap to adjust average</div>
-      </div>
-      <button class="btn btna btnsm" style="width:auto;padding:8px 14px;" onclick="openModal('karen-avg','Karen\\'s average pay')">Update</button>
-    </div>
-  </div>`;
+  html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div>
         <div class="card-title" style="margin-bottom:2px;">Karen's last pay</div>
