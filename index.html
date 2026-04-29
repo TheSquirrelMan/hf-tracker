@@ -1008,7 +1008,7 @@ function getMonthEvents(year,month,roadmap,balLog){
   if(key<='2029-10')add(22,'Jon PayPal Credit',-22,'#a8a69f','0% plan — do NOT overpay · ends Oct 2029');
   add(22,'Spotify',-22,'#5c5c58','Subscription');
   if(notDone('tn',22)&&key<='2027-12')add(22,'TN unemployment',-153,'#d4922a','~$153/mo');
-  add(23,'State Farm',-ub('statefarm',190),'#a8a69f','Auto insurance');
+  add(23,'State Farm',-(S.userBills ? (S.userBills.find(b=>b.id==='statefarm')||{amt:190}).amt : 190),'#a8a69f','Auto insurance');
   if(notDone('chase',26))add(26,'Chase/Amazon',-26,'#a8a69f','APR TBD');
   if(key<='2027-03'&&!(year===2026&&month===3))add(30,'PayPal Chinese vendor',-95,'#d4922a','24.99% APR · ends Mar 2027');
   if(year===2026&&month===3){
