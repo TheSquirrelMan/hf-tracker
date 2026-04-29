@@ -373,6 +373,7 @@ function defaultState(){
     mKey,
     bal4496:0,bal6764:19,bal0725:654,
     karenLastPay:810,karenAvgPay:762,
+    jonLastPay:1641,
     discSpent:0,discLog:[],
     discWeekly:50,
     discMonthlyCap:200,
@@ -441,10 +442,12 @@ async function loadFB(){
 
     if (saveTimer) {
       // If we are currently waiting to save local edits, 
-      // ONLY pull in the bank balances so they don't get lost/overwritten
+      // ONLY pull in the bank balances and pay data so they don't get lost/overwritten
       S.bal4496 = remote.bal4496;
       S.bal6764 = remote.bal6764;
       S.bal0725 = remote.bal0725;
+      S.karenLastPay = remote.karenLastPay;
+      S.jonLastPay = remote.jonLastPay;
       if(remote.phases) S.phases = remote.phases;
     } else {
       // Otherwise, take the full update
@@ -456,7 +459,11 @@ async function loadFB(){
     }
 
     setSS('ok');
-    renderAll();
+    // Debounce renders from rapid Firebase updates
+    if (window._renderTimeout) clearTimeout(window._renderTimeout);
+    window._renderTimeout = setTimeout(() => {
+      renderAll();
+    }, 100);
   });
 }
 
@@ -590,10 +597,14 @@ if(mMode==='karen-avg'){S.karenAvgPay=amt;
     const id=mMode.replace('card-','');
     if(!S.cardBals)S.cardBals={};
     S.cardBals[id]=amt;
+    _cachedRoadmap = null; // Invalidate roadmap cache
     save(S);renderSnowball();toast('Balance updated');
   }
 };
-window.editBal=a=>openModal('bal'+a,`Update ${a==='0725'?'savings':('#'+a)} balance`);
+window.editBal=a=>{
+  _cachedRoadmap = null; // Invalidate roadmap cache
+  openModal('bal'+a,`Update ${a==='0725'?'savings':('#'+a)} balance`);
+};
 
 // Set of default bill IDs for filtering custom-added bills
 const DEFAULT_BILL_IDS=new Set(['mazda','att','tmobile','statefarm','tn','irs1','irs2','merrick','cap3186','usaaAmex','cap4565','cap5592','cap7988','jonpaypal','karenpaypal','chase','spotify','claude','chatgpt','prime','randy','realdebrid','affirm','newegg','ebay','chinese','amazon']);
@@ -748,7 +759,20 @@ function bal(cb,id){
 // ══ ROADMAP ENGINE ══
 // Pure function -- calculates all milestone dates from current state
 // Returns {milestones, balLog}
+let _cachedRoadmap = null;
+let _roadmapCacheKey = '';
+
 function calcRoadmap(){
+  // Build cache key from inputs that affect roadmap calculation
+  const phasesKey = JSON.stringify(getPhases());
+  const phaseDoneKey = JSON.stringify(S.phaseDone || {});
+  const cardBalsKey = JSON.stringify(S.cardBals || {});
+  const cacheKey = `${S.bal4496}-${phasesKey}-${phaseDoneKey}-${cardBalsKey}`;
+  
+  if (_cachedRoadmap && _roadmapCacheKey === cacheKey) {
+    return _cachedRoadmap;
+  }
+  
   let balance=S.bal4496||0;
   const origCB=S.cardBals;
   const milestones={};
@@ -854,7 +878,13 @@ function calcRoadmap(){
   }
 
   S.cardBals=origCB;
-  return{milestones,balLog,finalCardBals:cardBals};
+  const result = {milestones,balLog,finalCardBals:cardBals};
+  
+  // Cache the result
+  _cachedRoadmap = result;
+  _roadmapCacheKey = cacheKey;
+  
+  return result;
 }
 
 // ══ SURPLUS CALCULATOR ══
@@ -1069,6 +1099,19 @@ function getMonthEvents(year,month,roadmap,balLog){
 
   evts.sort((a,b)=>a.day-b.day);
   return evts;
+}
+
+// ══ SAFE RENDER WRAPPER ══
+function safeRender(renderFn, fallbackText = 'Error loading data') {
+  try {
+    return renderFn();
+  } catch (e) {
+    console.error('Render error:', e);
+    return `<div class="card" style="border-color:var(--rm);background:var(--rbg);">
+      <div style="color:var(--red);font-weight:700;">⚠ ${fallbackText}</div>
+      <div style="color:var(--t3);font-size:11px;margin-top:4px;">${e.message}</div>
+    </div>`;
+  }
 }
 
 // ══ RENDER WEEK ══
@@ -1286,7 +1329,12 @@ window.changeMonth=function(dir){
 
 function renderMonth(){
   document.getElementById('month-title').textContent=`${MN[vMonth]} ${vYear}`;
-  const {milestones:roadmap,balLog}=calcRoadmap();
+  const roadmapData = safeRender(() => calcRoadmap(), 'Failed to calculate roadmap');
+  if (typeof roadmapData === 'string') {
+    document.getElementById('month-content').innerHTML = roadmapData;
+    return;
+  }
+  const {milestones:roadmap,balLog}=roadmapData;
   const evts=getMonthEvents(vYear,vMonth,roadmap,balLog);
   const startDay=(vYear===2026&&vMonth===3)?22:1;
   const isCurMonth=vYear===now.getFullYear()&&vMonth===now.getMonth();
@@ -1382,7 +1430,12 @@ function renderMonth(){
 
 // ══ RENDER SNOWBALL ══
 function renderSnowball(){
-  const{milestones:roadmap}=calcRoadmap();
+  const roadmapData = safeRender(() => calcRoadmap(), 'Failed to calculate roadmap');
+  if (typeof roadmapData === 'string') {
+    document.getElementById('snowball-content').innerHTML = roadmapData;
+    return;
+  }
+  const{milestones:roadmap}=roadmapData;
   const phaseDone=S.phaseDone||{};
   const allExpDone=getPhases().every(p=>phaseDone[p.id]);
   const cb=S.cardBals||{};
@@ -1716,6 +1769,7 @@ function logSnowballPmt(amt){
   const prev=S.cardBals[ct.id]!==undefined?S.cardBals[ct.id]:ct.startBal;
   S.cardBals[ct.id]=Math.max(0,prev-amt);
   S.snowballLog.unshift({amt,target:ct.label,date:new Date().toLocaleDateString()});
+  _cachedRoadmap = null; // Invalidate roadmap cache
   save(S);renderSnowball();toast(`$${amt.toLocaleString()} paid to ${ct.label} ✓`);
 }
 // ══ PHASE ADD/DELETE ══
@@ -1807,6 +1861,7 @@ window.saveDiscSettings = function() {
   
   S.discMonthlyCap = cap;
   S.discWeekly = Math.round(cap / 4);
+  _cachedRoadmap = null; // Invalidate roadmap cache
   save(S);
   renderAll();
   toast(`Discretionary: $${cap}/mo`);
@@ -1815,6 +1870,7 @@ window.saveDiscSettings = function() {
 window.markPhaseDone=function(id){
   if(!S.phaseDone)S.phaseDone={};
   S.phaseDone[id]=true;
+  _cachedRoadmap = null; // Invalidate roadmap cache
   if(id==='repair-buf'){
     S.bal0725=(S.bal0725||0)+1000;
     S.bal4496=Math.max(0,(S.bal4496||0)-1000);
