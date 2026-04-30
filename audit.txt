@@ -1,374 +1,374 @@
 ═══════════════════════════════════════
 HF TRACKER — PROJECTION AUDIT
-Generated: 4/30/2026, 2:35:08 PM
+Generated: 4/30/2026, 6:07:33 PM
 #4496: $1,560.6 · Karen last pay: $870.86
 ═══════════════════════════════════════
 
 ── MILESTONES ──────────────────────────
-  repair-buf             2026-04-30 (bal=$2336)
-  jon-tires              2026-05-14 (bal=$2685)
-  karen-tires            2026-05-28 (bal=$2765)
-  dental                 2026-06-11 (bal=$3451)
-  glasses                2026-06-25 (bal=$4186)
-  snowball-start         2026-06-25
-  amazon-done            2026-07-02
-  merrick-done           2026-07-07
-  cap3186-done           2026-07-09
-  kpaypal-done           2026-07-16
-  usaaAmex-done          2026-07-30
-  cap4565-done           2026-08-06
-  cap5592-done           2026-08-20
-  cap7988-done           2026-08-22
-  chase-done             2026-09-03
-  tn-done                2026-10-01
-  irs-done               2026-11-12
-  mazda-done             2027-04-22
-  debt-free              2027-04-22
+  repair-buf             2026-05-07 (bal=$3430)
+  jon-tires              2026-05-22 (bal=$3127)
+  karen-tires            2026-06-05 (bal=$2186)
+  dental                 2026-06-19 (bal=$2160)
+  glasses                2026-07-03 (bal=$3624)
+  snowball-start         2026-07-03
+  amazon-done            2026-07-07
+  merrick-done           2026-07-09
+  cap3186-done           2026-07-16
+  kpaypal-done           2026-07-23
+  usaaAmex-done          2026-08-06
+  cap4565-done           2026-08-20
+  cap5592-done           2026-08-22
+  cap7988-done           2026-08-27
+  chase-done             2026-09-10
+  tn-done                2026-10-15
+  irs-done               2026-11-19
+  mazda-done             2027-04-29
+  debt-free              2027-04-29
 
 ── MONTH BY MONTH ──────────────────────
 
 ┌─ Apr 2026 ─────────────────────────────────
-│  Start: $   1336   End: $   1336
-│  ★ repair-buf 2026-04-30
+│  Start: $      0   End: $      0
 │  ───────────────────────────────────────────────────────
-│  Apr 30  Karen paycheck                 +870.86
-│  Apr 30  PayPal Chinese — FIRST PMT      -95.00
-│  Apr 30  EXPENSE: Repair buffer (savings       -  776.00
-│  Apr 30  Balance                      $   1,336
 │  ───────────────────────────────────────────────────────
-│  Income: +$870.86   Expenses: -$95   Phases: -$776   Net: -$0.14
+│  Income: +$0   Expenses: -$0   Net: +$0
 └──────────────────────────────────────────
 
 ┌─ May 2026 ─────────────────────────────────
-│  Start: $   1247   End: $   1470
-│  ★ jon-tires 2026-05-14 · karen-tires 2026-05-28
+│  Start: $   1472   End: $   1695
+│  ★ repair-buf 2026-05-07 · jon-tires 2026-05-22
 │  ───────────────────────────────────────────────────────
 │  May  1  Gas                             -60.00
 │  May  1  Amazon Store Card               -29.00
-│  May  1  Balance                      $   1,247
+│  May  1  Balance                      $   1,472
 │  May  2  Amazon Prime                    -15.00
-│  May  2  Balance                      $   1,232
+│  May  2  Balance                      $   1,457
 │  May  3  Fresh Market                   -200.00
 │  May  3  Discretionary                   -63.00
-│  May  3  Balance                      $     969
+│  May  3  Balance                      $   1,194
 │  May  4  PayPal eBay                     -43.00
 │  May  4  ChatGPT                         -22.00
 │  May  4  Randy training                 -150.00
-│  May  4  Balance                      $     754
+│  May  4  Balance                      $     979
 │  May  7  Jon paycheck                  +1641.00
 │  May  7  Karen paycheck                 +810.00
-│  May  7  Balance                      $   3,205
+│  May  7  EXPENSE: Repair buffer (savings       - 1000.00
+│  May  7  Balance                      $   2,430
 │  May  9  Mazda CX-5                     -638.00
-│  May  9  Balance                      $   2,567
+│  May  9  Balance                      $   1,792
 │  May 10  Fresh Market                   -200.00
 │  May 10  Discretionary                   -63.00
-│  May 10  Balance                      $   2,304
+│  May 10  Balance                      $   1,529
 │  May 11  Merrick Bank                    -35.00
 │  May 11  Cap One #3186                   -25.00
-│  May 11  Balance                      $   2,244
+│  May 11  Balance                      $   1,469
 │  May 13  Affirm cluster                 -188.00
 │  May 13  PayPal Newegg                   -61.00
 │  May 13  Karen PayPal Credit            -100.00
 │  May 13  Claude.ai                       -20.00
-│  May 13  Balance                      $   1,875
+│  May 13  Balance                      $   1,100
 │  May 14  Karen paycheck                 +810.00
-│  May 14  EXPENSE: Jon's tires + oil            - 1500.00
-│  May 14  Balance                      $   1,185
+│  May 14  Balance                      $   1,910
 │  May 15  Gas                             -60.00
 │  May 15  T-Mobile                       -152.00
 │  May 15  USAA Amex                       -63.00
 │  May 15  IRS #1                          -68.00
-│  May 15  Balance                      $     842
+│  May 15  Balance                      $   1,567
 │  May 16  IRS #2                          -35.00
 │  May 16  AT&T fiber                     -166.00
-│  May 16  Balance                      $     641
+│  May 16  Balance                      $   1,366
 │  May 17  Fresh Market                   -200.00
 │  May 17  Discretionary                   -63.00
-│  May 17  Balance                      $     378
+│  May 17  Balance                      $   1,103
 │  May 18  Randy training                 -150.00
-│  May 18  Balance                      $     228
+│  May 18  Balance                      $     953
 │  May 21  Karen paycheck                 +810.00
 │  May 21  Cap One #4565                   -25.00
 │  May 21  Cap One #5592                   -25.00
 │  May 21  Cap One #7988                   -30.00
-│  May 21  Balance                      $     958
+│  May 21  Balance                      $   1,683
 │  May 22  Jon paycheck                  +1641.00
 │  May 22  Jon PayPal Credit               -22.00
 │  May 22  Spotify                         -22.00
 │  May 22  TN unemployment                -153.00
-│  May 22  Balance                      $   2,402
+│  May 22  EXPENSE: Jon's tires + oil            - 1500.00
+│  May 22  Balance                      $   1,627
 │  May 23  State Farm                     -160.00
-│  May 23  Balance                      $   2,242
+│  May 23  Balance                      $   1,467
 │  May 24  Fresh Market                   -200.00
 │  May 24  Discretionary                   -61.00
-│  May 24  Balance                      $   1,981
+│  May 24  Balance                      $   1,206
 │  May 26  Chase/Amazon                    -26.00
-│  May 26  Balance                      $   1,955
+│  May 26  Balance                      $   1,180
 │  May 28  Karen paycheck                 +810.00
-│  May 28  EXPENSE: Karen's tires                - 1000.00
-│  May 28  Balance                      $   1,765
+│  May 28  Balance                      $   1,990
 │  May 30  PayPal Chinese                  -95.00
-│  May 30  Balance                      $   1,670
+│  May 30  Balance                      $   1,895
 │  May 31  Fresh Market                   -200.00
-│  May 31  Balance                      $   1,470
+│  May 31  Balance                      $   1,695
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$3,888   Phases: -$2,500   Net: +$134
 └──────────────────────────────────────────
 
 ┌─ Jun 2026 ─────────────────────────────────
-│  Start: $   1381   End: $   2804
-│  ★ dental 2026-06-11 · glasses 2026-06-25 · snowball-start 2026-06-25
+│  Start: $   1606   End: $   2929
+│  ★ karen-tires 2026-06-05 · dental 2026-06-19
 │  ───────────────────────────────────────────────────────
 │  Jun  1  Gas                             -60.00
 │  Jun  1  Amazon Store Card               -29.00
-│  Jun  1  Balance                      $   1,381
+│  Jun  1  Balance                      $   1,606
 │  Jun  2  Amazon Prime                    -15.00
-│  Jun  2  Balance                      $   1,366
+│  Jun  2  Balance                      $   1,591
 │  Jun  4  Karen paycheck                 +810.00
 │  Jun  4  PayPal eBay                     -43.00
 │  Jun  4  ChatGPT                         -22.00
 │  Jun  4  Randy training                 -150.00
-│  Jun  4  Balance                      $   1,961
+│  Jun  4  Balance                      $   2,186
+│  Jun  5  EXPENSE: Karen's tires                - 1000.00
+│  Jun  5  Balance                      $   1,186
 │  Jun  7  Jon paycheck                  +1641.00
 │  Jun  7  Fresh Market                   -200.00
 │  Jun  7  Discretionary                   -63.00
-│  Jun  7  Balance                      $   3,339
+│  Jun  7  Balance                      $   2,564
 │  Jun  9  Mazda CX-5                     -638.00
-│  Jun  9  Balance                      $   2,701
+│  Jun  9  Balance                      $   1,926
 │  Jun 11  Karen paycheck                 +810.00
 │  Jun 11  Merrick Bank                    -35.00
 │  Jun 11  Cap One #3186                   -25.00
-│  Jun 11  EXPENSE: Dental — Jon + Karen         -  500.00
-│  Jun 11  Balance                      $   2,951
+│  Jun 11  Balance                      $   2,676
 │  Jun 13  Affirm cluster                 -188.00
 │  Jun 13  PayPal Newegg                   -61.00
 │  Jun 13  Karen PayPal Credit            -100.00
 │  Jun 13  Claude.ai                       -20.00
-│  Jun 13  Balance                      $   2,582
+│  Jun 13  Balance                      $   2,307
 │  Jun 14  Fresh Market                   -200.00
 │  Jun 14  Discretionary                   -63.00
-│  Jun 14  Balance                      $   2,319
+│  Jun 14  Balance                      $   2,044
 │  Jun 15  Gas                             -60.00
 │  Jun 15  T-Mobile                       -152.00
 │  Jun 15  USAA Amex                       -63.00
 │  Jun 15  IRS #1                          -68.00
-│  Jun 15  Balance                      $   1,976
+│  Jun 15  Balance                      $   1,701
 │  Jun 16  IRS #2                          -35.00
 │  Jun 16  AT&T fiber                     -166.00
-│  Jun 16  Balance                      $   1,775
+│  Jun 16  Balance                      $   1,500
 │  Jun 18  Karen paycheck                 +810.00
 │  Jun 18  Randy training                 -150.00
-│  Jun 18  Balance                      $   2,435
+│  Jun 18  Balance                      $   2,160
+│  Jun 19  EXPENSE: Dental — Jon + Karen         -  600.00
+│  Jun 19  Balance                      $   1,560
 │  Jun 21  Fresh Market                   -200.00
 │  Jun 21  Discretionary                   -63.00
 │  Jun 21  Cap One #4565                   -25.00
 │  Jun 21  Cap One #5592                   -25.00
 │  Jun 21  Cap One #7988                   -30.00
-│  Jun 21  Balance                      $   2,092
+│  Jun 21  Balance                      $   1,217
 │  Jun 22  Jon paycheck                  +1641.00
 │  Jun 22  Jon PayPal Credit               -22.00
 │  Jun 22  Spotify                         -22.00
 │  Jun 22  TN unemployment                -153.00
-│  Jun 22  Balance                      $   3,536
+│  Jun 22  Balance                      $   2,661
 │  Jun 23  State Farm                     -160.00
-│  Jun 23  Balance                      $   3,376
+│  Jun 23  Balance                      $   2,501
 │  Jun 25  Karen paycheck                 +810.00
-│  Jun 25  EXPENSE: Glasses — Jon + Karen        - 1000.00
-│  Jun 25  Balance                      $   3,186
+│  Jun 25  Balance                      $   3,311
 │  Jun 26  Chase/Amazon                    -26.00
-│  Jun 26  Balance                      $   3,160
+│  Jun 26  Balance                      $   3,285
 │  Jun 28  Fresh Market                   -200.00
 │  Jun 28  Discretionary                   -61.00
-│  Jun 28  Balance                      $   2,899
+│  Jun 28  Balance                      $   3,024
 │  Jun 30  PayPal Chinese                  -95.00
-│  Jun 30  Balance                      $   2,804
+│  Jun 30  Balance                      $   2,929
 │  ───────────────────────────────────────────────────────
-│  Income: +$6,522   Expenses: -$3,688   Phases: -$1,500   Net: +$1,334
+│  Income: +$6,522   Expenses: -$3,688   Phases: -$1,600   Net: +$1,234
 └──────────────────────────────────────────
 
 ┌─ Jul 2026 ─────────────────────────────────
-│  Start: $   2715   End: $   1076
-│  ★ amazon-done 2026-07-02 · merrick-done 2026-07-07 · cap3186-done 2026-07-09 · kpaypal-done 2026-07-16 · usaaAmex-done 2026-07-30
+│  Start: $   2840   End: $    853
+│  ★ glasses 2026-07-03 · snowball-start 2026-07-03 · amazon-done 2026-07-07 · merrick-done 2026-07-09 · cap3186-done 2026-07-16 · kpaypal-done 2026-07-23
 │  ───────────────────────────────────────────────────────
 │  Jul  1  Gas                             -60.00
 │  Jul  1  Amazon Store Card               -29.00
-│  Jul  1  Balance                      $   2,715
+│  Jul  1  Balance                      $   2,840
 │  Jul  2  Karen paycheck                 +810.00
 │  Jul  2  Amazon Prime                    -15.00
 │  Jul  2  Real-Debrid                     -11.00
-│  Jul  2  SNOWBALL → Amazon Store Card            -  235.00
-│  Jul  2  Balance                      $   3,264
+│  Jul  2  Balance                      $   3,624
+│  Jul  3  EXPENSE: Glasses — Jon + Karen        - 1000.00
+│  Jul  3  Balance                      $   2,624
 │  Jul  4  PayPal eBay                     -43.00
 │  Jul  4  ChatGPT                         -22.00
 │  Jul  4  Randy training                 -150.00
-│  Jul  4  Balance                      $   3,049
+│  Jul  4  Balance                      $   2,409
 │  Jul  5  Fresh Market                   -200.00
 │  Jul  5  Discretionary                   -63.00
-│  Jul  5  Balance                      $   2,786
+│  Jul  5  Balance                      $   2,146
 │  Jul  7  Jon paycheck                  +1641.00
-│  Jul  7  SNOWBALL → Merrick Bank                 -  926.00
-│  Jul  7  Balance                      $   3,501
+│  Jul  7  SNOWBALL → Amazon Store Card            -  235.00
+│  Jul  7  Balance                      $   3,552
 │  Jul  9  Karen paycheck                 +810.00
 │  Jul  9  Mazda CX-5                     -638.00
-│  Jul  9  SNOWBALL → Cap One #3186                -  491.00
-│  Jul  9  Balance                      $   3,182
+│  Jul  9  SNOWBALL → Merrick Bank                 -  926.00
+│  Jul  9  Balance                      $   2,798
+│  Jul 11  Cap One #3186                   -25.00
+│  Jul 11  Balance                      $   2,773
 │  Jul 12  Fresh Market                   -200.00
 │  Jul 12  Discretionary                   -63.00
-│  Jul 12  Balance                      $   2,919
+│  Jul 12  Balance                      $   2,510
 │  Jul 13  Affirm cluster                 -152.00
 │  Jul 13  PayPal Newegg                   -61.00
 │  Jul 13  Karen PayPal Credit            -100.00
 │  Jul 13  Claude.ai                       -20.00
-│  Jul 13  Balance                      $   2,586
+│  Jul 13  Balance                      $   2,177
 │  Jul 15  Gas                             -60.00
 │  Jul 15  T-Mobile                       -152.00
 │  Jul 15  USAA Amex                       -63.00
 │  Jul 15  IRS #1                          -68.00
-│  Jul 15  Balance                      $   2,243
+│  Jul 15  Balance                      $   1,834
 │  Jul 16  Karen paycheck                 +810.00
 │  Jul 16  IRS #2                          -35.00
 │  Jul 16  AT&T fiber                     -166.00
-│  Jul 16  SNOWBALL → Karen PayPal                 - 1958.00
-│  Jul 16  Balance                      $     894
+│  Jul 16  SNOWBALL → Cap One #3186                -  491.00
+│  Jul 16  Balance                      $   1,952
 │  Jul 18  Randy training                 -150.00
-│  Jul 18  Balance                      $     744
+│  Jul 18  Balance                      $   1,802
 │  Jul 19  Fresh Market                   -200.00
 │  Jul 19  Discretionary                   -63.00
-│  Jul 19  Balance                      $     481
+│  Jul 19  Balance                      $   1,539
 │  Jul 21  Cap One #4565                   -25.00
 │  Jul 21  Cap One #5592                   -25.00
 │  Jul 21  Cap One #7988                   -30.00
-│  Jul 21  Balance                      $     401
+│  Jul 21  Balance                      $   1,459
 │  Jul 22  Jon paycheck                  +1641.00
 │  Jul 22  Jon PayPal Credit               -22.00
 │  Jul 22  Spotify                         -22.00
 │  Jul 22  TN unemployment                -153.00
-│  Jul 22  SNOWBALL → USAA Amex                    -  450.00
+│  Jul 22  SNOWBALL → Karen PayPal                 - 1508.00
 │  Jul 22  Balance                      $   1,395
 │  Jul 23  Karen paycheck                 +810.00
 │  Jul 23  State Farm                     -160.00
-│  Jul 23  SNOWBALL → USAA Amex                    -  810.00
-│  Jul 23  Balance                      $   1,235
+│  Jul 23  SNOWBALL → Karen PayPal                 -  450.00
+│  Jul 23  Balance                      $   1,595
 │  Jul 26  Fresh Market                   -200.00
 │  Jul 26  Discretionary                   -61.00
 │  Jul 26  Chase/Amazon                    -26.00
-│  Jul 26  Balance                      $     948
+│  Jul 26  Balance                      $   1,308
 │  Jul 30  Karen paycheck                 +810.00
 │  Jul 30  PayPal Chinese                  -95.00
-│  Jul 30  SNOWBALL → USAA Amex                    -  587.00
-│  Jul 30  Balance                      $   1,076
+│  Jul 30  SNOWBALL → USAA Amex                    - 1170.00
+│  Jul 30  Balance                      $     853
 │  ───────────────────────────────────────────────────────
-│  Income: +$7,332   Expenses: -$3,603   Snowball: -$5,457   Net: -$1,728
+│  Income: +$7,332   Expenses: -$3,628   Phases: -$1,000   Snowball: -$4,780   Net: -$2,076
 └──────────────────────────────────────────
 
 ┌─ Aug 2026 ─────────────────────────────────
-│  Start: $   1016   End: $    853
-│  ★ cap4565-done 2026-08-06 · cap5592-done 2026-08-20 · cap7988-done 2026-08-22
+│  Start: $    793   End: $    867
+│  ★ usaaAmex-done 2026-08-06 · cap4565-done 2026-08-20 · cap5592-done 2026-08-22 · cap7988-done 2026-08-27
 │  ───────────────────────────────────────────────────────
 │  Aug  1  Gas                             -60.00
-│  Aug  1  Balance                      $   1,016
+│  Aug  1  Balance                      $     793
 │  Aug  2  Fresh Market                   -200.00
 │  Aug  2  Discretionary                   -63.00
 │  Aug  2  Amazon Prime                    -15.00
-│  Aug  2  Balance                      $     738
+│  Aug  2  Balance                      $     515
 │  Aug  4  PayPal eBay                     -43.00
 │  Aug  4  ChatGPT                         -22.00
 │  Aug  4  Randy training                 -150.00
-│  Aug  4  Balance                      $     523
+│  Aug  4  Balance                      $     300
 │  Aug  6  Karen paycheck                 +810.00
-│  Aug  6  SNOWBALL → Cap One #4565                -  726.00
-│  Aug  6  Balance                      $     607
+│  Aug  6  SNOWBALL → USAA Amex                    -  677.00
+│  Aug  6  Balance                      $     433
 │  Aug  7  Jon paycheck                  +1641.00
-│  Aug  7  Balance                      $   2,248
+│  Aug  7  Balance                      $   2,074
 │  Aug  9  Fresh Market                   -200.00
 │  Aug  9  Discretionary                   -63.00
 │  Aug  9  Mazda CX-5                     -638.00
-│  Aug  9  Balance                      $   1,347
+│  Aug  9  Balance                      $   1,173
 │  Aug 13  Karen paycheck                 +810.00
 │  Aug 13  Affirm cluster                 -108.00
 │  Aug 13  PayPal Newegg                   -61.00
 │  Aug 13  Claude.ai                       -20.00
-│  Aug 13  SNOWBALL → Cap One #5592                -  719.00
-│  Aug 13  Balance                      $   1,249
+│  Aug 13  SNOWBALL → Cap One #4565                -  520.00
+│  Aug 13  Balance                      $   1,274
 │  Aug 15  Gas                             -60.00
 │  Aug 15  T-Mobile                       -152.00
 │  Aug 15  IRS #1                          -68.00
-│  Aug 15  Balance                      $     969
+│  Aug 15  Balance                      $     994
 │  Aug 16  Fresh Market                   -200.00
 │  Aug 16  Discretionary                   -63.00
 │  Aug 16  IRS #2                          -35.00
 │  Aug 16  AT&T fiber                     -166.00
-│  Aug 16  Balance                      $     505
+│  Aug 16  Balance                      $     530
 │  Aug 18  Randy training                 -150.00
-│  Aug 18  Balance                      $     355
+│  Aug 18  Balance                      $     380
 │  Aug 20  Karen paycheck                 +810.00
-│  Aug 20  SNOWBALL → Cap One #5592                -   12.00
-│  Aug 20  Balance                      $   1,153
+│  Aug 20  SNOWBALL → Cap One #4565                -  206.00
+│  Aug 20  Balance                      $     984
+│  Aug 21  Cap One #5592                   -25.00
 │  Aug 21  Cap One #7988                   -30.00
-│  Aug 21  Balance                      $   1,123
+│  Aug 21  Balance                      $     929
 │  Aug 22  Jon paycheck                  +1641.00
 │  Aug 22  Jon PayPal Credit               -22.00
 │  Aug 22  Spotify                         -22.00
 │  Aug 22  TN unemployment                -153.00
-│  Aug 22  SNOWBALL → Cap One #7988                -  843.00
-│  Aug 22  Balance                      $   1,724
+│  Aug 22  SNOWBALL → Cap One #5592                -  731.00
+│  Aug 22  Balance                      $   1,642
 │  Aug 23  Fresh Market                   -200.00
 │  Aug 23  Discretionary                   -61.00
 │  Aug 23  State Farm                     -160.00
-│  Aug 23  Balance                      $   1,303
+│  Aug 23  Balance                      $   1,221
 │  Aug 26  Chase/Amazon                    -26.00
-│  Aug 26  Balance                      $   1,277
+│  Aug 26  Balance                      $   1,195
 │  Aug 27  Karen paycheck                 +810.00
-│  Aug 27  SNOWBALL → Chase/Amazon                 -  939.00
-│  Aug 27  Balance                      $   1,148
+│  Aug 27  SNOWBALL → Cap One #7988                -  843.00
+│  Aug 27  Balance                      $   1,162
 │  Aug 30  Fresh Market                   -200.00
 │  Aug 30  PayPal Chinese                  -95.00
-│  Aug 30  Balance                      $     853
+│  Aug 30  Balance                      $     867
 │  ───────────────────────────────────────────────────────
-│  Income: +$6,522   Expenses: -$3,506   Snowball: -$3,239   Net: -$223
+│  Income: +$6,522   Expenses: -$3,531   Snowball: -$2,977   Net: +$14
 └──────────────────────────────────────────
 
 ┌─ Sep 2026 ─────────────────────────────────
-│  Start: $    793   End: $    864
-│  ★ chase-done 2026-09-03
+│  Start: $    807   End: $    864
+│  ★ chase-done 2026-09-10
 │  ───────────────────────────────────────────────────────
 │  Sep  1  Gas                             -60.00
-│  Sep  1  Balance                      $     793
+│  Sep  1  Balance                      $     807
 │  Sep  2  Amazon Prime                    -15.00
-│  Sep  2  Balance                      $     778
+│  Sep  2  Balance                      $     792
 │  Sep  3  Karen paycheck                 +810.00
-│  Sep  3  SNOWBALL → Chase/Amazon                 -   12.00
-│  Sep  3  Balance                      $   1,576
+│  Sep  3  SNOWBALL → Chase/Amazon                 -  824.00
+│  Sep  3  Balance                      $     778
 │  Sep  4  PayPal eBay                     -43.00
 │  Sep  4  ChatGPT                         -22.00
 │  Sep  4  Randy training                 -150.00
-│  Sep  4  Balance                      $   1,361
+│  Sep  4  Balance                      $     563
 │  Sep  6  Fresh Market                   -200.00
 │  Sep  6  Discretionary                   -63.00
-│  Sep  6  Balance                      $   1,098
+│  Sep  6  Balance                      $     300
 │  Sep  7  Jon paycheck                  +1641.00
-│  Sep  7  SNOWBALL → TN Unemployment              -  455.00
-│  Sep  7  Balance                      $   2,284
+│  Sep  7  Balance                      $   1,941
 │  Sep  9  Mazda CX-5                     -638.00
-│  Sep  9  Balance                      $   1,646
+│  Sep  9  Balance                      $   1,303
 │  Sep 10  Karen paycheck                 +810.00
-│  Sep 10  SNOWBALL → TN Unemployment              -  810.00
-│  Sep 10  Balance                      $   1,646
+│  Sep 10  SNOWBALL → Chase/Amazon                 -  127.00
+│  Sep 10  Balance                      $   1,986
 │  Sep 13  Fresh Market                   -200.00
 │  Sep 13  Discretionary                   -63.00
 │  Sep 13  Affirm cluster                 -108.00
 │  Sep 13  PayPal Newegg                   -61.00
 │  Sep 13  Claude.ai                       -20.00
-│  Sep 13  Balance                      $   1,194
+│  Sep 13  Balance                      $   1,534
 │  Sep 15  Gas                             -60.00
 │  Sep 15  T-Mobile                       -152.00
 │  Sep 15  IRS #1                          -68.00
-│  Sep 15  Balance                      $     914
+│  Sep 15  Balance                      $   1,254
 │  Sep 16  IRS #2                          -35.00
 │  Sep 16  AT&T fiber                     -166.00
-│  Sep 16  Balance                      $     713
+│  Sep 16  Balance                      $   1,053
 │  Sep 17  Karen paycheck                 +810.00
-│  Sep 17  SNOWBALL → TN Unemployment              -  810.00
+│  Sep 17  SNOWBALL → TN Unemployment              - 1150.00
 │  Sep 17  Balance                      $     713
 │  Sep 18  Randy training                 -150.00
 │  Sep 18  Balance                      $     563
@@ -392,31 +392,30 @@ Generated: 4/30/2026, 2:35:08 PM
 │  Sep 30  PayPal Chinese                  -95.00
 │  Sep 30  Balance                      $     864
 │  ───────────────────────────────────────────────────────
-│  Income: +$6,522   Expenses: -$3,250   Snowball: -$3,261   Net: +$11
+│  Income: +$6,522   Expenses: -$3,250   Snowball: -$3,275   Net: -$3
 └──────────────────────────────────────────
 
 ┌─ Oct 2026 ─────────────────────────────────
-│  Start: $   1210   End: $    853
-│  ★ tn-done 2026-10-01
+│  Start: $    804   End: $    853
+│  ★ tn-done 2026-10-15
 │  ───────────────────────────────────────────────────────
 │  Oct  1  Karen paycheck                 +810.00
 │  Oct  1  Gas                             -60.00
-│  Oct  1  SNOWBALL → TN Unemployment              -  404.00
-│  Oct  1  Balance                      $   1,210
+│  Oct  1  SNOWBALL → TN Unemployment              -  810.00
+│  Oct  1  Balance                      $     804
 │  Oct  2  Amazon Prime                    -15.00
 │  Oct  2  Real-Debrid                     -11.00
-│  Oct  2  Balance                      $   1,184
+│  Oct  2  Balance                      $     778
 │  Oct  4  Fresh Market                   -200.00
 │  Oct  4  Discretionary                   -63.00
 │  Oct  4  PayPal eBay                     -43.00
 │  Oct  4  ChatGPT                         -22.00
 │  Oct  4  Randy training                 -150.00
-│  Oct  4  Balance                      $     706
+│  Oct  4  Balance                      $     300
 │  Oct  7  Jon paycheck                  +1641.00
-│  Oct  7  SNOWBALL → IRS 2024                     -   76.00
-│  Oct  7  Balance                      $   2,271
+│  Oct  7  Balance                      $   1,941
 │  Oct  8  Karen paycheck                 +810.00
-│  Oct  8  SNOWBALL → IRS 2024                     -  810.00
+│  Oct  8  SNOWBALL → TN Unemployment              -  480.00
 │  Oct  8  Balance                      $   2,271
 │  Oct  9  Mazda CX-5                     -638.00
 │  Oct  9  Balance                      $   1,633
@@ -431,20 +430,20 @@ Generated: 4/30/2026, 2:35:08 PM
 │  Oct 15  Gas                             -60.00
 │  Oct 15  T-Mobile                       -152.00
 │  Oct 15  IRS #1                          -68.00
-│  Oct 15  SNOWBALL → IRS 2024                     -  810.00
-│  Oct 15  Balance                      $     914
+│  Oct 15  SNOWBALL → TN Unemployment              -   39.00
+│  Oct 15  Balance                      $   1,685
 │  Oct 16  IRS #2                          -35.00
 │  Oct 16  AT&T fiber                     -166.00
-│  Oct 16  Balance                      $     713
+│  Oct 16  Balance                      $   1,484
 │  Oct 18  Fresh Market                   -200.00
 │  Oct 18  Discretionary                   -63.00
 │  Oct 18  Randy training                 -150.00
-│  Oct 18  Balance                      $     300
+│  Oct 18  Balance                      $   1,071
 │  Oct 22  Jon paycheck                  +1641.00
 │  Oct 22  Karen paycheck                 +810.00
 │  Oct 22  Jon PayPal Credit               -22.00
 │  Oct 22  Spotify                         -22.00
-│  Oct 22  SNOWBALL → IRS 2024                     - 1338.00
+│  Oct 22  SNOWBALL → IRS 2024                     - 2109.00
 │  Oct 22  Balance                      $   1,369
 │  Oct 23  State Farm                     -160.00
 │  Oct 23  Balance                      $   1,209
@@ -462,7 +461,7 @@ Generated: 4/30/2026, 2:35:08 PM
 
 ┌─ Nov 2026 ─────────────────────────────────
 │  Start: $    530   End: $    853
-│  ★ irs-done 2026-11-12
+│  ★ irs-done 2026-11-19
 │  ───────────────────────────────────────────────────────
 │  Nov  1  Fresh Market                   -200.00
 │  Nov  1  Discretionary                   -63.00
@@ -485,30 +484,32 @@ Generated: 4/30/2026, 2:35:08 PM
 │  Nov  9  Mazda CX-5                     -638.00
 │  Nov  9  Balance                      $   1,040
 │  Nov 12  Karen paycheck                 +810.00
-│  Nov 12  SNOWBALL → IRS 2024                     -  113.00
-│  Nov 12  Balance                      $   1,737
+│  Nov 12  SNOWBALL → IRS 2024                     -  493.00
+│  Nov 12  Balance                      $   1,357
 │  Nov 13  Affirm cluster                  -82.00
 │  Nov 13  PayPal Newegg                   -61.00
 │  Nov 13  Claude.ai                       -20.00
-│  Nov 13  Balance                      $   1,574
+│  Nov 13  Balance                      $   1,194
 │  Nov 15  Fresh Market                   -200.00
 │  Nov 15  Discretionary                   -63.00
 │  Nov 15  Gas                             -60.00
 │  Nov 15  T-Mobile                       -152.00
-│  Nov 15  Balance                      $   1,099
+│  Nov 15  IRS #1                          -68.00
+│  Nov 15  Balance                      $     651
+│  Nov 16  IRS #2                          -35.00
 │  Nov 16  AT&T fiber                     -166.00
-│  Nov 16  Balance                      $     933
+│  Nov 16  Balance                      $     450
 │  Nov 18  Randy training                 -150.00
-│  Nov 18  Balance                      $     783
+│  Nov 18  Balance                      $     300
 │  Nov 19  Karen paycheck                 +810.00
-│  Nov 19  SNOWBALL → Mazda CX-5                   - 1293.00
-│  Nov 19  Balance                      $     300
+│  Nov 19  SNOWBALL → IRS 2024                     -  545.00
+│  Nov 19  Balance                      $     565
 │  Nov 22  Jon paycheck                  +1641.00
 │  Nov 22  Fresh Market                   -200.00
 │  Nov 22  Discretionary                   -61.00
 │  Nov 22  Jon PayPal Credit               -22.00
 │  Nov 22  Spotify                         -22.00
-│  Nov 22  SNOWBALL → Mazda CX-5                   -  328.00
+│  Nov 22  SNOWBALL → Mazda CX-5                   -  593.00
 │  Nov 22  Balance                      $   1,308
 │  Nov 23  State Farm                     -160.00
 │  Nov 23  Balance                      $   1,148
@@ -520,7 +521,7 @@ Generated: 4/30/2026, 2:35:08 PM
 │  Nov 30  PayPal Chinese                  -95.00
 │  Nov 30  Balance                      $     853
 │  ───────────────────────────────────────────────────────
-│  Income: +$6,522   Expenses: -$3,168   Snowball: -$3,354   Net: +$0
+│  Income: +$6,522   Expenses: -$3,271   Snowball: -$3,251   Net: +$0
 └──────────────────────────────────────────
 
 ┌─ Dec 2026 ─────────────────────────────────
@@ -773,8 +774,8 @@ Generated: 4/30/2026, 2:35:08 PM
 └──────────────────────────────────────────
 
 ┌─ Apr 2027 ─────────────────────────────────
-│  Start: $    804   End: $   2178
-│  ★ mazda-done 2027-04-22 · debt-free 2027-04-22
+│  Start: $    804   End: $   1150
+│  ★ mazda-done 2027-04-29 · debt-free 2027-04-29
 │  ───────────────────────────────────────────────────────
 │  Apr  1  Karen paycheck                 +810.00
 │  Apr  1  Gas                             -60.00
@@ -818,1295 +819,1296 @@ Generated: 4/30/2026, 2:35:08 PM
 │  Apr 22  Karen paycheck                 +810.00
 │  Apr 22  Jon PayPal Credit               -22.00
 │  Apr 22  Spotify                         -22.00
-│  Apr 22  SNOWBALL → Mazda CX-5                   -  918.00
-│  Apr 22  Balance                      $   1,789
+│  Apr 22  SNOWBALL → Mazda CX-5                   - 1433.00
+│  Apr 22  Balance                      $   1,274
 │  Apr 23  State Farm                     -160.00
-│  Apr 23  Balance                      $   1,629
+│  Apr 23  Balance                      $   1,114
 │  Apr 25  Fresh Market                   -200.00
 │  Apr 25  Discretionary                   -61.00
-│  Apr 25  Balance                      $   1,368
+│  Apr 25  Balance                      $     853
 │  Apr 29  Karen paycheck                 +810.00
-│  Apr 29  Balance                      $   2,178
+│  Apr 29  SNOWBALL → Mazda CX-5                   -  513.00
+│  Apr 29  Balance                      $   1,150
 │  ───────────────────────────────────────────────────────
-│  Income: +$7,332   Expenses: -$2,800   Snowball: -$3,218   Net: +$1,314
+│  Income: +$7,332   Expenses: -$2,800   Snowball: -$4,246   Net: +$286
 └──────────────────────────────────────────
 
 ┌─ May 2027 ─────────────────────────────────
-│  Start: $   2118   End: $   6349
+│  Start: $   1090   End: $   5321
 │  ───────────────────────────────────────────────────────
 │  May  1  Gas                             -60.00
-│  May  1  Balance                      $   2,118
+│  May  1  Balance                      $   1,090
 │  May  2  Fresh Market                   -200.00
 │  May  2  Discretionary                   -63.00
 │  May  2  Amazon Prime                    -15.00
-│  May  2  Balance                      $   1,840
+│  May  2  Balance                      $     812
 │  May  4  PayPal eBay                     -43.00
 │  May  4  ChatGPT                         -22.00
 │  May  4  Randy training                 -150.00
-│  May  4  Balance                      $   1,625
+│  May  4  Balance                      $     597
 │  May  6  Karen paycheck                 +810.00
-│  May  6  Balance                      $   2,435
+│  May  6  Balance                      $   1,407
 │  May  7  Jon paycheck                  +1641.00
-│  May  7  Balance                      $   4,076
+│  May  7  Balance                      $   3,048
 │  May  9  Fresh Market                   -200.00
 │  May  9  Discretionary                   -63.00
-│  May  9  Balance                      $   3,813
+│  May  9  Balance                      $   2,785
 │  May 13  Karen paycheck                 +810.00
 │  May 13  Affirm cluster                  -59.00
 │  May 13  Claude.ai                       -20.00
-│  May 13  Balance                      $   4,544
+│  May 13  Balance                      $   3,516
 │  May 15  Gas                             -60.00
 │  May 15  T-Mobile                       -152.00
-│  May 15  Balance                      $   4,332
+│  May 15  Balance                      $   3,304
 │  May 16  Fresh Market                   -200.00
 │  May 16  Discretionary                   -63.00
 │  May 16  AT&T fiber                     -166.00
-│  May 16  Balance                      $   3,903
+│  May 16  Balance                      $   2,875
 │  May 18  Randy training                 -150.00
-│  May 18  Balance                      $   3,753
+│  May 18  Balance                      $   2,725
 │  May 20  Karen paycheck                 +810.00
-│  May 20  Balance                      $   4,563
+│  May 20  Balance                      $   3,535
 │  May 22  Jon paycheck                  +1641.00
 │  May 22  Jon PayPal Credit               -22.00
 │  May 22  Spotify                         -22.00
-│  May 22  Balance                      $   6,160
+│  May 22  Balance                      $   5,132
 │  May 23  Fresh Market                   -200.00
 │  May 23  Discretionary                   -61.00
 │  May 23  State Farm                     -160.00
-│  May 23  Balance                      $   5,739
+│  May 23  Balance                      $   4,711
 │  May 27  Karen paycheck                 +810.00
-│  May 27  Balance                      $   6,549
+│  May 27  Balance                      $   5,521
 │  May 30  Fresh Market                   -200.00
-│  May 30  Balance                      $   6,349
+│  May 30  Balance                      $   5,321
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,351   Net: +$4,171
 └──────────────────────────────────────────
 
 ┌─ Jun 2027 ─────────────────────────────────
-│  Start: $   6289   End: $  10720
+│  Start: $   5261   End: $   9692
 │  ───────────────────────────────────────────────────────
 │  Jun  1  Gas                             -60.00
-│  Jun  1  Balance                      $   6,289
+│  Jun  1  Balance                      $   5,261
 │  Jun  2  Amazon Prime                    -15.00
-│  Jun  2  Balance                      $   6,274
+│  Jun  2  Balance                      $   5,246
 │  Jun  3  Karen paycheck                 +810.00
-│  Jun  3  Balance                      $   7,084
+│  Jun  3  Balance                      $   6,056
 │  Jun  4  PayPal eBay                     -43.00
 │  Jun  4  ChatGPT                         -22.00
 │  Jun  4  Randy training                 -150.00
-│  Jun  4  Balance                      $   6,869
+│  Jun  4  Balance                      $   5,841
 │  Jun  6  Fresh Market                   -200.00
 │  Jun  6  Discretionary                   -63.00
-│  Jun  6  Balance                      $   6,606
+│  Jun  6  Balance                      $   5,578
 │  Jun  7  Jon paycheck                  +1641.00
-│  Jun  7  Balance                      $   8,247
+│  Jun  7  Balance                      $   7,219
 │  Jun 10  Karen paycheck                 +810.00
-│  Jun 10  Balance                      $   9,057
+│  Jun 10  Balance                      $   8,029
 │  Jun 13  Fresh Market                   -200.00
 │  Jun 13  Discretionary                   -63.00
 │  Jun 13  Affirm cluster                  -59.00
 │  Jun 13  Claude.ai                       -20.00
-│  Jun 13  Balance                      $   8,715
+│  Jun 13  Balance                      $   7,687
 │  Jun 15  Gas                             -60.00
 │  Jun 15  T-Mobile                       -152.00
-│  Jun 15  Balance                      $   8,503
+│  Jun 15  Balance                      $   7,475
 │  Jun 16  AT&T fiber                     -166.00
-│  Jun 16  Balance                      $   8,337
+│  Jun 16  Balance                      $   7,309
 │  Jun 17  Karen paycheck                 +810.00
-│  Jun 17  Balance                      $   9,147
+│  Jun 17  Balance                      $   8,119
 │  Jun 18  Randy training                 -150.00
-│  Jun 18  Balance                      $   8,997
+│  Jun 18  Balance                      $   7,969
 │  Jun 20  Fresh Market                   -200.00
 │  Jun 20  Discretionary                   -63.00
-│  Jun 20  Balance                      $   8,734
+│  Jun 20  Balance                      $   7,706
 │  Jun 22  Jon paycheck                  +1641.00
 │  Jun 22  Jon PayPal Credit               -22.00
 │  Jun 22  Spotify                         -22.00
-│  Jun 22  Balance                      $  10,331
+│  Jun 22  Balance                      $   9,303
 │  Jun 23  State Farm                     -160.00
-│  Jun 23  Balance                      $  10,171
+│  Jun 23  Balance                      $   9,143
 │  Jun 24  Karen paycheck                 +810.00
-│  Jun 24  Balance                      $  10,981
+│  Jun 24  Balance                      $   9,953
 │  Jun 27  Fresh Market                   -200.00
 │  Jun 27  Discretionary                   -61.00
-│  Jun 27  Balance                      $  10,720
+│  Jun 27  Balance                      $   9,692
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,151   Net: +$4,371
 └──────────────────────────────────────────
 
 ┌─ Jul 2027 ─────────────────────────────────
-│  Start: $  11470   End: $  15890
+│  Start: $  10442   End: $  14862
 │  ───────────────────────────────────────────────────────
 │  Jul  1  Karen paycheck                 +810.00
 │  Jul  1  Gas                             -60.00
-│  Jul  1  Balance                      $  11,470
+│  Jul  1  Balance                      $  10,442
 │  Jul  2  Amazon Prime                    -15.00
 │  Jul  2  Real-Debrid                     -11.00
-│  Jul  2  Balance                      $  11,444
+│  Jul  2  Balance                      $  10,416
 │  Jul  4  Fresh Market                   -200.00
 │  Jul  4  Discretionary                   -63.00
 │  Jul  4  PayPal eBay                     -43.00
 │  Jul  4  ChatGPT                         -22.00
 │  Jul  4  Randy training                 -150.00
-│  Jul  4  Balance                      $  10,966
+│  Jul  4  Balance                      $   9,938
 │  Jul  7  Jon paycheck                  +1641.00
-│  Jul  7  Balance                      $  12,607
+│  Jul  7  Balance                      $  11,579
 │  Jul  8  Karen paycheck                 +810.00
-│  Jul  8  Balance                      $  13,417
+│  Jul  8  Balance                      $  12,389
 │  Jul 11  Fresh Market                   -200.00
 │  Jul 11  Discretionary                   -63.00
-│  Jul 11  Balance                      $  13,154
+│  Jul 11  Balance                      $  12,126
 │  Jul 13  Affirm cluster                  -59.00
 │  Jul 13  Claude.ai                       -20.00
-│  Jul 13  Balance                      $  13,075
+│  Jul 13  Balance                      $  12,047
 │  Jul 15  Karen paycheck                 +810.00
 │  Jul 15  Gas                             -60.00
 │  Jul 15  T-Mobile                       -152.00
-│  Jul 15  Balance                      $  13,673
+│  Jul 15  Balance                      $  12,645
 │  Jul 16  AT&T fiber                     -166.00
-│  Jul 16  Balance                      $  13,507
+│  Jul 16  Balance                      $  12,479
 │  Jul 18  Fresh Market                   -200.00
 │  Jul 18  Discretionary                   -63.00
 │  Jul 18  Randy training                 -150.00
-│  Jul 18  Balance                      $  13,094
+│  Jul 18  Balance                      $  12,066
 │  Jul 22  Jon paycheck                  +1641.00
 │  Jul 22  Karen paycheck                 +810.00
 │  Jul 22  Jon PayPal Credit               -22.00
 │  Jul 22  Spotify                         -22.00
-│  Jul 22  Balance                      $  15,501
+│  Jul 22  Balance                      $  14,473
 │  Jul 23  State Farm                     -160.00
-│  Jul 23  Balance                      $  15,341
+│  Jul 23  Balance                      $  14,313
 │  Jul 25  Fresh Market                   -200.00
 │  Jul 25  Discretionary                   -61.00
-│  Jul 25  Balance                      $  15,080
+│  Jul 25  Balance                      $  14,052
 │  Jul 29  Karen paycheck                 +810.00
-│  Jul 29  Balance                      $  15,890
+│  Jul 29  Balance                      $  14,862
 │  ───────────────────────────────────────────────────────
 │  Income: +$7,332   Expenses: -$2,162   Net: +$5,170
 └──────────────────────────────────────────
 
 ┌─ Aug 2027 ─────────────────────────────────
-│  Start: $  15567   End: $  20061
+│  Start: $  14539   End: $  19033
 │  ───────────────────────────────────────────────────────
 │  Aug  1  Fresh Market                   -200.00
 │  Aug  1  Discretionary                   -63.00
 │  Aug  1  Gas                             -60.00
-│  Aug  1  Balance                      $  15,567
+│  Aug  1  Balance                      $  14,539
 │  Aug  2  Amazon Prime                    -15.00
-│  Aug  2  Balance                      $  15,552
+│  Aug  2  Balance                      $  14,524
 │  Aug  4  PayPal eBay                     -43.00
 │  Aug  4  ChatGPT                         -22.00
 │  Aug  4  Randy training                 -150.00
-│  Aug  4  Balance                      $  15,337
+│  Aug  4  Balance                      $  14,309
 │  Aug  5  Karen paycheck                 +810.00
-│  Aug  5  Balance                      $  16,147
+│  Aug  5  Balance                      $  15,119
 │  Aug  7  Jon paycheck                  +1641.00
-│  Aug  7  Balance                      $  17,788
+│  Aug  7  Balance                      $  16,760
 │  Aug  8  Fresh Market                   -200.00
 │  Aug  8  Discretionary                   -63.00
-│  Aug  8  Balance                      $  17,525
+│  Aug  8  Balance                      $  16,497
 │  Aug 12  Karen paycheck                 +810.00
-│  Aug 12  Balance                      $  18,335
+│  Aug 12  Balance                      $  17,307
 │  Aug 13  Affirm cluster                  -59.00
 │  Aug 13  Claude.ai                       -20.00
-│  Aug 13  Balance                      $  18,256
+│  Aug 13  Balance                      $  17,228
 │  Aug 15  Fresh Market                   -200.00
 │  Aug 15  Discretionary                   -63.00
 │  Aug 15  Gas                             -60.00
 │  Aug 15  T-Mobile                       -152.00
-│  Aug 15  Balance                      $  17,781
+│  Aug 15  Balance                      $  16,753
 │  Aug 16  AT&T fiber                     -166.00
-│  Aug 16  Balance                      $  17,615
+│  Aug 16  Balance                      $  16,587
 │  Aug 18  Randy training                 -150.00
-│  Aug 18  Balance                      $  17,465
+│  Aug 18  Balance                      $  16,437
 │  Aug 19  Karen paycheck                 +810.00
-│  Aug 19  Balance                      $  18,275
+│  Aug 19  Balance                      $  17,247
 │  Aug 22  Jon paycheck                  +1641.00
 │  Aug 22  Fresh Market                   -200.00
 │  Aug 22  Discretionary                   -61.00
 │  Aug 22  Jon PayPal Credit               -22.00
 │  Aug 22  Spotify                         -22.00
-│  Aug 22  Balance                      $  19,611
+│  Aug 22  Balance                      $  18,583
 │  Aug 23  State Farm                     -160.00
-│  Aug 23  Balance                      $  19,451
+│  Aug 23  Balance                      $  18,423
 │  Aug 26  Karen paycheck                 +810.00
-│  Aug 26  Balance                      $  20,261
+│  Aug 26  Balance                      $  19,233
 │  Aug 29  Fresh Market                   -200.00
-│  Aug 29  Balance                      $  20,061
+│  Aug 29  Balance                      $  19,033
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,351   Net: +$4,171
 └──────────────────────────────────────────
 
 ┌─ Sep 2027 ─────────────────────────────────
-│  Start: $  20001   End: $  25285
+│  Start: $  18973   End: $  24257
 │  ───────────────────────────────────────────────────────
 │  Sep  1  Gas                             -60.00
-│  Sep  1  Balance                      $  20,001
+│  Sep  1  Balance                      $  18,973
 │  Sep  2  Karen paycheck                 +810.00
 │  Sep  2  Amazon Prime                    -15.00
-│  Sep  2  Balance                      $  20,796
+│  Sep  2  Balance                      $  19,768
 │  Sep  4  ChatGPT                         -22.00
 │  Sep  4  Randy training                 -150.00
-│  Sep  4  Balance                      $  20,624
+│  Sep  4  Balance                      $  19,596
 │  Sep  5  Fresh Market                   -200.00
 │  Sep  5  Discretionary                   -63.00
-│  Sep  5  Balance                      $  20,361
+│  Sep  5  Balance                      $  19,333
 │  Sep  7  Jon paycheck                  +1641.00
-│  Sep  7  Balance                      $  22,002
+│  Sep  7  Balance                      $  20,974
 │  Sep  9  Karen paycheck                 +810.00
-│  Sep  9  Balance                      $  22,812
+│  Sep  9  Balance                      $  21,784
 │  Sep 12  Fresh Market                   -200.00
 │  Sep 12  Discretionary                   -63.00
-│  Sep 12  Balance                      $  22,549
+│  Sep 12  Balance                      $  21,521
 │  Sep 13  Affirm cluster                  -59.00
 │  Sep 13  Claude.ai                       -20.00
-│  Sep 13  Balance                      $  22,470
+│  Sep 13  Balance                      $  21,442
 │  Sep 15  Gas                             -60.00
 │  Sep 15  T-Mobile                       -152.00
-│  Sep 15  Balance                      $  22,258
+│  Sep 15  Balance                      $  21,230
 │  Sep 16  Karen paycheck                 +810.00
 │  Sep 16  AT&T fiber                     -166.00
-│  Sep 16  Balance                      $  22,902
+│  Sep 16  Balance                      $  21,874
 │  Sep 18  Randy training                 -150.00
-│  Sep 18  Balance                      $  22,752
+│  Sep 18  Balance                      $  21,724
 │  Sep 19  Fresh Market                   -200.00
 │  Sep 19  Discretionary                   -63.00
-│  Sep 19  Balance                      $  22,489
+│  Sep 19  Balance                      $  21,461
 │  Sep 22  Jon paycheck                  +1641.00
 │  Sep 22  Jon PayPal Credit               -22.00
 │  Sep 22  Spotify                         -22.00
-│  Sep 22  Balance                      $  24,086
+│  Sep 22  Balance                      $  23,058
 │  Sep 23  Karen paycheck                 +810.00
 │  Sep 23  State Farm                     -160.00
-│  Sep 23  Balance                      $  24,736
+│  Sep 23  Balance                      $  23,708
 │  Sep 26  Fresh Market                   -200.00
 │  Sep 26  Discretionary                   -61.00
-│  Sep 26  Balance                      $  24,475
+│  Sep 26  Balance                      $  23,447
 │  Sep 30  Karen paycheck                 +810.00
-│  Sep 30  Balance                      $  25,285
+│  Sep 30  Balance                      $  24,257
 │  ───────────────────────────────────────────────────────
 │  Income: +$7,332   Expenses: -$2,108   Net: +$5,224
 └──────────────────────────────────────────
 
 ┌─ Oct 2027 ─────────────────────────────────
-│  Start: $  25225   End: $  29488
+│  Start: $  24197   End: $  28460
 │  ───────────────────────────────────────────────────────
 │  Oct  1  Gas                             -60.00
-│  Oct  1  Balance                      $  25,225
+│  Oct  1  Balance                      $  24,197
 │  Oct  2  Amazon Prime                    -15.00
 │  Oct  2  Real-Debrid                     -11.00
-│  Oct  2  Balance                      $  25,199
+│  Oct  2  Balance                      $  24,171
 │  Oct  3  Fresh Market                   -200.00
 │  Oct  3  Discretionary                   -63.00
-│  Oct  3  Balance                      $  24,936
+│  Oct  3  Balance                      $  23,908
 │  Oct  4  ChatGPT                         -22.00
 │  Oct  4  Randy training                 -150.00
-│  Oct  4  Balance                      $  24,764
+│  Oct  4  Balance                      $  23,736
 │  Oct  7  Jon paycheck                  +1641.00
 │  Oct  7  Karen paycheck                 +810.00
-│  Oct  7  Balance                      $  27,215
+│  Oct  7  Balance                      $  26,187
 │  Oct 10  Fresh Market                   -200.00
 │  Oct 10  Discretionary                   -63.00
-│  Oct 10  Balance                      $  26,952
+│  Oct 10  Balance                      $  25,924
 │  Oct 13  Affirm cluster                  -59.00
 │  Oct 13  Claude.ai                       -20.00
-│  Oct 13  Balance                      $  26,873
+│  Oct 13  Balance                      $  25,845
 │  Oct 14  Karen paycheck                 +810.00
-│  Oct 14  Balance                      $  27,683
+│  Oct 14  Balance                      $  26,655
 │  Oct 15  Gas                             -60.00
 │  Oct 15  T-Mobile                       -152.00
-│  Oct 15  Balance                      $  27,471
+│  Oct 15  Balance                      $  26,443
 │  Oct 16  AT&T fiber                     -166.00
-│  Oct 16  Balance                      $  27,305
+│  Oct 16  Balance                      $  26,277
 │  Oct 17  Fresh Market                   -200.00
 │  Oct 17  Discretionary                   -63.00
-│  Oct 17  Balance                      $  27,042
+│  Oct 17  Balance                      $  26,014
 │  Oct 18  Randy training                 -150.00
-│  Oct 18  Balance                      $  26,892
+│  Oct 18  Balance                      $  25,864
 │  Oct 21  Karen paycheck                 +810.00
-│  Oct 21  Balance                      $  27,702
+│  Oct 21  Balance                      $  26,674
 │  Oct 22  Jon paycheck                  +1641.00
 │  Oct 22  Jon PayPal Credit               -22.00
 │  Oct 22  Spotify                         -22.00
-│  Oct 22  Balance                      $  29,299
+│  Oct 22  Balance                      $  28,271
 │  Oct 23  State Farm                     -160.00
-│  Oct 23  Balance                      $  29,139
+│  Oct 23  Balance                      $  28,111
 │  Oct 24  Fresh Market                   -200.00
 │  Oct 24  Discretionary                   -61.00
-│  Oct 24  Balance                      $  28,878
+│  Oct 24  Balance                      $  27,850
 │  Oct 28  Karen paycheck                 +810.00
-│  Oct 28  Balance                      $  29,688
+│  Oct 28  Balance                      $  28,660
 │  Oct 31  Fresh Market                   -200.00
-│  Oct 31  Balance                      $  29,488
+│  Oct 31  Balance                      $  28,460
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,319   Net: +$4,203
 └──────────────────────────────────────────
 
 ┌─ Nov 2027 ─────────────────────────────────
-│  Start: $  29428   End: $  33902
+│  Start: $  28400   End: $  32874
 │  ───────────────────────────────────────────────────────
 │  Nov  1  Gas                             -60.00
-│  Nov  1  Balance                      $  29,428
+│  Nov  1  Balance                      $  28,400
 │  Nov  2  Amazon Prime                    -15.00
-│  Nov  2  Balance                      $  29,413
+│  Nov  2  Balance                      $  28,385
 │  Nov  4  Karen paycheck                 +810.00
 │  Nov  4  ChatGPT                         -22.00
 │  Nov  4  Randy training                 -150.00
-│  Nov  4  Balance                      $  30,051
+│  Nov  4  Balance                      $  29,023
 │  Nov  7  Jon paycheck                  +1641.00
 │  Nov  7  Fresh Market                   -200.00
 │  Nov  7  Discretionary                   -63.00
-│  Nov  7  Balance                      $  31,429
+│  Nov  7  Balance                      $  30,401
 │  Nov 11  Karen paycheck                 +810.00
-│  Nov 11  Balance                      $  32,239
+│  Nov 11  Balance                      $  31,211
 │  Nov 13  Affirm cluster                  -59.00
 │  Nov 13  Claude.ai                       -20.00
-│  Nov 13  Balance                      $  32,160
+│  Nov 13  Balance                      $  31,132
 │  Nov 14  Fresh Market                   -200.00
 │  Nov 14  Discretionary                   -63.00
-│  Nov 14  Balance                      $  31,897
+│  Nov 14  Balance                      $  30,869
 │  Nov 15  Gas                             -60.00
 │  Nov 15  T-Mobile                       -152.00
-│  Nov 15  Balance                      $  31,685
+│  Nov 15  Balance                      $  30,657
 │  Nov 16  AT&T fiber                     -166.00
-│  Nov 16  Balance                      $  31,519
+│  Nov 16  Balance                      $  30,491
 │  Nov 18  Karen paycheck                 +810.00
 │  Nov 18  Randy training                 -150.00
-│  Nov 18  Balance                      $  32,179
+│  Nov 18  Balance                      $  31,151
 │  Nov 21  Fresh Market                   -200.00
 │  Nov 21  Discretionary                   -63.00
-│  Nov 21  Balance                      $  31,916
+│  Nov 21  Balance                      $  30,888
 │  Nov 22  Jon paycheck                  +1641.00
 │  Nov 22  Jon PayPal Credit               -22.00
 │  Nov 22  Spotify                         -22.00
-│  Nov 22  Balance                      $  33,513
+│  Nov 22  Balance                      $  32,485
 │  Nov 23  State Farm                     -160.00
-│  Nov 23  Balance                      $  33,353
+│  Nov 23  Balance                      $  32,325
 │  Nov 25  Karen paycheck                 +810.00
-│  Nov 25  Balance                      $  34,163
+│  Nov 25  Balance                      $  33,135
 │  Nov 28  Fresh Market                   -200.00
 │  Nov 28  Discretionary                   -61.00
-│  Nov 28  Balance                      $  33,902
+│  Nov 28  Balance                      $  32,874
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,108   Net: +$4,414
 └──────────────────────────────────────────
 
 ┌─ Dec 2027 ─────────────────────────────────
-│  Start: $  33842   End: $  39126
+│  Start: $  32814   End: $  38098
 │  ───────────────────────────────────────────────────────
 │  Dec  1  Gas                             -60.00
-│  Dec  1  Balance                      $  33,842
+│  Dec  1  Balance                      $  32,814
 │  Dec  2  Karen paycheck                 +810.00
 │  Dec  2  Amazon Prime                    -15.00
-│  Dec  2  Balance                      $  34,637
+│  Dec  2  Balance                      $  33,609
 │  Dec  4  ChatGPT                         -22.00
 │  Dec  4  Randy training                 -150.00
-│  Dec  4  Balance                      $  34,465
+│  Dec  4  Balance                      $  33,437
 │  Dec  5  Fresh Market                   -200.00
 │  Dec  5  Discretionary                   -63.00
-│  Dec  5  Balance                      $  34,202
+│  Dec  5  Balance                      $  33,174
 │  Dec  7  Jon paycheck                  +1641.00
-│  Dec  7  Balance                      $  35,843
+│  Dec  7  Balance                      $  34,815
 │  Dec  9  Karen paycheck                 +810.00
-│  Dec  9  Balance                      $  36,653
+│  Dec  9  Balance                      $  35,625
 │  Dec 12  Fresh Market                   -200.00
 │  Dec 12  Discretionary                   -63.00
-│  Dec 12  Balance                      $  36,390
+│  Dec 12  Balance                      $  35,362
 │  Dec 13  Affirm cluster                  -59.00
 │  Dec 13  Claude.ai                       -20.00
-│  Dec 13  Balance                      $  36,311
+│  Dec 13  Balance                      $  35,283
 │  Dec 15  Gas                             -60.00
 │  Dec 15  T-Mobile                       -152.00
-│  Dec 15  Balance                      $  36,099
+│  Dec 15  Balance                      $  35,071
 │  Dec 16  Karen paycheck                 +810.00
 │  Dec 16  AT&T fiber                     -166.00
-│  Dec 16  Balance                      $  36,743
+│  Dec 16  Balance                      $  35,715
 │  Dec 18  Randy training                 -150.00
-│  Dec 18  Balance                      $  36,593
+│  Dec 18  Balance                      $  35,565
 │  Dec 19  Fresh Market                   -200.00
 │  Dec 19  Discretionary                   -63.00
-│  Dec 19  Balance                      $  36,330
+│  Dec 19  Balance                      $  35,302
 │  Dec 22  Jon paycheck                  +1641.00
 │  Dec 22  Jon PayPal Credit               -22.00
 │  Dec 22  Spotify                         -22.00
-│  Dec 22  Balance                      $  37,927
+│  Dec 22  Balance                      $  36,899
 │  Dec 23  Karen paycheck                 +810.00
 │  Dec 23  State Farm                     -160.00
-│  Dec 23  Balance                      $  38,577
+│  Dec 23  Balance                      $  37,549
 │  Dec 26  Fresh Market                   -200.00
 │  Dec 26  Discretionary                   -61.00
-│  Dec 26  Balance                      $  38,316
+│  Dec 26  Balance                      $  37,288
 │  Dec 30  Karen paycheck                 +810.00
-│  Dec 30  Balance                      $  39,126
+│  Dec 30  Balance                      $  38,098
 │  ───────────────────────────────────────────────────────
 │  Income: +$7,332   Expenses: -$2,108   Net: +$5,224
 └──────────────────────────────────────────
 
 ┌─ Jan 2028 ─────────────────────────────────
-│  Start: $  39066   End: $  43329
+│  Start: $  38038   End: $  42301
 │  ───────────────────────────────────────────────────────
 │  Jan  1  Gas                             -60.00
-│  Jan  1  Balance                      $  39,066
+│  Jan  1  Balance                      $  38,038
 │  Jan  2  Fresh Market                   -200.00
 │  Jan  2  Discretionary                   -63.00
 │  Jan  2  Amazon Prime                    -15.00
 │  Jan  2  Real-Debrid                     -11.00
-│  Jan  2  Balance                      $  38,777
+│  Jan  2  Balance                      $  37,749
 │  Jan  4  ChatGPT                         -22.00
 │  Jan  4  Randy training                 -150.00
-│  Jan  4  Balance                      $  38,605
+│  Jan  4  Balance                      $  37,577
 │  Jan  6  Karen paycheck                 +810.00
-│  Jan  6  Balance                      $  39,415
+│  Jan  6  Balance                      $  38,387
 │  Jan  7  Jon paycheck                  +1641.00
-│  Jan  7  Balance                      $  41,056
+│  Jan  7  Balance                      $  40,028
 │  Jan  9  Fresh Market                   -200.00
 │  Jan  9  Discretionary                   -63.00
-│  Jan  9  Balance                      $  40,793
+│  Jan  9  Balance                      $  39,765
 │  Jan 13  Karen paycheck                 +810.00
 │  Jan 13  Affirm cluster                  -59.00
 │  Jan 13  Claude.ai                       -20.00
-│  Jan 13  Balance                      $  41,524
+│  Jan 13  Balance                      $  40,496
 │  Jan 15  Gas                             -60.00
 │  Jan 15  T-Mobile                       -152.00
-│  Jan 15  Balance                      $  41,312
+│  Jan 15  Balance                      $  40,284
 │  Jan 16  Fresh Market                   -200.00
 │  Jan 16  Discretionary                   -63.00
 │  Jan 16  AT&T fiber                     -166.00
-│  Jan 16  Balance                      $  40,883
+│  Jan 16  Balance                      $  39,855
 │  Jan 18  Randy training                 -150.00
-│  Jan 18  Balance                      $  40,733
+│  Jan 18  Balance                      $  39,705
 │  Jan 20  Karen paycheck                 +810.00
-│  Jan 20  Balance                      $  41,543
+│  Jan 20  Balance                      $  40,515
 │  Jan 22  Jon paycheck                  +1641.00
 │  Jan 22  Jon PayPal Credit               -22.00
 │  Jan 22  Spotify                         -22.00
-│  Jan 22  Balance                      $  43,140
+│  Jan 22  Balance                      $  42,112
 │  Jan 23  Fresh Market                   -200.00
 │  Jan 23  Discretionary                   -61.00
 │  Jan 23  State Farm                     -160.00
-│  Jan 23  Balance                      $  42,719
+│  Jan 23  Balance                      $  41,691
 │  Jan 27  Karen paycheck                 +810.00
-│  Jan 27  Balance                      $  43,529
+│  Jan 27  Balance                      $  42,501
 │  Jan 30  Fresh Market                   -200.00
-│  Jan 30  Balance                      $  43,329
+│  Jan 30  Balance                      $  42,301
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,319   Net: +$4,203
 └──────────────────────────────────────────
 
 ┌─ Feb 2028 ─────────────────────────────────
-│  Start: $  43269   End: $  47802
+│  Start: $  42241   End: $  46774
 │  ───────────────────────────────────────────────────────
 │  Feb  1  Gas                             -60.00
-│  Feb  1  Balance                      $  43,269
+│  Feb  1  Balance                      $  42,241
 │  Feb  2  Amazon Prime                    -15.00
-│  Feb  2  Balance                      $  43,254
+│  Feb  2  Balance                      $  42,226
 │  Feb  3  Karen paycheck                 +810.00
-│  Feb  3  Balance                      $  44,064
+│  Feb  3  Balance                      $  43,036
 │  Feb  4  ChatGPT                         -22.00
 │  Feb  4  Randy training                 -150.00
-│  Feb  4  Balance                      $  43,892
+│  Feb  4  Balance                      $  42,864
 │  Feb  6  Fresh Market                   -200.00
 │  Feb  6  Discretionary                   -63.00
-│  Feb  6  Balance                      $  43,629
+│  Feb  6  Balance                      $  42,601
 │  Feb  7  Jon paycheck                  +1641.00
-│  Feb  7  Balance                      $  45,270
+│  Feb  7  Balance                      $  44,242
 │  Feb 10  Karen paycheck                 +810.00
-│  Feb 10  Balance                      $  46,080
+│  Feb 10  Balance                      $  45,052
 │  Feb 13  Fresh Market                   -200.00
 │  Feb 13  Discretionary                   -63.00
 │  Feb 13  Claude.ai                       -20.00
-│  Feb 13  Balance                      $  45,797
+│  Feb 13  Balance                      $  44,769
 │  Feb 15  Gas                             -60.00
 │  Feb 15  T-Mobile                       -152.00
-│  Feb 15  Balance                      $  45,585
+│  Feb 15  Balance                      $  44,557
 │  Feb 16  AT&T fiber                     -166.00
-│  Feb 16  Balance                      $  45,419
+│  Feb 16  Balance                      $  44,391
 │  Feb 17  Karen paycheck                 +810.00
-│  Feb 17  Balance                      $  46,229
+│  Feb 17  Balance                      $  45,201
 │  Feb 18  Randy training                 -150.00
-│  Feb 18  Balance                      $  46,079
+│  Feb 18  Balance                      $  45,051
 │  Feb 20  Fresh Market                   -200.00
 │  Feb 20  Discretionary                   -63.00
-│  Feb 20  Balance                      $  45,816
+│  Feb 20  Balance                      $  44,788
 │  Feb 22  Jon paycheck                  +1641.00
 │  Feb 22  Jon PayPal Credit               -22.00
 │  Feb 22  Spotify                         -22.00
-│  Feb 22  Balance                      $  47,413
+│  Feb 22  Balance                      $  46,385
 │  Feb 23  State Farm                     -160.00
-│  Feb 23  Balance                      $  47,253
+│  Feb 23  Balance                      $  46,225
 │  Feb 24  Karen paycheck                 +810.00
-│  Feb 24  Balance                      $  48,063
+│  Feb 24  Balance                      $  47,035
 │  Feb 27  Fresh Market                   -200.00
 │  Feb 27  Discretionary                   -61.00
-│  Feb 27  Balance                      $  47,802
+│  Feb 27  Balance                      $  46,774
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,049   Net: +$4,473
 └──────────────────────────────────────────
 
 ┌─ Mar 2028 ─────────────────────────────────
-│  Start: $  47742   End: $  53085
+│  Start: $  46714   End: $  52057
 │  ───────────────────────────────────────────────────────
 │  Mar  1  Gas                             -60.00
-│  Mar  1  Balance                      $  47,742
+│  Mar  1  Balance                      $  46,714
 │  Mar  2  Karen paycheck                 +810.00
 │  Mar  2  Amazon Prime                    -15.00
-│  Mar  2  Balance                      $  48,537
+│  Mar  2  Balance                      $  47,509
 │  Mar  4  ChatGPT                         -22.00
 │  Mar  4  Randy training                 -150.00
-│  Mar  4  Balance                      $  48,365
+│  Mar  4  Balance                      $  47,337
 │  Mar  5  Fresh Market                   -200.00
 │  Mar  5  Discretionary                   -63.00
-│  Mar  5  Balance                      $  48,102
+│  Mar  5  Balance                      $  47,074
 │  Mar  7  Jon paycheck                  +1641.00
-│  Mar  7  Balance                      $  49,743
+│  Mar  7  Balance                      $  48,715
 │  Mar  9  Karen paycheck                 +810.00
-│  Mar  9  Balance                      $  50,553
+│  Mar  9  Balance                      $  49,525
 │  Mar 12  Fresh Market                   -200.00
 │  Mar 12  Discretionary                   -63.00
-│  Mar 12  Balance                      $  50,290
+│  Mar 12  Balance                      $  49,262
 │  Mar 13  Claude.ai                       -20.00
-│  Mar 13  Balance                      $  50,270
+│  Mar 13  Balance                      $  49,242
 │  Mar 15  Gas                             -60.00
 │  Mar 15  T-Mobile                       -152.00
-│  Mar 15  Balance                      $  50,058
+│  Mar 15  Balance                      $  49,030
 │  Mar 16  Karen paycheck                 +810.00
 │  Mar 16  AT&T fiber                     -166.00
-│  Mar 16  Balance                      $  50,702
+│  Mar 16  Balance                      $  49,674
 │  Mar 18  Randy training                 -150.00
-│  Mar 18  Balance                      $  50,552
+│  Mar 18  Balance                      $  49,524
 │  Mar 19  Fresh Market                   -200.00
 │  Mar 19  Discretionary                   -63.00
-│  Mar 19  Balance                      $  50,289
+│  Mar 19  Balance                      $  49,261
 │  Mar 22  Jon paycheck                  +1641.00
 │  Mar 22  Jon PayPal Credit               -22.00
 │  Mar 22  Spotify                         -22.00
-│  Mar 22  Balance                      $  51,886
+│  Mar 22  Balance                      $  50,858
 │  Mar 23  Karen paycheck                 +810.00
 │  Mar 23  State Farm                     -160.00
-│  Mar 23  Balance                      $  52,536
+│  Mar 23  Balance                      $  51,508
 │  Mar 26  Fresh Market                   -200.00
 │  Mar 26  Discretionary                   -61.00
-│  Mar 26  Balance                      $  52,275
+│  Mar 26  Balance                      $  51,247
 │  Mar 30  Karen paycheck                 +810.00
-│  Mar 30  Balance                      $  53,085
+│  Mar 30  Balance                      $  52,057
 │  ───────────────────────────────────────────────────────
 │  Income: +$7,332   Expenses: -$2,049   Net: +$5,283
 └──────────────────────────────────────────
 
 ┌─ Apr 2028 ─────────────────────────────────
-│  Start: $  53025   End: $  57347
+│  Start: $  51997   End: $  56319
 │  ───────────────────────────────────────────────────────
 │  Apr  1  Gas                             -60.00
-│  Apr  1  Balance                      $  53,025
+│  Apr  1  Balance                      $  51,997
 │  Apr  2  Fresh Market                   -200.00
 │  Apr  2  Discretionary                   -63.00
 │  Apr  2  Amazon Prime                    -15.00
 │  Apr  2  Real-Debrid                     -11.00
-│  Apr  2  Balance                      $  52,736
+│  Apr  2  Balance                      $  51,708
 │  Apr  4  ChatGPT                         -22.00
 │  Apr  4  Randy training                 -150.00
-│  Apr  4  Balance                      $  52,564
+│  Apr  4  Balance                      $  51,536
 │  Apr  6  Karen paycheck                 +810.00
-│  Apr  6  Balance                      $  53,374
+│  Apr  6  Balance                      $  52,346
 │  Apr  7  Jon paycheck                  +1641.00
-│  Apr  7  Balance                      $  55,015
+│  Apr  7  Balance                      $  53,987
 │  Apr  9  Fresh Market                   -200.00
 │  Apr  9  Discretionary                   -63.00
-│  Apr  9  Balance                      $  54,752
+│  Apr  9  Balance                      $  53,724
 │  Apr 13  Karen paycheck                 +810.00
 │  Apr 13  Claude.ai                       -20.00
-│  Apr 13  Balance                      $  55,542
+│  Apr 13  Balance                      $  54,514
 │  Apr 15  Gas                             -60.00
 │  Apr 15  T-Mobile                       -152.00
-│  Apr 15  Balance                      $  55,330
+│  Apr 15  Balance                      $  54,302
 │  Apr 16  Fresh Market                   -200.00
 │  Apr 16  Discretionary                   -63.00
 │  Apr 16  AT&T fiber                     -166.00
-│  Apr 16  Balance                      $  54,901
+│  Apr 16  Balance                      $  53,873
 │  Apr 18  Randy training                 -150.00
-│  Apr 18  Balance                      $  54,751
+│  Apr 18  Balance                      $  53,723
 │  Apr 20  Karen paycheck                 +810.00
-│  Apr 20  Balance                      $  55,561
+│  Apr 20  Balance                      $  54,533
 │  Apr 22  Jon paycheck                  +1641.00
 │  Apr 22  Jon PayPal Credit               -22.00
 │  Apr 22  Spotify                         -22.00
-│  Apr 22  Balance                      $  57,158
+│  Apr 22  Balance                      $  56,130
 │  Apr 23  Fresh Market                   -200.00
 │  Apr 23  Discretionary                   -61.00
 │  Apr 23  State Farm                     -160.00
-│  Apr 23  Balance                      $  56,737
+│  Apr 23  Balance                      $  55,709
 │  Apr 27  Karen paycheck                 +810.00
-│  Apr 27  Balance                      $  57,547
+│  Apr 27  Balance                      $  56,519
 │  Apr 30  Fresh Market                   -200.00
-│  Apr 30  Balance                      $  57,347
+│  Apr 30  Balance                      $  56,319
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,260   Net: +$4,262
 └──────────────────────────────────────────
 
 ┌─ May 2028 ─────────────────────────────────
-│  Start: $  57287   End: $  61820
+│  Start: $  56259   End: $  60792
 │  ───────────────────────────────────────────────────────
 │  May  1  Gas                             -60.00
-│  May  1  Balance                      $  57,287
+│  May  1  Balance                      $  56,259
 │  May  2  Amazon Prime                    -15.00
-│  May  2  Balance                      $  57,272
+│  May  2  Balance                      $  56,244
 │  May  4  Karen paycheck                 +810.00
 │  May  4  ChatGPT                         -22.00
 │  May  4  Randy training                 -150.00
-│  May  4  Balance                      $  57,910
+│  May  4  Balance                      $  56,882
 │  May  7  Jon paycheck                  +1641.00
 │  May  7  Fresh Market                   -200.00
 │  May  7  Discretionary                   -63.00
-│  May  7  Balance                      $  59,288
+│  May  7  Balance                      $  58,260
 │  May 11  Karen paycheck                 +810.00
-│  May 11  Balance                      $  60,098
+│  May 11  Balance                      $  59,070
 │  May 13  Claude.ai                       -20.00
-│  May 13  Balance                      $  60,078
+│  May 13  Balance                      $  59,050
 │  May 14  Fresh Market                   -200.00
 │  May 14  Discretionary                   -63.00
-│  May 14  Balance                      $  59,815
+│  May 14  Balance                      $  58,787
 │  May 15  Gas                             -60.00
 │  May 15  T-Mobile                       -152.00
-│  May 15  Balance                      $  59,603
+│  May 15  Balance                      $  58,575
 │  May 16  AT&T fiber                     -166.00
-│  May 16  Balance                      $  59,437
+│  May 16  Balance                      $  58,409
 │  May 18  Karen paycheck                 +810.00
 │  May 18  Randy training                 -150.00
-│  May 18  Balance                      $  60,097
+│  May 18  Balance                      $  59,069
 │  May 21  Fresh Market                   -200.00
 │  May 21  Discretionary                   -63.00
-│  May 21  Balance                      $  59,834
+│  May 21  Balance                      $  58,806
 │  May 22  Jon paycheck                  +1641.00
 │  May 22  Jon PayPal Credit               -22.00
 │  May 22  Spotify                         -22.00
-│  May 22  Balance                      $  61,431
+│  May 22  Balance                      $  60,403
 │  May 23  State Farm                     -160.00
-│  May 23  Balance                      $  61,271
+│  May 23  Balance                      $  60,243
 │  May 25  Karen paycheck                 +810.00
-│  May 25  Balance                      $  62,081
+│  May 25  Balance                      $  61,053
 │  May 28  Fresh Market                   -200.00
 │  May 28  Discretionary                   -61.00
-│  May 28  Balance                      $  61,820
+│  May 28  Balance                      $  60,792
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,049   Net: +$4,473
 └──────────────────────────────────────────
 
 ┌─ Jun 2028 ─────────────────────────────────
-│  Start: $  62570   End: $  67103
+│  Start: $  61542   End: $  66075
 │  ───────────────────────────────────────────────────────
 │  Jun  1  Karen paycheck                 +810.00
 │  Jun  1  Gas                             -60.00
-│  Jun  1  Balance                      $  62,570
+│  Jun  1  Balance                      $  61,542
 │  Jun  2  Amazon Prime                    -15.00
-│  Jun  2  Balance                      $  62,555
+│  Jun  2  Balance                      $  61,527
 │  Jun  4  Fresh Market                   -200.00
 │  Jun  4  Discretionary                   -63.00
 │  Jun  4  ChatGPT                         -22.00
 │  Jun  4  Randy training                 -150.00
-│  Jun  4  Balance                      $  62,120
+│  Jun  4  Balance                      $  61,092
 │  Jun  7  Jon paycheck                  +1641.00
-│  Jun  7  Balance                      $  63,761
+│  Jun  7  Balance                      $  62,733
 │  Jun  8  Karen paycheck                 +810.00
-│  Jun  8  Balance                      $  64,571
+│  Jun  8  Balance                      $  63,543
 │  Jun 11  Fresh Market                   -200.00
 │  Jun 11  Discretionary                   -63.00
-│  Jun 11  Balance                      $  64,308
+│  Jun 11  Balance                      $  63,280
 │  Jun 13  Claude.ai                       -20.00
-│  Jun 13  Balance                      $  64,288
+│  Jun 13  Balance                      $  63,260
 │  Jun 15  Karen paycheck                 +810.00
 │  Jun 15  Gas                             -60.00
 │  Jun 15  T-Mobile                       -152.00
-│  Jun 15  Balance                      $  64,886
+│  Jun 15  Balance                      $  63,858
 │  Jun 16  AT&T fiber                     -166.00
-│  Jun 16  Balance                      $  64,720
+│  Jun 16  Balance                      $  63,692
 │  Jun 18  Fresh Market                   -200.00
 │  Jun 18  Discretionary                   -63.00
 │  Jun 18  Randy training                 -150.00
-│  Jun 18  Balance                      $  64,307
+│  Jun 18  Balance                      $  63,279
 │  Jun 22  Jon paycheck                  +1641.00
 │  Jun 22  Karen paycheck                 +810.00
 │  Jun 22  Jon PayPal Credit               -22.00
 │  Jun 22  Spotify                         -22.00
-│  Jun 22  Balance                      $  66,714
+│  Jun 22  Balance                      $  65,686
 │  Jun 23  State Farm                     -160.00
-│  Jun 23  Balance                      $  66,554
+│  Jun 23  Balance                      $  65,526
 │  Jun 25  Fresh Market                   -200.00
 │  Jun 25  Discretionary                   -61.00
-│  Jun 25  Balance                      $  66,293
+│  Jun 25  Balance                      $  65,265
 │  Jun 29  Karen paycheck                 +810.00
-│  Jun 29  Balance                      $  67,103
+│  Jun 29  Balance                      $  66,075
 │  ───────────────────────────────────────────────────────
 │  Income: +$7,332   Expenses: -$2,049   Net: +$5,283
 └──────────────────────────────────────────
 
 ┌─ Jul 2028 ─────────────────────────────────
-│  Start: $  67043   End: $  71365
+│  Start: $  66015   End: $  70337
 │  ───────────────────────────────────────────────────────
 │  Jul  1  Gas                             -60.00
-│  Jul  1  Balance                      $  67,043
+│  Jul  1  Balance                      $  66,015
 │  Jul  2  Fresh Market                   -200.00
 │  Jul  2  Discretionary                   -63.00
 │  Jul  2  Amazon Prime                    -15.00
 │  Jul  2  Real-Debrid                     -11.00
-│  Jul  2  Balance                      $  66,754
+│  Jul  2  Balance                      $  65,726
 │  Jul  4  ChatGPT                         -22.00
 │  Jul  4  Randy training                 -150.00
-│  Jul  4  Balance                      $  66,582
+│  Jul  4  Balance                      $  65,554
 │  Jul  6  Karen paycheck                 +810.00
-│  Jul  6  Balance                      $  67,392
+│  Jul  6  Balance                      $  66,364
 │  Jul  7  Jon paycheck                  +1641.00
-│  Jul  7  Balance                      $  69,033
+│  Jul  7  Balance                      $  68,005
 │  Jul  9  Fresh Market                   -200.00
 │  Jul  9  Discretionary                   -63.00
-│  Jul  9  Balance                      $  68,770
+│  Jul  9  Balance                      $  67,742
 │  Jul 13  Karen paycheck                 +810.00
 │  Jul 13  Claude.ai                       -20.00
-│  Jul 13  Balance                      $  69,560
+│  Jul 13  Balance                      $  68,532
 │  Jul 15  Gas                             -60.00
 │  Jul 15  T-Mobile                       -152.00
-│  Jul 15  Balance                      $  69,348
+│  Jul 15  Balance                      $  68,320
 │  Jul 16  Fresh Market                   -200.00
 │  Jul 16  Discretionary                   -63.00
 │  Jul 16  AT&T fiber                     -166.00
-│  Jul 16  Balance                      $  68,919
+│  Jul 16  Balance                      $  67,891
 │  Jul 18  Randy training                 -150.00
-│  Jul 18  Balance                      $  68,769
+│  Jul 18  Balance                      $  67,741
 │  Jul 20  Karen paycheck                 +810.00
-│  Jul 20  Balance                      $  69,579
+│  Jul 20  Balance                      $  68,551
 │  Jul 22  Jon paycheck                  +1641.00
 │  Jul 22  Jon PayPal Credit               -22.00
 │  Jul 22  Spotify                         -22.00
-│  Jul 22  Balance                      $  71,176
+│  Jul 22  Balance                      $  70,148
 │  Jul 23  Fresh Market                   -200.00
 │  Jul 23  Discretionary                   -61.00
 │  Jul 23  State Farm                     -160.00
-│  Jul 23  Balance                      $  70,755
+│  Jul 23  Balance                      $  69,727
 │  Jul 27  Karen paycheck                 +810.00
-│  Jul 27  Balance                      $  71,565
+│  Jul 27  Balance                      $  70,537
 │  Jul 30  Fresh Market                   -200.00
-│  Jul 30  Balance                      $  71,365
+│  Jul 30  Balance                      $  70,337
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,260   Net: +$4,262
 └──────────────────────────────────────────
 
 ┌─ Aug 2028 ─────────────────────────────────
-│  Start: $  71305   End: $  76648
+│  Start: $  70277   End: $  75620
 │  ───────────────────────────────────────────────────────
 │  Aug  1  Gas                             -60.00
-│  Aug  1  Balance                      $  71,305
+│  Aug  1  Balance                      $  70,277
 │  Aug  2  Amazon Prime                    -15.00
-│  Aug  2  Balance                      $  71,290
+│  Aug  2  Balance                      $  70,262
 │  Aug  3  Karen paycheck                 +810.00
-│  Aug  3  Balance                      $  72,100
+│  Aug  3  Balance                      $  71,072
 │  Aug  4  ChatGPT                         -22.00
 │  Aug  4  Randy training                 -150.00
-│  Aug  4  Balance                      $  71,928
+│  Aug  4  Balance                      $  70,900
 │  Aug  6  Fresh Market                   -200.00
 │  Aug  6  Discretionary                   -63.00
-│  Aug  6  Balance                      $  71,665
+│  Aug  6  Balance                      $  70,637
 │  Aug  7  Jon paycheck                  +1641.00
-│  Aug  7  Balance                      $  73,306
+│  Aug  7  Balance                      $  72,278
 │  Aug 10  Karen paycheck                 +810.00
-│  Aug 10  Balance                      $  74,116
+│  Aug 10  Balance                      $  73,088
 │  Aug 13  Fresh Market                   -200.00
 │  Aug 13  Discretionary                   -63.00
 │  Aug 13  Claude.ai                       -20.00
-│  Aug 13  Balance                      $  73,833
+│  Aug 13  Balance                      $  72,805
 │  Aug 15  Gas                             -60.00
 │  Aug 15  T-Mobile                       -152.00
-│  Aug 15  Balance                      $  73,621
+│  Aug 15  Balance                      $  72,593
 │  Aug 16  AT&T fiber                     -166.00
-│  Aug 16  Balance                      $  73,455
+│  Aug 16  Balance                      $  72,427
 │  Aug 17  Karen paycheck                 +810.00
-│  Aug 17  Balance                      $  74,265
+│  Aug 17  Balance                      $  73,237
 │  Aug 18  Randy training                 -150.00
-│  Aug 18  Balance                      $  74,115
+│  Aug 18  Balance                      $  73,087
 │  Aug 20  Fresh Market                   -200.00
 │  Aug 20  Discretionary                   -63.00
-│  Aug 20  Balance                      $  73,852
+│  Aug 20  Balance                      $  72,824
 │  Aug 22  Jon paycheck                  +1641.00
 │  Aug 22  Jon PayPal Credit               -22.00
 │  Aug 22  Spotify                         -22.00
-│  Aug 22  Balance                      $  75,449
+│  Aug 22  Balance                      $  74,421
 │  Aug 23  State Farm                     -160.00
-│  Aug 23  Balance                      $  75,289
+│  Aug 23  Balance                      $  74,261
 │  Aug 24  Karen paycheck                 +810.00
-│  Aug 24  Balance                      $  76,099
+│  Aug 24  Balance                      $  75,071
 │  Aug 27  Fresh Market                   -200.00
 │  Aug 27  Discretionary                   -61.00
-│  Aug 27  Balance                      $  75,838
+│  Aug 27  Balance                      $  74,810
 │  Aug 31  Karen paycheck                 +810.00
-│  Aug 31  Balance                      $  76,648
+│  Aug 31  Balance                      $  75,620
 │  ───────────────────────────────────────────────────────
 │  Income: +$7,332   Expenses: -$2,049   Net: +$5,283
 └──────────────────────────────────────────
 
 ┌─ Sep 2028 ─────────────────────────────────
-│  Start: $  76588   End: $  81121
+│  Start: $  75560   End: $  80093
 │  ───────────────────────────────────────────────────────
 │  Sep  1  Gas                             -60.00
-│  Sep  1  Balance                      $  76,588
+│  Sep  1  Balance                      $  75,560
 │  Sep  2  Amazon Prime                    -15.00
-│  Sep  2  Balance                      $  76,573
+│  Sep  2  Balance                      $  75,545
 │  Sep  3  Fresh Market                   -200.00
 │  Sep  3  Discretionary                   -63.00
-│  Sep  3  Balance                      $  76,310
+│  Sep  3  Balance                      $  75,282
 │  Sep  4  ChatGPT                         -22.00
 │  Sep  4  Randy training                 -150.00
-│  Sep  4  Balance                      $  76,138
+│  Sep  4  Balance                      $  75,110
 │  Sep  7  Jon paycheck                  +1641.00
 │  Sep  7  Karen paycheck                 +810.00
-│  Sep  7  Balance                      $  78,589
+│  Sep  7  Balance                      $  77,561
 │  Sep 10  Fresh Market                   -200.00
 │  Sep 10  Discretionary                   -63.00
-│  Sep 10  Balance                      $  78,326
+│  Sep 10  Balance                      $  77,298
 │  Sep 13  Claude.ai                       -20.00
-│  Sep 13  Balance                      $  78,306
+│  Sep 13  Balance                      $  77,278
 │  Sep 14  Karen paycheck                 +810.00
-│  Sep 14  Balance                      $  79,116
+│  Sep 14  Balance                      $  78,088
 │  Sep 15  Gas                             -60.00
 │  Sep 15  T-Mobile                       -152.00
-│  Sep 15  Balance                      $  78,904
+│  Sep 15  Balance                      $  77,876
 │  Sep 16  AT&T fiber                     -166.00
-│  Sep 16  Balance                      $  78,738
+│  Sep 16  Balance                      $  77,710
 │  Sep 17  Fresh Market                   -200.00
 │  Sep 17  Discretionary                   -63.00
-│  Sep 17  Balance                      $  78,475
+│  Sep 17  Balance                      $  77,447
 │  Sep 18  Randy training                 -150.00
-│  Sep 18  Balance                      $  78,325
+│  Sep 18  Balance                      $  77,297
 │  Sep 21  Karen paycheck                 +810.00
-│  Sep 21  Balance                      $  79,135
+│  Sep 21  Balance                      $  78,107
 │  Sep 22  Jon paycheck                  +1641.00
 │  Sep 22  Jon PayPal Credit               -22.00
 │  Sep 22  Spotify                         -22.00
-│  Sep 22  Balance                      $  80,732
+│  Sep 22  Balance                      $  79,704
 │  Sep 23  State Farm                     -160.00
-│  Sep 23  Balance                      $  80,572
+│  Sep 23  Balance                      $  79,544
 │  Sep 24  Fresh Market                   -200.00
 │  Sep 24  Discretionary                   -61.00
-│  Sep 24  Balance                      $  80,311
+│  Sep 24  Balance                      $  79,283
 │  Sep 28  Karen paycheck                 +810.00
-│  Sep 28  Balance                      $  81,121
+│  Sep 28  Balance                      $  80,093
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,049   Net: +$4,473
 └──────────────────────────────────────────
 
 ┌─ Oct 2028 ─────────────────────────────────
-│  Start: $  80798   End: $  85383
+│  Start: $  79770   End: $  84355
 │  ───────────────────────────────────────────────────────
 │  Oct  1  Fresh Market                   -200.00
 │  Oct  1  Discretionary                   -63.00
 │  Oct  1  Gas                             -60.00
-│  Oct  1  Balance                      $  80,798
+│  Oct  1  Balance                      $  79,770
 │  Oct  2  Amazon Prime                    -15.00
 │  Oct  2  Real-Debrid                     -11.00
-│  Oct  2  Balance                      $  80,772
+│  Oct  2  Balance                      $  79,744
 │  Oct  4  ChatGPT                         -22.00
 │  Oct  4  Randy training                 -150.00
-│  Oct  4  Balance                      $  80,600
+│  Oct  4  Balance                      $  79,572
 │  Oct  5  Karen paycheck                 +810.00
-│  Oct  5  Balance                      $  81,410
+│  Oct  5  Balance                      $  80,382
 │  Oct  7  Jon paycheck                  +1641.00
-│  Oct  7  Balance                      $  83,051
+│  Oct  7  Balance                      $  82,023
 │  Oct  8  Fresh Market                   -200.00
 │  Oct  8  Discretionary                   -63.00
-│  Oct  8  Balance                      $  82,788
+│  Oct  8  Balance                      $  81,760
 │  Oct 12  Karen paycheck                 +810.00
-│  Oct 12  Balance                      $  83,598
+│  Oct 12  Balance                      $  82,570
 │  Oct 13  Claude.ai                       -20.00
-│  Oct 13  Balance                      $  83,578
+│  Oct 13  Balance                      $  82,550
 │  Oct 15  Fresh Market                   -200.00
 │  Oct 15  Discretionary                   -63.00
 │  Oct 15  Gas                             -60.00
 │  Oct 15  T-Mobile                       -152.00
-│  Oct 15  Balance                      $  83,103
+│  Oct 15  Balance                      $  82,075
 │  Oct 16  AT&T fiber                     -166.00
-│  Oct 16  Balance                      $  82,937
+│  Oct 16  Balance                      $  81,909
 │  Oct 18  Randy training                 -150.00
-│  Oct 18  Balance                      $  82,787
+│  Oct 18  Balance                      $  81,759
 │  Oct 19  Karen paycheck                 +810.00
-│  Oct 19  Balance                      $  83,597
+│  Oct 19  Balance                      $  82,569
 │  Oct 22  Jon paycheck                  +1641.00
 │  Oct 22  Fresh Market                   -200.00
 │  Oct 22  Discretionary                   -61.00
 │  Oct 22  Jon PayPal Credit               -22.00
 │  Oct 22  Spotify                         -22.00
-│  Oct 22  Balance                      $  84,933
+│  Oct 22  Balance                      $  83,905
 │  Oct 23  State Farm                     -160.00
-│  Oct 23  Balance                      $  84,773
+│  Oct 23  Balance                      $  83,745
 │  Oct 26  Karen paycheck                 +810.00
-│  Oct 26  Balance                      $  85,583
+│  Oct 26  Balance                      $  84,555
 │  Oct 29  Fresh Market                   -200.00
-│  Oct 29  Balance                      $  85,383
+│  Oct 29  Balance                      $  84,355
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,260   Net: +$4,262
 └──────────────────────────────────────────
 
 ┌─ Nov 2028 ─────────────────────────────────
-│  Start: $  85323   End: $  90666
+│  Start: $  84295   End: $  89638
 │  ───────────────────────────────────────────────────────
 │  Nov  1  Gas                             -60.00
-│  Nov  1  Balance                      $  85,323
+│  Nov  1  Balance                      $  84,295
 │  Nov  2  Karen paycheck                 +810.00
 │  Nov  2  Amazon Prime                    -15.00
-│  Nov  2  Balance                      $  86,118
+│  Nov  2  Balance                      $  85,090
 │  Nov  4  ChatGPT                         -22.00
 │  Nov  4  Randy training                 -150.00
-│  Nov  4  Balance                      $  85,946
+│  Nov  4  Balance                      $  84,918
 │  Nov  5  Fresh Market                   -200.00
 │  Nov  5  Discretionary                   -63.00
-│  Nov  5  Balance                      $  85,683
+│  Nov  5  Balance                      $  84,655
 │  Nov  7  Jon paycheck                  +1641.00
-│  Nov  7  Balance                      $  87,324
+│  Nov  7  Balance                      $  86,296
 │  Nov  9  Karen paycheck                 +810.00
-│  Nov  9  Balance                      $  88,134
+│  Nov  9  Balance                      $  87,106
 │  Nov 12  Fresh Market                   -200.00
 │  Nov 12  Discretionary                   -63.00
-│  Nov 12  Balance                      $  87,871
+│  Nov 12  Balance                      $  86,843
 │  Nov 13  Claude.ai                       -20.00
-│  Nov 13  Balance                      $  87,851
+│  Nov 13  Balance                      $  86,823
 │  Nov 15  Gas                             -60.00
 │  Nov 15  T-Mobile                       -152.00
-│  Nov 15  Balance                      $  87,639
+│  Nov 15  Balance                      $  86,611
 │  Nov 16  Karen paycheck                 +810.00
 │  Nov 16  AT&T fiber                     -166.00
-│  Nov 16  Balance                      $  88,283
+│  Nov 16  Balance                      $  87,255
 │  Nov 18  Randy training                 -150.00
-│  Nov 18  Balance                      $  88,133
+│  Nov 18  Balance                      $  87,105
 │  Nov 19  Fresh Market                   -200.00
 │  Nov 19  Discretionary                   -63.00
-│  Nov 19  Balance                      $  87,870
+│  Nov 19  Balance                      $  86,842
 │  Nov 22  Jon paycheck                  +1641.00
 │  Nov 22  Jon PayPal Credit               -22.00
 │  Nov 22  Spotify                         -22.00
-│  Nov 22  Balance                      $  89,467
+│  Nov 22  Balance                      $  88,439
 │  Nov 23  Karen paycheck                 +810.00
 │  Nov 23  State Farm                     -160.00
-│  Nov 23  Balance                      $  90,117
+│  Nov 23  Balance                      $  89,089
 │  Nov 26  Fresh Market                   -200.00
 │  Nov 26  Discretionary                   -61.00
-│  Nov 26  Balance                      $  89,856
+│  Nov 26  Balance                      $  88,828
 │  Nov 30  Karen paycheck                 +810.00
-│  Nov 30  Balance                      $  90,666
+│  Nov 30  Balance                      $  89,638
 │  ───────────────────────────────────────────────────────
 │  Income: +$7,332   Expenses: -$2,049   Net: +$5,283
 └──────────────────────────────────────────
 
 ┌─ Dec 2028 ─────────────────────────────────
-│  Start: $  90606   End: $  94939
+│  Start: $  89578   End: $  93911
 │  ───────────────────────────────────────────────────────
 │  Dec  1  Gas                             -60.00
-│  Dec  1  Balance                      $  90,606
+│  Dec  1  Balance                      $  89,578
 │  Dec  2  Amazon Prime                    -15.00
-│  Dec  2  Balance                      $  90,591
+│  Dec  2  Balance                      $  89,563
 │  Dec  3  Fresh Market                   -200.00
 │  Dec  3  Discretionary                   -63.00
-│  Dec  3  Balance                      $  90,328
+│  Dec  3  Balance                      $  89,300
 │  Dec  4  ChatGPT                         -22.00
 │  Dec  4  Randy training                 -150.00
-│  Dec  4  Balance                      $  90,156
+│  Dec  4  Balance                      $  89,128
 │  Dec  7  Jon paycheck                  +1641.00
 │  Dec  7  Karen paycheck                 +810.00
-│  Dec  7  Balance                      $  92,607
+│  Dec  7  Balance                      $  91,579
 │  Dec 10  Fresh Market                   -200.00
 │  Dec 10  Discretionary                   -63.00
-│  Dec 10  Balance                      $  92,344
+│  Dec 10  Balance                      $  91,316
 │  Dec 13  Claude.ai                       -20.00
-│  Dec 13  Balance                      $  92,324
+│  Dec 13  Balance                      $  91,296
 │  Dec 14  Karen paycheck                 +810.00
-│  Dec 14  Balance                      $  93,134
+│  Dec 14  Balance                      $  92,106
 │  Dec 15  Gas                             -60.00
 │  Dec 15  T-Mobile                       -152.00
-│  Dec 15  Balance                      $  92,922
+│  Dec 15  Balance                      $  91,894
 │  Dec 16  AT&T fiber                     -166.00
-│  Dec 16  Balance                      $  92,756
+│  Dec 16  Balance                      $  91,728
 │  Dec 17  Fresh Market                   -200.00
 │  Dec 17  Discretionary                   -63.00
-│  Dec 17  Balance                      $  92,493
+│  Dec 17  Balance                      $  91,465
 │  Dec 18  Randy training                 -150.00
-│  Dec 18  Balance                      $  92,343
+│  Dec 18  Balance                      $  91,315
 │  Dec 21  Karen paycheck                 +810.00
-│  Dec 21  Balance                      $  93,153
+│  Dec 21  Balance                      $  92,125
 │  Dec 22  Jon paycheck                  +1641.00
 │  Dec 22  Jon PayPal Credit               -22.00
 │  Dec 22  Spotify                         -22.00
-│  Dec 22  Balance                      $  94,750
+│  Dec 22  Balance                      $  93,722
 │  Dec 23  State Farm                     -160.00
-│  Dec 23  Balance                      $  94,590
+│  Dec 23  Balance                      $  93,562
 │  Dec 24  Fresh Market                   -200.00
 │  Dec 24  Discretionary                   -61.00
-│  Dec 24  Balance                      $  94,329
+│  Dec 24  Balance                      $  93,301
 │  Dec 28  Karen paycheck                 +810.00
-│  Dec 28  Balance                      $  95,139
+│  Dec 28  Balance                      $  94,111
 │  Dec 31  Fresh Market                   -200.00
-│  Dec 31  Balance                      $  94,939
+│  Dec 31  Balance                      $  93,911
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,249   Net: +$4,273
 └──────────────────────────────────────────
 
 ┌─ Jan 2029 ─────────────────────────────────
-│  Start: $  94879   End: $  99401
+│  Start: $  93851   End: $  98373
 │  ───────────────────────────────────────────────────────
 │  Jan  1  Gas                             -60.00
-│  Jan  1  Balance                      $  94,879
+│  Jan  1  Balance                      $  93,851
 │  Jan  2  Amazon Prime                    -15.00
 │  Jan  2  Real-Debrid                     -11.00
-│  Jan  2  Balance                      $  94,853
+│  Jan  2  Balance                      $  93,825
 │  Jan  4  Karen paycheck                 +810.00
 │  Jan  4  ChatGPT                         -22.00
 │  Jan  4  Randy training                 -150.00
-│  Jan  4  Balance                      $  95,491
+│  Jan  4  Balance                      $  94,463
 │  Jan  7  Jon paycheck                  +1641.00
 │  Jan  7  Fresh Market                   -200.00
 │  Jan  7  Discretionary                   -63.00
-│  Jan  7  Balance                      $  96,869
+│  Jan  7  Balance                      $  95,841
 │  Jan 11  Karen paycheck                 +810.00
-│  Jan 11  Balance                      $  97,679
+│  Jan 11  Balance                      $  96,651
 │  Jan 13  Claude.ai                       -20.00
-│  Jan 13  Balance                      $  97,659
+│  Jan 13  Balance                      $  96,631
 │  Jan 14  Fresh Market                   -200.00
 │  Jan 14  Discretionary                   -63.00
-│  Jan 14  Balance                      $  97,396
+│  Jan 14  Balance                      $  96,368
 │  Jan 15  Gas                             -60.00
 │  Jan 15  T-Mobile                       -152.00
-│  Jan 15  Balance                      $  97,184
+│  Jan 15  Balance                      $  96,156
 │  Jan 16  AT&T fiber                     -166.00
-│  Jan 16  Balance                      $  97,018
+│  Jan 16  Balance                      $  95,990
 │  Jan 18  Karen paycheck                 +810.00
 │  Jan 18  Randy training                 -150.00
-│  Jan 18  Balance                      $  97,678
+│  Jan 18  Balance                      $  96,650
 │  Jan 21  Fresh Market                   -200.00
 │  Jan 21  Discretionary                   -63.00
-│  Jan 21  Balance                      $  97,415
+│  Jan 21  Balance                      $  96,387
 │  Jan 22  Jon paycheck                  +1641.00
 │  Jan 22  Jon PayPal Credit               -22.00
 │  Jan 22  Spotify                         -22.00
-│  Jan 22  Balance                      $  99,012
+│  Jan 22  Balance                      $  97,984
 │  Jan 23  State Farm                     -160.00
-│  Jan 23  Balance                      $  98,852
+│  Jan 23  Balance                      $  97,824
 │  Jan 25  Karen paycheck                 +810.00
-│  Jan 25  Balance                      $  99,662
+│  Jan 25  Balance                      $  98,634
 │  Jan 28  Fresh Market                   -200.00
 │  Jan 28  Discretionary                   -61.00
-│  Jan 28  Balance                      $  99,401
+│  Jan 28  Balance                      $  98,373
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,060   Net: +$4,462
 └──────────────────────────────────────────
 
 ┌─ Feb 2029 ─────────────────────────────────
-│  Start: $ 100151   End: $ 103874
+│  Start: $  99123   End: $ 102846
 │  ───────────────────────────────────────────────────────
 │  Feb  1  Karen paycheck                 +810.00
 │  Feb  1  Gas                             -60.00
-│  Feb  1  Balance                      $ 100,151
+│  Feb  1  Balance                      $  99,123
 │  Feb  2  Amazon Prime                    -15.00
-│  Feb  2  Balance                      $ 100,136
+│  Feb  2  Balance                      $  99,108
 │  Feb  4  Fresh Market                   -200.00
 │  Feb  4  Discretionary                   -63.00
 │  Feb  4  ChatGPT                         -22.00
 │  Feb  4  Randy training                 -150.00
-│  Feb  4  Balance                      $  99,701
+│  Feb  4  Balance                      $  98,673
 │  Feb  7  Jon paycheck                  +1641.00
-│  Feb  7  Balance                      $ 101,342
+│  Feb  7  Balance                      $ 100,314
 │  Feb  8  Karen paycheck                 +810.00
-│  Feb  8  Balance                      $ 102,152
+│  Feb  8  Balance                      $ 101,124
 │  Feb 11  Fresh Market                   -200.00
 │  Feb 11  Discretionary                   -63.00
-│  Feb 11  Balance                      $ 101,889
+│  Feb 11  Balance                      $ 100,861
 │  Feb 13  Claude.ai                       -20.00
-│  Feb 13  Balance                      $ 101,869
+│  Feb 13  Balance                      $ 100,841
 │  Feb 15  Karen paycheck                 +810.00
 │  Feb 15  Gas                             -60.00
 │  Feb 15  T-Mobile                       -152.00
-│  Feb 15  Balance                      $ 102,467
+│  Feb 15  Balance                      $ 101,439
 │  Feb 16  AT&T fiber                     -166.00
-│  Feb 16  Balance                      $ 102,301
+│  Feb 16  Balance                      $ 101,273
 │  Feb 18  Fresh Market                   -200.00
 │  Feb 18  Discretionary                   -63.00
 │  Feb 18  Randy training                 -150.00
-│  Feb 18  Balance                      $ 101,888
+│  Feb 18  Balance                      $ 100,860
 │  Feb 22  Jon paycheck                  +1641.00
 │  Feb 22  Karen paycheck                 +810.00
 │  Feb 22  Jon PayPal Credit               -22.00
 │  Feb 22  Spotify                         -22.00
-│  Feb 22  Balance                      $ 104,295
+│  Feb 22  Balance                      $ 103,267
 │  Feb 23  State Farm                     -160.00
-│  Feb 23  Balance                      $ 104,135
+│  Feb 23  Balance                      $ 103,107
 │  Feb 25  Fresh Market                   -200.00
 │  Feb 25  Discretionary                   -61.00
-│  Feb 25  Balance                      $ 103,874
+│  Feb 25  Balance                      $ 102,846
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,049   Net: +$4,473
 └──────────────────────────────────────────
 
 ┌─ Mar 2029 ─────────────────────────────────
-│  Start: $ 104624   End: $ 109157
+│  Start: $ 103596   End: $ 108129
 │  ───────────────────────────────────────────────────────
 │  Mar  1  Karen paycheck                 +810.00
 │  Mar  1  Gas                             -60.00
-│  Mar  1  Balance                      $ 104,624
+│  Mar  1  Balance                      $ 103,596
 │  Mar  2  Amazon Prime                    -15.00
-│  Mar  2  Balance                      $ 104,609
+│  Mar  2  Balance                      $ 103,581
 │  Mar  4  Fresh Market                   -200.00
 │  Mar  4  Discretionary                   -63.00
 │  Mar  4  ChatGPT                         -22.00
 │  Mar  4  Randy training                 -150.00
-│  Mar  4  Balance                      $ 104,174
+│  Mar  4  Balance                      $ 103,146
 │  Mar  7  Jon paycheck                  +1641.00
-│  Mar  7  Balance                      $ 105,815
+│  Mar  7  Balance                      $ 104,787
 │  Mar  8  Karen paycheck                 +810.00
-│  Mar  8  Balance                      $ 106,625
+│  Mar  8  Balance                      $ 105,597
 │  Mar 11  Fresh Market                   -200.00
 │  Mar 11  Discretionary                   -63.00
-│  Mar 11  Balance                      $ 106,362
+│  Mar 11  Balance                      $ 105,334
 │  Mar 13  Claude.ai                       -20.00
-│  Mar 13  Balance                      $ 106,342
+│  Mar 13  Balance                      $ 105,314
 │  Mar 15  Karen paycheck                 +810.00
 │  Mar 15  Gas                             -60.00
 │  Mar 15  T-Mobile                       -152.00
-│  Mar 15  Balance                      $ 106,940
+│  Mar 15  Balance                      $ 105,912
 │  Mar 16  AT&T fiber                     -166.00
-│  Mar 16  Balance                      $ 106,774
+│  Mar 16  Balance                      $ 105,746
 │  Mar 18  Fresh Market                   -200.00
 │  Mar 18  Discretionary                   -63.00
 │  Mar 18  Randy training                 -150.00
-│  Mar 18  Balance                      $ 106,361
+│  Mar 18  Balance                      $ 105,333
 │  Mar 22  Jon paycheck                  +1641.00
 │  Mar 22  Karen paycheck                 +810.00
 │  Mar 22  Jon PayPal Credit               -22.00
 │  Mar 22  Spotify                         -22.00
-│  Mar 22  Balance                      $ 108,768
+│  Mar 22  Balance                      $ 107,740
 │  Mar 23  State Farm                     -160.00
-│  Mar 23  Balance                      $ 108,608
+│  Mar 23  Balance                      $ 107,580
 │  Mar 25  Fresh Market                   -200.00
 │  Mar 25  Discretionary                   -61.00
-│  Mar 25  Balance                      $ 108,347
+│  Mar 25  Balance                      $ 107,319
 │  Mar 29  Karen paycheck                 +810.00
-│  Mar 29  Balance                      $ 109,157
+│  Mar 29  Balance                      $ 108,129
 │  ───────────────────────────────────────────────────────
 │  Income: +$7,332   Expenses: -$2,049   Net: +$5,283
 └──────────────────────────────────────────
 
 ┌─ Apr 2029 ─────────────────────────────────
-│  Start: $ 108834   End: $ 113419
+│  Start: $ 107806   End: $ 112391
 │  ───────────────────────────────────────────────────────
 │  Apr  1  Fresh Market                   -200.00
 │  Apr  1  Discretionary                   -63.00
 │  Apr  1  Gas                             -60.00
-│  Apr  1  Balance                      $ 108,834
+│  Apr  1  Balance                      $ 107,806
 │  Apr  2  Amazon Prime                    -15.00
 │  Apr  2  Real-Debrid                     -11.00
-│  Apr  2  Balance                      $ 108,808
+│  Apr  2  Balance                      $ 107,780
 │  Apr  4  ChatGPT                         -22.00
 │  Apr  4  Randy training                 -150.00
-│  Apr  4  Balance                      $ 108,636
+│  Apr  4  Balance                      $ 107,608
 │  Apr  5  Karen paycheck                 +810.00
-│  Apr  5  Balance                      $ 109,446
+│  Apr  5  Balance                      $ 108,418
 │  Apr  7  Jon paycheck                  +1641.00
-│  Apr  7  Balance                      $ 111,087
+│  Apr  7  Balance                      $ 110,059
 │  Apr  8  Fresh Market                   -200.00
 │  Apr  8  Discretionary                   -63.00
-│  Apr  8  Balance                      $ 110,824
+│  Apr  8  Balance                      $ 109,796
 │  Apr 12  Karen paycheck                 +810.00
-│  Apr 12  Balance                      $ 111,634
+│  Apr 12  Balance                      $ 110,606
 │  Apr 13  Claude.ai                       -20.00
-│  Apr 13  Balance                      $ 111,614
+│  Apr 13  Balance                      $ 110,586
 │  Apr 15  Fresh Market                   -200.00
 │  Apr 15  Discretionary                   -63.00
 │  Apr 15  Gas                             -60.00
 │  Apr 15  T-Mobile                       -152.00
-│  Apr 15  Balance                      $ 111,139
+│  Apr 15  Balance                      $ 110,111
 │  Apr 16  AT&T fiber                     -166.00
-│  Apr 16  Balance                      $ 110,973
+│  Apr 16  Balance                      $ 109,945
 │  Apr 18  Randy training                 -150.00
-│  Apr 18  Balance                      $ 110,823
+│  Apr 18  Balance                      $ 109,795
 │  Apr 19  Karen paycheck                 +810.00
-│  Apr 19  Balance                      $ 111,633
+│  Apr 19  Balance                      $ 110,605
 │  Apr 22  Jon paycheck                  +1641.00
 │  Apr 22  Fresh Market                   -200.00
 │  Apr 22  Discretionary                   -61.00
 │  Apr 22  Jon PayPal Credit               -22.00
 │  Apr 22  Spotify                         -22.00
-│  Apr 22  Balance                      $ 112,969
+│  Apr 22  Balance                      $ 111,941
 │  Apr 23  State Farm                     -160.00
-│  Apr 23  Balance                      $ 112,809
+│  Apr 23  Balance                      $ 111,781
 │  Apr 26  Karen paycheck                 +810.00
-│  Apr 26  Balance                      $ 113,619
+│  Apr 26  Balance                      $ 112,591
 │  Apr 29  Fresh Market                   -200.00
-│  Apr 29  Balance                      $ 113,419
+│  Apr 29  Balance                      $ 112,391
 │  ───────────────────────────────────────────────────────
 │  Income: +$6,522   Expenses: -$2,260   Net: +$4,262
 └──────────────────────────────────────────
 
 ┌─ May 2029 ─────────────────────────────────
-│  Start: $ 113359   End: $ 118702
+│  Start: $ 112331   End: $ 117674
 │  ───────────────────────────────────────────────────────
 │  May  1  Gas                             -60.00
-│  May  1  Balance                      $ 113,359
+│  May  1  Balance                      $ 112,331
 │  May  2  Amazon Prime                    -15.00
-│  May  2  Balance                      $ 113,344
+│  May  2  Balance                      $ 112,316
 │  May  3  Karen paycheck                 +810.00
-│  May  3  Balance                      $ 114,154
+│  May  3  Balance                      $ 113,126
 │  May  4  ChatGPT                         -22.00
 │  May  4  Randy training                 -150.00
-│  May  4  Balance                      $ 113,982
+│  May  4  Balance                      $ 112,954
 │  May  6  Fresh Market                   -200.00
 │  May  6  Discretionary                   -63.00
-│  May  6  Balance                      $ 113,719
+│  May  6  Balance                      $ 112,691
 │  May  7  Jon paycheck                  +1641.00
-│  May  7  Balance                      $ 115,360
+│  May  7  Balance                      $ 114,332
 │  May 10  Karen paycheck                 +810.00
-│  May 10  Balance                      $ 116,170
+│  May 10  Balance                      $ 115,142
 │  May 13  Fresh Market                   -200.00
 │  May 13  Discretionary                   -63.00
 │  May 13  Claude.ai                       -20.00
-│  May 13  Balance                      $ 115,887
+│  May 13  Balance                      $ 114,859
 │  May 15  Gas                             -60.00
 │  May 15  T-Mobile                       -152.00
-│  May 15  Balance                      $ 115,675
+│  May 15  Balance                      $ 114,647
 │  May 16  AT&T fiber                     -166.00
-│  May 16  Balance                      $ 115,509
+│  May 16  Balance                      $ 114,481
 │  May 17  Karen paycheck                 +810.00
-│  May 17  Balance                      $ 116,319
+│  May 17  Balance                      $ 115,291
 │  May 18  Randy training                 -150.00
-│  May 18  Balance                      $ 116,169
+│  May 18  Balance                      $ 115,141
 │  May 20  Fresh Market                   -200.00
 │  May 20  Discretionary                   -63.00
-│  May 20  Balance                      $ 115,906
+│  May 20  Balance                      $ 114,878
 │  May 22  Jon paycheck                  +1641.00
 │  May 22  Jon PayPal Credit               -22.00
 │  May 22  Spotify                         -22.00
-│  May 22  Balance                      $ 117,503
+│  May 22  Balance                      $ 116,475
 │  May 23  State Farm                     -160.00
-│  May 23  Balance                      $ 117,343
+│  May 23  Balance                      $ 116,315
 │  May 24  Karen paycheck                 +810.00
-│  May 24  Balance                      $ 118,153
+│  May 24  Balance                      $ 117,125
 │  May 27  Fresh Market                   -200.00
 │  May 27  Discretionary                   -61.00
-│  May 27  Balance                      $ 117,892
+│  May 27  Balance                      $ 116,864
 │  May 31  Karen paycheck                 +810.00
-│  May 31  Balance                      $ 118,702
+│  May 31  Balance                      $ 117,674
 │  ───────────────────────────────────────────────────────
 │  Income: +$7,332   Expenses: -$2,049   Net: +$5,283
 └──────────────────────────────────────────
 
 ── DEBT PAYOFF SUMMARY ─────────────────
-  Amazon Store Card        $    76 → PAID OFF 2026-07-02
-  Merrick Bank             $   926 → PAID OFF 2026-07-07
-  Cap One #3186            $   491 → PAID OFF 2026-07-09
-  Karen PayPal             $  1958 → PAID OFF 2026-07-16
-  USAA Amex                $  1847 → PAID OFF 2026-07-30
-  Cap One #4565            $   726 → PAID OFF 2026-08-06
-  Cap One #5592            $   731 → PAID OFF 2026-08-20
-  Cap One #7988            $   843 → PAID OFF 2026-08-22
-  Chase/Amazon             $  1000 → PAID OFF 2026-09-03
-  TN Unemployment          $  3653 → PAID OFF 2026-10-01
-  IRS 2024                 $  4767 → PAID OFF 2026-11-12
-  Mazda CX-5               $ 20693 → PAID OFF 2027-04-22
+  Amazon Store Card        $    76 → PAID OFF 2026-07-07
+  Merrick Bank             $   926 → PAID OFF 2026-07-09
+  Cap One #3186            $   491 → PAID OFF 2026-07-16
+  Karen PayPal             $  1958 → PAID OFF 2026-07-23
+  USAA Amex                $  1847 → PAID OFF 2026-08-06
+  Cap One #4565            $   726 → PAID OFF 2026-08-20
+  Cap One #5592            $   731 → PAID OFF 2026-08-22
+  Cap One #7988            $   843 → PAID OFF 2026-08-27
+  Chase/Amazon             $  1000 → PAID OFF 2026-09-10
+  TN Unemployment          $  3653 → PAID OFF 2026-10-15
+  IRS 2024                 $  4767 → PAID OFF 2026-11-19
+  Mazda CX-5               $ 20693 → PAID OFF 2027-04-29
   ────────────────────────────────────────────
   TOTAL DEBT                $37,711
-  Consumer debt free:       2026-11-12
-  Totally debt free:        2027-04-22
+  Consumer debt free:       2026-11-19
+  Totally debt free:        2027-04-29
   Savings balance at debt free: $1,654 (includes $1k repair buffer)
 
 ═══════════════════════════════════════

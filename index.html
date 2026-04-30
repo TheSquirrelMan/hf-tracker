@@ -564,7 +564,13 @@ window.sw=function(id,el){
   if(id==='snowball')renderSnowball();
   if(id==='bills')renderBills();
 };
-function renderAll(){renderWeek();renderMonth();renderSnowball();renderBills();}
+function renderAll(){
+  const active=document.querySelector('.panel.on')?.id?.replace('p-','');
+  renderWeek();
+  if(active==='month')renderMonth();
+  if(active==='snowball')renderSnowball();
+  if(active==='bills')renderBills();
+}
 
 // ══ TOAST ══
 window.toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);};
@@ -652,10 +658,6 @@ function getDailyBills(year,month,day,cardBalOverride){
   
   // 4. Define the push helper
   const push=(label,amt,isIncome=false)=>bills.push({label,amt,isIncome});  // Helper: get bill amount from userBills if edited, else default
-  const ub=(id,def)=>{
-    if(S.userBills){const b=S.userBills.find(x=>x.id===id);if(b)return b.amt;}
-    return def;
-  };
 
   // User-managed custom bills (added by user, not in defaults)
   if(S.userBills){
@@ -754,6 +756,7 @@ function bal(cb,id){
 let _cachedRoadmap = null;
 let _roadmapCacheKey = '';
 const phaseAmt=(id,def)=>{if(S.phaseCosts&&S.phaseCosts[id]!==undefined)return S.phaseCosts[id];return def;};
+const ub=(id,def)=>{if(S.userBills){const b=S.userBills.find(x=>x.id===id);if(b)return b.amt;}return def;};
 function calcRoadmap(){
   // Build cache key from inputs that affect roadmap calculation
   const phasesKey = JSON.stringify(getPhases());
@@ -908,10 +911,6 @@ function getMonthEvents(year,month,roadmap,balLog){
   
   const phaseDone=S.phaseDone||{};
   const cb=S.cardBals||{};
-  const ub=(id,def)=>{
-      if(S.userBills){const b=S.userBills.find(x=>x.id===id);if(b)return b.amt;}
-      return def;
-  };
   const add=(day,title,amt,color,note='',isIncome=false,feat=false,isFinal=false)=>{
     if(day>=1&&day<=dim)evts.push({day,title,amt,color,note,isIncome,feat,isFinal});
   };
