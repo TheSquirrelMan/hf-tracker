@@ -767,7 +767,7 @@ function calcRoadmap(){
   const phasesKey = JSON.stringify(getPhases());
   const phaseDoneKey = JSON.stringify(S.phaseDone || {});
   const cardBalsKey = JSON.stringify(S.cardBals || {});
-  const cacheKey = `${S.bal4496}-${phasesKey}-${phaseDoneKey}-${cardBalsKey}`;
+  const cacheKey = `${S.bal4496}-${S.karenLastPay||0}-${S.karenAvgPay||0}-${phasesKey}-${phaseDoneKey}-${cardBalsKey}`;
   
   if (_cachedRoadmap && _roadmapCacheKey === cacheKey) {
     return _cachedRoadmap;
@@ -911,7 +911,6 @@ function getMonthEvents(year,month,roadmap,balLog){
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dim=new Date(year,month+1,0).getDate();
   const fromDay=(year===2026&&month===3)?22:1;
-  //const karenAmt=S.karenLastPay||S.karenAvgPay||762;
   
   const phaseDone=S.phaseDone||{};
   const cb=S.cardBals||{};
