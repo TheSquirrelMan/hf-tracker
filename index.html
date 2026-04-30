@@ -1230,12 +1230,19 @@ function renderWeek(){
   if(wdays.length){
     html+=`<div class="card"><div class="card-title">Next 7 days</div><div class="evlist">`;
     let runBal=S.bal4496;
+    let firstDay=true;
     wdays.forEach(day=>{
       const isToday=day===today;
       const ed=new Date(now.getFullYear(),now.getMonth(),day);
       const dow=DN[ed.getDay()];
       html+=`<div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:${day===wdays[0]?'0':'8px'} 0 3px;text-transform:uppercase;letter-spacing:.06em;">${isToday?'TODAY · ':''}${dow} ${ed.getDate()}</div>`;
-      const dayNet=weekEvtsByDay[day].reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
+      let dayNet=weekEvtsByDay[day].reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
+      // Skip today's income — already reflected in synced balance
+      if(firstDay){
+        const incomeToday=weekEvtsByDay[day].filter(e=>e.isIncome).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
+        dayNet-=incomeToday;
+        firstDay=false;
+      }
       runBal+=dayNet;
       weekEvtsByDay[day].forEach(e=>{
         const ac=e.isIncome?'var(--grn)':e.amt<0&&Math.abs(e.amt)>400?'var(--red)':e.color||'var(--t2)';
