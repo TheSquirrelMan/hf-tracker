@@ -275,7 +275,6 @@ select.minput option{background:var(--s2);}
       <div class="bacct">Savings</div>
       <div class="bnum" id="b0725" style="color:var(--pur);">--</div>
     </div>
-    <div style="display:flex; justify-content:flex-end; margin-bottom:4px;"><button onclick="forceRefresh()" style="background:none; border:none; color:var(--t3); font-size:10px; padding:2px 6px;">⟳ refresh projections</button></div>
   </div>
   <div class="sync-row">
     <span class="sync-dot sdpend" id="sync-dot"></span>
@@ -441,9 +440,6 @@ async function loadFB(){
     if (!snap.exists()) return;
     const remote = snap.val();
 
-    // Check if balance changed from remote
-    const balanceChanged = (S.bal4496 !== remote.bal4496);
-
     if (saveTimer) {
       // If we are currently waiting to save local edits, 
       // ONLY pull in the bank balances and pay data so they don't get lost/overwritten
@@ -460,12 +456,6 @@ async function loadFB(){
       if(!S.phases || S.phases.length === 0) {
         S.phases = JSON.parse(JSON.stringify(DEFAULT_PHASES));
       }
-    }
-
-    // If balance changed, clear roadmap cache
-    if (balanceChanged) {
-      _cachedRoadmap = null;
-      _roadmapCacheKey = '';
     }
 
     setSS('ok');
@@ -594,9 +584,9 @@ window.submitModal=function(){
   const label=document.getElementById('mi-label').value||'Expense';
   const acct=document.getElementById('mi-acct').value||'4496';
   closeModal();
-  if(mMode==='bal4496'){S.bal4496=amt; _cachedRoadmap=null; _roadmapCacheKey=''; save(S); renderAll(); toast('#4496 updated');}
-  if(mMode==='bal6764'){S.bal6764=amt; _cachedRoadmap=null; _roadmapCacheKey=''; save(S); renderAll(); toast('#6764 updated');}
-  if(mMode==='bal0725'){S.bal0725=amt; _cachedRoadmap=null; _roadmapCacheKey=''; save(S); renderAll(); toast('Savings updated');}
+  if(mMode==='bal4496'){S.bal4496=amt;save(S);renderWeek();toast('#4496 updated');}
+  if(mMode==='bal6764'){S.bal6764=amt;save(S);renderWeek();toast('#6764 updated');}
+  if(mMode==='bal0725'){S.bal0725=amt;save(S);renderWeek();toast('Savings updated');}
   if(mMode==='karen-pay'){S.karenLastPay=amt;
     save(S);renderWeek();toast(`Karen pay $${amt} saved`);}
 if(mMode==='karen-avg'){S.karenAvgPay=amt;
@@ -612,10 +602,8 @@ if(mMode==='karen-avg'){S.karenAvgPay=amt;
   }
 };
 window.editBal=a=>{
-  // Force clear roadmap cache immediately
-  _cachedRoadmap = null;
-  _roadmapCacheKey = '';
-  openModal('bal'+a, `Update ${a==='0725'?'savings':('#'+a)} balance`);
+  _cachedRoadmap = null; // Invalidate roadmap cache
+  openModal('bal'+a,`Update ${a==='0725'?'savings':('#'+a)} balance`);
 };
 
 // Set of default bill IDs for filtering custom-added bills
@@ -774,29 +762,12 @@ function bal(cb,id){
 let _cachedRoadmap = null;
 let _roadmapCacheKey = '';
 
-// Add this function here
-window.forceRefresh = function() {
-  console.log('Force refresh - current balance:', S.bal4496);
-  _cachedRoadmap = null;
-  _roadmapCacheKey = '';
-  renderAll();
-  toast('Recalculated with current balances');
-};
-
 function calcRoadmap(){
-  // Build cache key from ALL inputs that affect roadmap calculation
+  // Build cache key from inputs that affect roadmap calculation
   const phasesKey = JSON.stringify(getPhases());
   const phaseDoneKey = JSON.stringify(S.phaseDone || {});
   const cardBalsKey = JSON.stringify(S.cardBals || {});
-  // CRITICAL: Include current balance in cache key
-  const currentBalance = S.bal4496 || 0;
-  const karenPay = S.karenLastPay || 810;
-  const karenAvg = S.karenAvgPay || 810;
-  const jonPay = S.jonLastPay || 1641;
-  const discCap = S.discMonthlyCap || 200;
-  const discWeekly = S.discWeekly || 50;
-  
-  const cacheKey = `${currentBalance}-${karenPay}-${karenAvg}-${jonPay}-${discCap}-${discWeekly}-${phasesKey}-${phaseDoneKey}-${cardBalsKey}`;
+  const cacheKey = `${S.bal4496}-${S.karenLastPay||0}-${S.karenAvgPay||0}-${phasesKey}-${phaseDoneKey}-${cardBalsKey}`;
   
   if (_cachedRoadmap && _roadmapCacheKey === cacheKey) {
     return _cachedRoadmap;
@@ -1797,8 +1768,7 @@ function logSnowballPmt(amt){
   const prev=S.cardBals[ct.id]!==undefined?S.cardBals[ct.id]:ct.startBal;
   S.cardBals[ct.id]=Math.max(0,prev-amt);
   S.snowballLog.unshift({amt,target:ct.label,date:new Date().toLocaleDateString()});
-  _cachedRoadmap = null;
-  _roadmapCacheKey = '';
+  _cachedRoadmap = null; // Invalidate roadmap cache
   save(S);renderSnowball();toast(`$${amt.toLocaleString()} paid to ${ct.label} ✓`);
 }
 // ══ PHASE ADD/DELETE ══
@@ -1882,14 +1852,15 @@ window.movePhase = function(index, direction) {
 
 window.saveDiscSettings = function() {
   const cap = parseInt(document.getElementById('disc-cap').value);
+  
   if (isNaN(cap) || cap < 0) {
     toast('Enter a valid amount');
     return;
   }
+  
   S.discMonthlyCap = cap;
   S.discWeekly = Math.round(cap / 4);
-  _cachedRoadmap = null;
-  _roadmapCacheKey = '';
+  _cachedRoadmap = null; // Invalidate roadmap cache
   save(S);
   renderAll();
   toast(`Discretionary: $${cap}/mo`);
