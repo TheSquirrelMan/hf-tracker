@@ -1401,6 +1401,31 @@ function renderMonth(){
     html+=`</div></div>`;
   });
 
+  // Discretionary summary card -- current month only, display only, no balance impact
+  if(isCurMonth){
+    const cap=S.discMonthlyCap||200;
+    const spent=S.discSpent||0;
+    const diff=cap-spent;
+    const pct=Math.min(100,Math.round((spent/cap)*100));
+    const sc=pct>100?'var(--red)':pct>80?'var(--amb)':'var(--grn)';
+    const label=diff>=0?`$${diff.toFixed(2)} under budget ✓`:`$${Math.abs(diff).toFixed(2)} over budget ⚠`;
+    const lc=diff>=0?'var(--grn)':'var(--red)';
+    html+=`<div class="card">
+      <div class="card-title">Discretionary summary · ${MN[vMonth].substring(0,3)}</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:13px;color:var(--t2);">Spent</span>
+        <span style="font-size:13px;font-weight:700;color:var(--red);">$${spent.toFixed(2)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:13px;color:var(--t2);">Cap</span>
+        <span style="font-size:13px;color:var(--t3);">$${cap}</span>
+      </div>
+      <div class="prog"><div class="progbar" style="width:${pct}%;background:${sc};"></div></div>
+      <div style="font-size:12px;font-weight:700;color:${lc};margin-top:6px;">${label}</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px;">Tracking only — does not affect balance</div>
+    </div>`;
+  }
+
   const prevM=(vMonth-1+12)%12,prevY=vMonth===0?vYear-1:vYear;
   const nextM=(vMonth+1)%12,nextY=vMonth===11?vYear+1:vYear;
   html+=`<div style="display:flex;gap:8px;margin-top:4px;">
