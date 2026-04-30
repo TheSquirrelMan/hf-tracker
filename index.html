@@ -730,7 +730,22 @@ if (dow === 0) {
   // One-time
   if(year===2026&&month===3&&day===23)push('Vehicle registration',-220);
   if(year===2026&&month===3&&day===30)push('PayPal Chinese — FIRST PMT',-95);
-
+  // Month-end: reconcile discretionary — credit unused or deduct overspend
+  if (day === new Date(year, month+1, 0).getDate()) {
+    const cap = S.discMonthlyCap || 200;
+    const wkAmt = S.discWeekly || Math.round(cap/4);
+    const sundaysInMonth = [];
+    for (let dd = 1; dd <= day; dd++) {
+      if (new Date(year, month, dd).getDay() === 0) sundaysInMonth.push(dd);
+    }
+    const projected = Math.min(cap, sundaysInMonth.length * wkAmt);
+    const difference = cap - projected;
+    if (difference > 0) {
+      push('Disc. credit (unused)', difference, true);
+    } else if (difference < 0) {
+      push('Disc. overspend', difference, false);
+    }
+  }
   return bills.filter(b=>b.amt!==0);
 }
 
