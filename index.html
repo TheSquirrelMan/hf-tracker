@@ -1415,14 +1415,15 @@ function renderMonth(){
         </div>`;
       });
       // Day balance summary from balLog
-      if(isFuture&&dayEndBal!==undefined){
+      const displayBal = dayEndBal !== undefined ? dayEndBal : (isToday ? S.bal4496 : undefined);
+      if(isFuture&&displayBal!==undefined){
         const dayNet=(byDay[day]||[]).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
         const nc=dayNet>0?'var(--grn)':dayNet<0?'var(--red)':'var(--t3)';
         const ns=dayNet!==0?(dayNet>0?`+$${dayNet.toLocaleString()}`:`-$${Math.abs(dayNet).toLocaleString()}`):'';
-        const bc=dayEndBal<300?'var(--red)':dayEndBal<600?'var(--amb)':'var(--blu)';
+        const bc=displayBal<300?'var(--red)':displayBal<600?'var(--amb)':'var(--blu)';
         html+=`<div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 0 5px;border-top:0.5px solid var(--br);margin-top:2px;">
           ${ns?`<span style="font-size:11px;font-weight:600;color:${nc};">${ns}</span><span style="color:var(--t4);">·</span>`:''}
-          <span style="font-size:12px;font-weight:700;color:${bc};">$${Math.round(dayEndBal).toLocaleString()}${dayEndBal<300?' ⚠':''}</span>
+          <span style="font-size:12px;font-weight:700;color:${bc};">$${Math.round(displayBal).toLocaleString()}${displayBal<300?' ⚠':''}</span>
         </div>`;
       }
       html+='</div>';
