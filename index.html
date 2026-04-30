@@ -1067,7 +1067,7 @@ function getMonthEvents(year,month,roadmap,balLog){
       const payAmt=Math.round(prevBal+dayNet-todayBal);
       if(payAmt<=5)continue;
       const isFinal=roadmap[activeTarget.id+'-done']?.date===eventDate;
-      const title=isFinal?`${activeTarget.label} — CLEARED`:`Pay $${payAmt.toLocaleString()} → ${activeTarget.label}`;
+      const title=isFinal?`${activeTarget.label} — CLEARED`:`Pay $${Math.round(payAmt).toLocaleString()} → ${activeTarget.label}`;
       evts.push({day:dd,title,amt:-payAmt,color:isFinal?'var(--pur)':'#7aad4e',note:isFinal?'Final payment · debt closed':'Snowball payment · log into card and pay now',isIncome:false,feat:true,isFinal});
     }
   }
@@ -1219,7 +1219,7 @@ function renderWeek(){
       runBal+=dayNet;
       weekEvtsByDay[day].forEach(e=>{
         const ac=e.isIncome?'var(--grn)':e.amt<0&&Math.abs(e.amt)>400?'var(--red)':e.color||'var(--t2)';
-        const as=e.amt!==0?(e.amt>0?`+$${e.amt.toLocaleString()}`:`-$${Math.abs(e.amt).toLocaleString()}`):'';
+        const as=e.amt!==0?(e.amt>0?`+$${Math.round(e.amt).toLocaleString()}`:`-$${Math.round(Math.abs(e.amt)).toLocaleString()}`):'';
         html+=`<div class="ev${e.feat?' feat':''}" style="${e.feat?`border-left:2px solid ${e.color};padding-left:8px;margin-left:-8px;`:''}">
           <div class="evdot" style="background:${e.color||'var(--t3)'};${e.feat?'display:none;':''}"></div>
           <div class="evcontent">
@@ -1232,7 +1232,7 @@ function renderWeek(){
       // Day-end balance
       const bc=runBal<0?'var(--red)':runBal<300?'var(--amb)':'var(--blu)';
       const nc=dayNet>0?'var(--grn)':dayNet<0?'var(--red)':'var(--t3)';
-      const ns=dayNet!==0?(dayNet>0?`+$${dayNet.toLocaleString()}`:`-$${Math.abs(dayNet).toLocaleString()}`):'';
+      const ns=dayNet!==0?(dayNet>0?`+$${Math.round(dayNet).toLocaleString()}`:`-$${Math.round(Math.abs(dayNet)).toLocaleString()}`):'';
       html+=`<div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 0 5px;border-top:0.5px solid var(--br);margin-top:2px;">
         ${ns?`<span style="font-size:11px;font-weight:600;color:${nc};">${ns}</span><span style="color:var(--t4);">·</span>`:''}
         <span style="font-size:12px;font-weight:700;color:${bc};">$${Math.round(runBal).toLocaleString()}${runBal<0?' ⚠':''}</span>
@@ -1256,7 +1256,7 @@ function renderWeek(){
       <div style="font-size:11px;color:var(--t3);">$${S.discMonthlyCap||200}/mo soft cap</div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;">
-      <div style="font-size:28px;font-weight:700;color:${sc};letter-spacing:-.5px;">$${rem.toFixed(0)} <span style="font-size:12px;color:var(--t3);font-weight:400;">left of $${S.discMonthlyCap||200}</span></div>
+      <div style="font-size:28px;font-weight:700;color:${sc};letter-spacing:-.5px;">$${Math.round(rem)} <span style="font-size:12px;color:var(--t3);font-weight:400;">left of $${S.discMonthlyCap||200}</span></div>
       <div style="font-size:13px;color:var(--red);font-weight:700;">$${Math.round(spent)} used</div>
     </div>
     <div class="prog"><div class="progbar" style="width:${pct}%;background:${sc};"></div></div>
@@ -1296,7 +1296,7 @@ html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <div>
         <div class="card-title" style="margin-bottom:2px;">Karen's pay</div>
-        <div style="font-size:13px;font-weight:700;color:var(--amb);">Average: $${karenAvg.toLocaleString()} · Last: $${(S.karenLastPay||810).toLocaleString()}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--amb);">Average: $${Math.round(karenAvg).toLocaleString()} · Last: $${Math.round(S.karenLastPay||810).toLocaleString()}</div>
         <div style="font-size:11px;color:var(--t3);">Updates projections · tap to adjust average</div>
       </div>
       <button class="btn btna btnsm" style="width:auto;padding:8px 14px;" onclick="openModal('karen-avg','Karen\\'s average pay')">Update</button>
@@ -1347,10 +1347,10 @@ function renderMonth(){
 
   let html=`<div class="card">
     <div class="card-title">Month overview</div>
-    <div class="row"><div class="rl"><div class="rlabel">Income</div></div><div class="rval" style="color:var(--grn);">+$${totalIn.toLocaleString()}</div></div>
-    <div class="row"><div class="rl"><div class="rlabel">Bills + spending</div></div><div class="rval" style="color:var(--red);">-$${totalOut.toLocaleString()}</div></div>
+    <div class="row"><div class="rl"><div class="rlabel">Income</div></div><div class="rval" style="color:var(--grn);">+$${Math.round(totalIn).toLocaleString()}</div></div>
+    <div class="row"><div class="rl"><div class="rlabel">Bills + spending</div></div><div class="rval" style="color:var(--red);">-$${Math.round(totalOut).toLocaleString()}</div></div>
     <div class="row"><div class="rl"><div class="rlabel">Starting #4496</div></div><div class="rval" style="color:var(--blu);">$${Math.round(startBal).toLocaleString()}</div></div>
-    <div class="row"><div class="rl"><div class="rlabel" style="font-weight:700;">Net</div></div><div class="rval" style="color:${net>=0?'var(--grn)':'var(--red)'};">${net>=0?'+':'-'}$${Math.abs(net).toLocaleString()}</div></div>
+    <div class="row"><div class="rl"><div class="rlabel" style="font-weight:700;">Net</div></div><div class="rval" style="color:${net>=0?'var(--grn)':'var(--red)'};">${net>=0?'+':'-'}$${Math.round(Math.abs(net)).toLocaleString()}</div></div>
   </div>`;
 
   // Group by day then week
@@ -1369,7 +1369,7 @@ function renderMonth(){
     const allW=wds.flatMap(d=>byDay[d]);
     const wIn=allW.filter(e=>e.isIncome).reduce((a,e)=>a+(e.amt||0),0);
     const wOut=allW.filter(e=>!e.isIncome&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
-    html+=`<div class="card"><div class="wheader"><span>${mn} ${wStart}–${wEnd}</span><span>${wIn>0?`<span style="color:var(--grn);">+$${wIn.toLocaleString()}</span> `:''}${wOut>0?`<span style="color:var(--red);">-$${wOut.toLocaleString()}</span>`:''}</span></div><div class="evlist">`;
+    html+=`<div class="card"><div class="wheader"><span>${mn} ${wStart}–${wEnd}</span><span>${wIn>0?`<span style="color:var(--grn);">+$${Math.round(wIn).toLocaleString()}</span> `:''}${wOut>0?`<span style="color:var(--red);">-$${Math.round(wOut).toLocaleString()}</span>`:''}</span></div><div class="evlist">`;
     wds.forEach(day=>{
       const isToday=isCurMonth&&day===now.getDate();
       const isPast=isCurMonth&&day<now.getDate();
@@ -1381,7 +1381,7 @@ function renderMonth(){
       (byDay[day]||[]).forEach(e=>{
         const amtNum=typeof e.amt==='number'?e.amt:0;
         const ac=e.isIncome?'var(--grn)':Math.abs(amtNum)>400?'var(--red)':'var(--t2)';
-        const as=amtNum!==0?(amtNum>0?'+$'+amtNum.toLocaleString():'-$'+Math.abs(amtNum).toLocaleString()):'';
+        const as=amtNum!==0?(amtNum>0?'+$'+Math.round(amtNum).toLocaleString():'-$'+Math.round(Math.abs(amtNum)).toLocaleString()):'';
         const featBorder=e.feat?`border-left:2px solid ${e.isFinal?'var(--pur)':e.color};padding-left:8px;margin-left:-8px;`:'';
         html+=`<div class="ev${e.feat?' feat':''}" style="${featBorder}">
           <div class="evdot" style="background:${e.color};"></div>
@@ -1397,7 +1397,7 @@ function renderMonth(){
       if(isFuture&&displayBal!==undefined){
         const dayNet=(byDay[day]||[]).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
         const nc=dayNet>0?'var(--grn)':dayNet<0?'var(--red)':'var(--t3)';
-        const ns=dayNet!==0?(dayNet>0?`+$${dayNet.toLocaleString()}`:`-$${Math.abs(dayNet).toLocaleString()}`):'';
+        const ns=dayNet!==0?(dayNet>0?`+$${Math.round(dayNet).toLocaleString()}`:`-$${Math.round(Math.abs(dayNet)).toLocaleString()}`):'';
         const bc=displayBal<300?'var(--red)':displayBal<600?'var(--amb)':'var(--blu)';
         html+=`<div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 0 5px;border-top:0.5px solid var(--br);margin-top:2px;">
           ${ns?`<span style="font-size:11px;font-weight:600;color:${nc};">${ns}</span><span style="color:var(--t4);">·</span>`:''}
@@ -1538,7 +1538,7 @@ function renderSnowball(){
       <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
         <div style="font-size:14px;font-weight:600;">${a.label}</div>
         <div style="text-align:right;">
-          <div style="font-size:14px;font-weight:700;color:var(--blu);">$${a.bal.toLocaleString()}</div>
+          <div style="font-size:14px;font-weight:700;color:var(--blu);">$${Math.round(a.bal).toLocaleString()}</div>
           <div style="font-size:11px;color:var(--t3);">ends ${a.end}</div>
         </div>
       </div>
@@ -1624,7 +1624,7 @@ function renderBills(){
   let html=`<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;">
     <div>
       <div style="font-size:18px;font-weight:700;letter-spacing:-.3px;">Bills manager</div>
-      <div style="font-size:12px;color:var(--t3);margin-top:2px;">$${totalAmt.toLocaleString()}/mo · tap to edit</div>
+      <div style="font-size:12px;color:var(--t3);margin-top:2px;">$${Math.round(totalAmt).toLocaleString()}/mo · tap to edit</div>
     </div>
     <button class="btn btng btnsm" style="width:auto;padding:8px 14px;" onclick="addBill()">+ Add bill</button>
   </div>`;
@@ -1786,7 +1786,7 @@ function logSnowballPmt(amt){
   S.cardBals[ct.id]=Math.max(0,prev-amt);
   S.snowballLog.unshift({amt,target:ct.label,date:new Date().toLocaleDateString()});
   _cachedRoadmap = null; // Invalidate roadmap cache
-  save(S);renderSnowball();toast(`$${amt.toLocaleString()} paid to ${ct.label} ✓`);
+  save(S);renderSnowball();toast(`$${Math.round(amt).toLocaleString()} paid to ${ct.label} ✓`);
 }
 // ══ PHASE ADD/DELETE ══
 let editingPhaseId = null;
