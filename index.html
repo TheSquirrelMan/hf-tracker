@@ -745,7 +745,7 @@ function bal(cb,id){
 // Returns {milestones, balLog}
 let _cachedRoadmap = null;
 let _roadmapCacheKey = '';
-
+const phaseAmt=(id,def)=>{if(S.phaseCosts&&S.phaseCosts[id]!==undefined)return S.phaseCosts[id];return def;};
 function calcRoadmap(){
   // Build cache key from inputs that affect roadmap calculation
   const phasesKey = JSON.stringify(getPhases());
@@ -815,7 +815,7 @@ function calcRoadmap(){
           }
           if(simOk){
             milestones[phase.id]={date:dateStr,bal:Math.round(balance)};
-            balance-=phase.cost; // always deduct including repair buffer
+            balance-=phaseAmt(phase.id,phase.cost); // always deduct including repair buffer
             lastPhaseDate=new Date(d);
             pendingPhases.shift();
             if(pendingPhases.length===0){
