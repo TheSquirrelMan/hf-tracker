@@ -372,7 +372,7 @@ function defaultState(){
   return{
     mKey,
     bal4496:0,bal6764:19,bal0725:654,
-    karenLastPay:810,karenAvgPay:762,
+    karenLastPay:810,karenAvgPay:810,
     jonLastPay:1641,
     discSpent:0,discLog:[],
     discWeekly:50,
@@ -658,10 +658,6 @@ function getDailyBills(year,month,day,cardBalOverride){
   }
 
   // Income
-  //OLD
-  //if(day===7||day===22)push('Jon paycheck',JON_PAY,true);
-  //if(day===7 || day===22) push('Jon paycheck', jonAmt, true);
-  //if(dow===4)push('Karen paycheck',karenAmt,true);
   if(day===7 || day===22) push('Jon paycheck', currentJon, true);
   if(dow===4)push('Karen paycheck',currentKaren,true);
   
@@ -734,22 +730,7 @@ if (dow === 0) {
   // One-time
   if(year===2026&&month===3&&day===23)push('Vehicle registration',-220);
   if(year===2026&&month===3&&day===30)push('PayPal Chinese — FIRST PMT',-95);
-  // Month-end: reconcile discretionary — credit unused or deduct overspend
-  if (day === new Date(year, month+1, 0).getDate()) {
-    const cap = S.discMonthlyCap || 200;
-    const wkAmt = S.discWeekly || Math.round(cap/4);
-    const sundaysInMonth = [];
-    for (let dd = 1; dd <= day; dd++) {
-      if (new Date(year, month, dd).getDay() === 0) sundaysInMonth.push(dd);
-    }
-    const projected = Math.min(cap, sundaysInMonth.length * wkAmt);
-    const difference = cap - projected;
-    if (difference > 0) {
-      push('Disc. credit (unused)', difference, true);
-    } else if (difference < 0) {
-      push('Disc. overspend', difference, false);
-    }
-  }
+
   return bills.filter(b=>b.amt!==0);
 }
 
@@ -937,23 +918,11 @@ function getMonthEvents(year,month,roadmap,balLog){
     const payoffDay=parseInt(m.date.substring(8,10));
     return day<=payoffDay;
   };
-
-  // Paychecks 
-  //const nextP=PHASES.find(p=>!phaseDone[p.id]);
-  //const pcNote=nextP?`→ Saving for ${nextP.label} ($${nextP.cost.toLocaleString()})`:'→ Surplus to snowball target same day';
-  //if(7>=fromDay)add(7,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
-  //if(22>=fromDay)add(22,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
-  //if(7>=fromDay)add(7,'Jon paycheck',jonAmt,'#7aad4e',pcNote,true);
-  //if(22>=fromDay)add(22,'Jon paycheck',jonAmt,'#7aad4e',pcNote,true);
-  //for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===4)add(d,'Karen paycheck — Copans',karenAmt,'#7aad4e','Direct deposit to #4496',true);}
+  }
 // Helper to check if a specific day is in the future
   const todayDate = new Date();
   todayDate.setHours(0,0,0,0);
   const checkFuture = (d) => new Date(year, month, d) > todayDate;
-
-  // Paychecks
- // const nextP=getPhases().find(p=>!phaseDone[p.id]);
- // const pcNote=nextP?`→ Saving for ${nextP.label} ($${nextP.cost.toLocaleString()})`:'→ Surplus to snowball target same day';
 
 // Paychecks - Smart Labels
   function getSmartNote(m, y) {
@@ -1431,6 +1400,31 @@ function renderMonth(){
     html+=`</div></div>`;
   });
 
+  // Discretionary summary card -- current month only, display only, no balance impact
+  if(isCurMonth){
+    const cap=S.discMonthlyCap||200;
+    const spent=S.discSpent||0;
+    const diff=cap-spent;
+    const pct=Math.min(100,Math.round((spent/cap)*100));
+    const sc=pct>100?'var(--red)':pct>80?'var(--amb)':'var(--grn)';
+    const label=diff>=0?`$${diff.toFixed(2)} under budget ✓`:`$${Math.abs(diff).toFixed(2)} over budget ⚠`;
+    const lc=diff>=0?'var(--grn)':'var(--red)';
+    html+=`<div class="card">
+      <div class="card-title">Discretionary summary · ${MN[vMonth].substring(0,3)}</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:13px;color:var(--t2);">Spent</span>
+        <span style="font-size:13px;font-weight:700;color:var(--red);">$${spent.toFixed(2)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:13px;color:var(--t2);">Cap</span>
+        <span style="font-size:13px;color:var(--t3);">$${cap}</span>
+      </div>
+      <div class="prog"><div class="progbar" style="width:${pct}%;background:${sc};"></div></div>
+      <div style="font-size:12px;font-weight:700;color:${lc};margin-top:6px;">${label}</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px;">Tracking only — does not affect balance</div>
+    </div>`;
+  }
+
   const prevM=(vMonth-1+12)%12,prevY=vMonth===0?vYear-1:vYear;
   const nextM=(vMonth+1)%12,nextY=vMonth===11?vYear+1:vYear;
   html+=`<div style="display:flex;gap:8px;margin-top:4px;">
@@ -1571,7 +1565,7 @@ const DEFAULT_BILLS=[
   {id:'mazda',    name:'Mazda CX-5',           amt:638, day:9,  note:'12.72% APR'},
   {id:'att',      name:'AT&T Fiber',            amt:166, day:16, note:'Internet'},
   {id:'tmobile',  name:'T-Mobile',              amt:152, day:15, note:'Both phones'},
-  {id:'statefarm',name:'State Farm',            amt:190, day:23, note:'Auto insurance · showing $160.27 Apr — monitor'},
+  {id:'statefarm',name:'State Farm',            amt:160, day:23, note:'Auto insurance · confirmed $160.27 Apr'},
   {id:'tn',       name:'TN Unemployment',       amt:153, day:22, note:'~$3,653 remaining'},
   {id:'irs1',     name:'IRS payment #1',        amt:68,  day:15, note:'Installment plan'},
   {id:'irs2',     name:'IRS payment #2',        amt:35,  day:16, note:'Installment plan'},
