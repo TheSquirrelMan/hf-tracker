@@ -1041,8 +1041,9 @@ function getMonthEvents(year,month,roadmap,balLog){
     const ed=new Date(m.date+'T12:00:00');
     if(ed.getFullYear()===year&&ed.getMonth()===month){
       const label=phase.isSavings?'TRANSFER → Savings #0725':phase.label.toUpperCase();
-      const note=phase.isSavings?`$${phase.cost.toLocaleString()} · transfer to savings then tap ✓`:`$${phase.cost.toLocaleString()} budget · calculated date`;
-      add(ed.getDate(),label,-phase.cost,phase.isSavings?'#9b82e8':'#d4922a',note,false,true);
+      const pCost=phaseAmt(phase.id,phase.cost);
+      const note=phase.isSavings?`$${pCost.toLocaleString()} · transfer to savings then tap ✓`:`$${pCost.toLocaleString()} budget · calculated date`;
+      add(ed.getDate(),label,-pCost,phase.isSavings?'#9b82e8':'#d4922a',note,false,true);
     }
   });
 
