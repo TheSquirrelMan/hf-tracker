@@ -934,14 +934,6 @@ function getMonthEvents(year,month,roadmap,balLog){
     return day<=payoffDay;
   };
 
-  // Paychecks 
-  //const nextP=PHASES.find(p=>!phaseDone[p.id]);
-  //const pcNote=nextP?`→ Saving for ${nextP.label} ($${nextP.cost.toLocaleString()})`:'→ Surplus to snowball target same day';
-  //if(7>=fromDay)add(7,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
-  //if(22>=fromDay)add(22,'Jon paycheck',JON_PAY,'#7aad4e',pcNote,true);
-  //if(7>=fromDay)add(7,'Jon paycheck',jonAmt,'#7aad4e',pcNote,true);
-  //if(22>=fromDay)add(22,'Jon paycheck',jonAmt,'#7aad4e',pcNote,true);
-  //for(let d=fromDay;d<=dim;d++){if(new Date(year,month,d).getDay()===4)add(d,'Karen paycheck — Copans',karenAmt,'#7aad4e','Direct deposit to #4496',true);}
 // Helper to check if a specific day is in the future
   const todayDate = new Date();
   todayDate.setHours(0,0,0,0);
