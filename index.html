@@ -440,7 +440,7 @@ async function loadFB(){
     if (!snap.exists()) return;
     const remote = snap.val();
 
-    // Always invalidate roadmap cache when state changes
+     // Always invalidate roadmap cache when state changes
     _cachedRoadmap = null;
     _roadmapCacheKey = '';
 
@@ -794,7 +794,14 @@ function calcRoadmap(){
   let snowIdx=TARGETS.findIndex(t=>cardBals[t.id]>0);
   if(snowIdx===-1)snowIdx=null;
 
-  const d=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  // Apply today's scheduled transactions to get tomorrow's clean starting balance
+  // (avoids double-counting income that's already reflected in S.bal4496)
+  const todayNet = getDailyBills(now.getFullYear(), now.getMonth(), now.getDate())
+    .reduce((a,b) => a + b.amt, 0);
+  balance += todayNet;
+
+  // Start simulation from tomorrow
+  const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
 
   for(let i=0;i<1500;i++){
     const yr=d.getFullYear(),mo=d.getMonth(),dy=d.getDate();
