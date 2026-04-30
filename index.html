@@ -1884,14 +1884,6 @@ window.saveDiscSettings = function() {
   renderAll();
   toast(`Discretionary: $${cap}/mo`);
 };
-  
-  S.discMonthlyCap = cap;
-  S.discWeekly = Math.round(cap / 4);
-  _cachedRoadmap = null; // Invalidate roadmap cache
-  save(S);
-  renderAll();
-  toast(`Discretionary: $${cap}/mo`);
-};
 
 window.markPhaseDone=function(id){
   if(!S.phaseDone)S.phaseDone={};
