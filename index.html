@@ -588,6 +588,14 @@ window.submitModal=function(){
   const label=document.getElementById('mi-label').value||'Expense';
   const acct=document.getElementById('mi-acct').value||'4496';
   closeModal();
+  if(mMode&&mMode.startsWith('phase-cost-')){
+    const pid=mMode.replace('phase-cost-','');
+    if(!S.phaseCosts)S.phaseCosts={};
+    S.phaseCosts[pid]=amt;
+    _cachedRoadmap=null;
+    save(S);renderSnowball();renderWeek();toast('Phase budget updated');
+    return;
+  }
   if(mMode==='bal4496'){S.bal4496=amt;save(S);renderWeek();toast('#4496 updated');}
   if(mMode==='bal6764'){S.bal6764=amt;save(S);renderWeek();toast('#6764 updated');}
   if(mMode==='bal0725'){S.bal0725=amt;save(S);renderWeek();toast('Savings updated');}
@@ -1465,7 +1473,7 @@ function renderSnowball(){
     html+=`<div class="ms">
       <div class="ms-info">
         <div class="ms-label" style="font-weight:600;${done?'text-decoration:line-through;color:var(--t3);':''}">${p.label}</div>
-        <div class="ms-sub">$${p.cost.toLocaleString()} · ${p.isSavings?'transfers to savings':'from #4496'}</div>
+        <div class="ms-sub">$${phaseAmt(p.id,p.cost).toLocaleString()} · ${p.isSavings?'transfers to savings':'from #4496'}</div>
       </div>
       <div class="ms-right">
         <div class="reorder-btns">
@@ -1473,7 +1481,7 @@ function renderSnowball(){
           <button class="reorder-btn" onclick="movePhase(${index}, 1)" ${index === phasesList.length - 1 ? 'disabled' : ''}>▼</button>
         </div>
         <div class="ms-date" style="color:${done?'var(--grn)':'var(--amb)'};">${dateLabel}</div>
-        ${!done?`<button class="btn btng btnsm" style="padding:4px 9px;font-size:11px;" onclick="markPhaseDone('${p.id}')">✓</button>`:''}
+        ${!done?`<div style="display:flex;gap:6px;"><button class="btn btno btnsm" style="padding:4px 9px;font-size:11px;" onclick="openModal('phase-cost-${p.id}','Edit ${p.label} budget')">✏</button><button class="btn btng btnsm" style="padding:4px 9px;font-size:11px;" onclick="markPhaseDone('${p.id}')">✓</button></div>`:''}
         <button class="reorder-btn" style="color:var(--red);" onclick="deletePhase('${p.id}')" title="Delete milestone">✕</button>
       </div>
     </div>`;
