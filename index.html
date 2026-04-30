@@ -1481,7 +1481,7 @@ function renderSnowball(){
           <button class="reorder-btn" onclick="movePhase(${index}, 1)" ${index === phasesList.length - 1 ? 'disabled' : ''}>▼</button>
         </div>
         <div class="ms-date" style="color:${done?'var(--grn)':'var(--amb)'};">${dateLabel}</div>
-        ${!done?`<div style="display:flex;gap:6px;"><button class="btn btno btnsm" style="padding:4px 9px;font-size:11px;" onclick="openModal('phase-cost-${p.id}','Edit ${p.label} budget')">✏</button><button class="btn btng btnsm" style="padding:4px 9px;font-size:11px;" onclick="markPhaseDone('${p.id}')">✓</button></div>`:''}
+        ${!done?`<div style="display:flex;gap:6px;"><button class="btn btno btnsm" style="padding:4px 9px;font-size:11px;" onclick="openModal('phase-cost-${p.id}','Edit ${p.label} budget')">✎</button><button class="btn btng btnsm" style="padding:4px 9px;font-size:11px;" onclick="markPhaseDone('${p.id}')">✓</button></div>`:''}
         <button class="reorder-btn" style="color:var(--red);" onclick="deletePhase('${p.id}')" title="Delete milestone">✕</button>
       </div>
     </div>`;
