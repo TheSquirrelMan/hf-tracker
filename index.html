@@ -440,6 +440,10 @@ async function loadFB(){
     if (!snap.exists()) return;
     const remote = snap.val();
 
+    // Always invalidate roadmap cache when state changes
+    _cachedRoadmap = null;
+    _roadmapCacheKey = '';
+
     if (saveTimer) {
       // If we are currently waiting to save local edits, 
       // ONLY pull in the bank balances and pay data so they don't get lost/overwritten
