@@ -441,6 +441,9 @@ async function loadFB(){
     if (!snap.exists()) return;
     const remote = snap.val();
 
+    // Check if balance changed from remote
+    const balanceChanged = (S.bal4496 !== remote.bal4496);
+
     if (saveTimer) {
       // If we are currently waiting to save local edits, 
       // ONLY pull in the bank balances and pay data so they don't get lost/overwritten
@@ -457,6 +460,12 @@ async function loadFB(){
       if(!S.phases || S.phases.length === 0) {
         S.phases = JSON.parse(JSON.stringify(DEFAULT_PHASES));
       }
+    }
+
+    // If balance changed, clear roadmap cache
+    if (balanceChanged) {
+      _cachedRoadmap = null;
+      _roadmapCacheKey = '';
     }
 
     setSS('ok');
@@ -767,6 +776,7 @@ let _roadmapCacheKey = '';
 
 // Add this function here
 window.forceRefresh = function() {
+  console.log('Force refresh - current balance:', S.bal4496);
   _cachedRoadmap = null;
   _roadmapCacheKey = '';
   renderAll();
