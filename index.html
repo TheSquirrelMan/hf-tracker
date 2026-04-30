@@ -1415,8 +1415,6 @@ function renderMonth(){
     html+=`</div></div>`;
   });
 
-
-
   const prevM=(vMonth-1+12)%12,prevY=vMonth===0?vYear-1:vYear;
   const nextM=(vMonth+1)%12,nextY=vMonth===11?vYear+1:vYear;
   html+=`<div style="display:flex;gap:8px;margin-top:4px;">
