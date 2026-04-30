@@ -940,8 +940,6 @@ function getMonthEvents(year,month,roadmap,balLog){
   const checkFuture = (d) => new Date(year, month, d) > todayDate;
 
   // Paychecks
- // const nextP=getPhases().find(p=>!phaseDone[p.id]);
- // const pcNote=nextP?`→ Saving for ${nextP.label} ($${nextP.cost.toLocaleString()})`:'→ Surplus to snowball target same day';
 
 // Paychecks - Smart Labels
   function getSmartNote(m, y) {
