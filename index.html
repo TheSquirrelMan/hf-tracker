@@ -625,7 +625,7 @@ window.editBal=a=>{
 };
 
 // Set of default bill IDs for filtering custom-added bills
-const DEFAULT_BILL_IDS=new Set(['mazda','att','tmobile','statefarm','tn','irs1','irs2','merrick','cap3186','usaaAmex','cap4565','cap5592','cap7988','jonpaypal','karenpaypal','chase','spotify','claude','chatgpt','prime','randy','realdebrid','affirm','newegg','ebay','chinese','amazon','freshmarket']);
+const DEFAULT_BILL_IDS=new Set(['mazda','att','tmobile','statefarm','tn','irs1','irs2','merrick','cap3186','usaaAmex','cap4565','cap5592','cap7988','jonpaypal','karenpaypal','chase','spotify','claude','chatgpt','prime','randy','realdebrid','affirm','newegg','ebay','chinese','amazon','freshmarket','gas']);
 
 // ══ DAILY BILLS ENGINE ══
 // Returns array of {label, amt, isIncome} for a given date
@@ -702,8 +702,7 @@ if (dow === 0) {
   }
 
   // Transport
-  if(day===1){push('Gas',-60);}
-  if(day===15)push('Gas',-60);
+  if(day===1)push('Gas',-ub('gas',120));
 
   // Fixed bills with payoff suppression -- amounts pulled from userBills if edited
   if(day===1&&key<='2026-07'&&bal(cb,'amazon')>0)push('Amazon Store Card',-29);
@@ -992,8 +991,7 @@ function getMonthEvents(year,month,roadmap,balLog){
   }
 
   // Transport
-  if(1>=fromDay)add(1,'Gas',-60,'#5c5c58','Gasoline');
-  add(15,'Gas',-60,'#5c5c58','Gasoline');
+  if(1>=fromDay)add(1,'Gas (monthly est.)',-ub('gas',120),'#5c5c58','Log actual fill-ups in spend log');
 
   // Fixed bills
   if([0,3,6,9].includes(month))add(2,'Real-Debrid',-11,'#5c5c58','Quarterly $11');
@@ -1593,6 +1591,7 @@ const DEFAULT_BILLS=[
   {id:'prime',    name:'Amazon Prime',          amt:15,  day:2,  note:'Subscription'},
   {id:'randy',    name:'Randy training',        amt:150, day:4,  note:'Biweekly · also ~18th'},
   {id:'freshmarket', name:'Fresh Market',       amt:200, day:0,  note:'Weekly grocery · every Sunday'},
+  {id:'gas',         name:'Gas (monthly est.)', amt:120, day:1,  note:'Log actual fill-ups in spend log'},
 ];
 
 // Locked bills -- hardcoded engine logic, shown read-only
