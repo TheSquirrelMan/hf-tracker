@@ -218,12 +218,6 @@ select.minput option{background:var(--s2);}
   <div class="mbox" onclick="event.stopPropagation()">
     <div class="mtitle" id="mtitle"></div>
     <input class="minput" type="text" id="mi-label" placeholder="Description" style="display:none;">
-    <select class="minput" id="mi-category" style="display:none;">
-      <option value="discretionary">Discretionary</option>
-      <option value="gas">Gas</option>
-      <option value="groceries">Groceries</option>
-      <option value="other">Other</option>
-    </select>
     <select class="minput" id="mi-acct" style="display:none;">
       <option value="4496">#4496 checking</option>
       <option value="0725">Savings #0725</option>
@@ -588,8 +582,6 @@ window.openModal=function(mode,title,showLabel=false,showAcct=false){
   document.getElementById('mtitle').textContent=title;
   document.getElementById('mi-label').style.display=showLabel?'block':'none';
   document.getElementById('mi-acct').style.display=showAcct?'block':'none';
-  document.getElementById('mi-category').style.display=mode==='spend'?'block':'none';
-  if(mode==='spend')document.getElementById('mi-category').value='discretionary';
   document.getElementById('mi-amt').value='';
   document.getElementById('mi-label').value='';
   document.getElementById('mbg').classList.add('open');
@@ -1083,9 +1075,7 @@ function getMonthEvents(year,month,roadmap,balLog){
     if(!e.date||!e.amt)return;
     const sp=new Date(e.date);
     if(isNaN(sp.getTime())||sp.getMonth()!==month||sp.getFullYear()!==year)return;
-    const catLabel=e.cat&&e.cat!=='discretionary'?e.cat.charAt(0).toUpperCase()+e.cat.slice(1):'Discretionary';
-    const catColor=e.cat==='gas'?'#5c5c58':e.cat==='groceries'?'#4a8fa8':'#6b9fd4';
-    add(sp.getDate(),e.label||catLabel,-Math.abs(e.amt),catColor,'Logged · '+catLabel);
+    add(sp.getDate(),e.label||'Discretionary',-Math.abs(e.amt),'#6b9fd4','Logged spend');
   });
 
   evts.sort((a,b)=>a.day-b.day);
@@ -1753,15 +1743,14 @@ window.closeBillModal=()=>document.getElementById('bill-modal').classList.remove
 // ══ ACTIONS ══
 // Spend log — tracking only, never touches bal4496
 function addSpend(amt,label){
-  const cat=document.getElementById('mi-category').value||'discretionary';
-  if(cat==='discretionary')S.discSpent=(S.discSpent||0)+amt;
-  (S.discLog=S.discLog||[]).unshift({amt,date:new Date().toLocaleDateString(),label,cat});
+  S.discSpent=(S.discSpent||0)+amt;
+  (S.discLog=S.discLog||[]).unshift({amt,date:new Date().toLocaleDateString(),label});
   save(S);renderWeek();toast(`-$${Math.round(amt)} logged`);
 }
 window.deleteSpend=function(i){
   const entry=S.discLog[i];
   if(!entry)return;
-  if(!entry.cat||entry.cat==='discretionary')S.discSpent=Math.max(0,(S.discSpent||0)-entry.amt);
+  S.discSpent=Math.max(0,(S.discSpent||0)-entry.amt);
   S.discLog.splice(i,1);
   save(S);renderWeek();toast('Entry removed');
 };
