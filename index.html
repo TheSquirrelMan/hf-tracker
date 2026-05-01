@@ -764,6 +764,7 @@ let _cachedRoadmap = null;
 let _roadmapCacheKey = '';
 const phaseAmt=(id,def)=>{if(S.phaseCosts&&S.phaseCosts[id]!==undefined)return S.phaseCosts[id];return def;};
 const ub=(id,def)=>{if(S.userBills){const b=S.userBills.find(x=>x.id===id);if(b)return b.amt;}return def;};
+const ubn=(id,def)=>{if(S.userBills){const b=S.userBills.find(x=>x.id===id);if(b&&b.note)return b.note;}return def;};
 function calcRoadmap(){
   // Build cache key from inputs that affect roadmap calculation
   const phasesKey = JSON.stringify(getPhases());
@@ -993,22 +994,22 @@ function getMonthEvents(year,month,roadmap,balLog){
       }
       const discAmt = isLastSun ? Math.min(moCap - spentBefore, moCap) : Math.min(wkAmt, moCap - spentBefore);
       
-      add(d,'Fresh Market',-ub('freshmarket',200),'#6b9fd4',`$${ub('freshmarket',200)}/wk grocery`);
+      add(d,'Fresh Market',-ub('freshmarket',200),'#6b9fd4',ubn('freshmarket',`$${ub('freshmarket',200)}/wk grocery`));
       add(d,'Discretionary',-discAmt,'#5c5c58',`$${wkAmt}/wk · $${moCap}/mo cap`);
     }
   }
 
   // Transport
-  if(1>=fromDay)add(1,'Gas (monthly est.)',-ub('gas',120),'#5c5c58','Log actual fill-ups in spend log');
+  if(1>=fromDay)add(1,'Gas (monthly est.)',-ub('gas',120),'#5c5c58',ubn('gas','Log actual fill-ups in spend log'));
 
   // Fixed bills
   if([0,3,6,9].includes(month))add(2,'Real-Debrid',-11,'#5c5c58','Quarterly $11');
   if(key<='2026-07'&&notDone('amazon',1))add(1,'Amazon Store Card',-ub('amazon',29),'#e8836e','29.49% APR · $235 balance');
   add(2,'Amazon Prime',-ub('prime',15),'#5c5c58','Subscription');
   if(key<='2027-08')add(4,'PayPal eBay',-ub('ebay',43),'#d4922a','35.99% APR · done Aug 2027');
-  add(4,'ChatGPT',-ub('chatgpt',22),'#5c5c58','Karen subscription');
-  add(4,'Zelle Randy',-ub('randy',150),'#7aad4e','Biweekly training');
-  add(18,'Zelle Randy',-ub('randy',150),'#7aad4e','Biweekly training');
+  add(4,'ChatGPT',-ub('chatgpt',22),'#5c5c58',ubn('chatgpt','Karen subscription'));
+  add(4,'Zelle Randy',-ub('randy',150),'#7aad4e',ubn('randy','Biweekly training'));
+  add(18,'Zelle Randy',-ub('randy',150),'#7aad4e',ubn('randy','Biweekly training'));
   if(notDone('mazda',9))add(9,'Mazda CX-5',-ub('mazda',638),'#d4922a','12.72% APR');
   if(notDone('merrick',11))add(11,'Merrick Bank',-ub('merrick',35),'#e8836e','31.95% APR');
   if(notDone('cap3186',11))add(11,'Cap One #3186 (Karen)',-ub('cap3186',25),'#e8836e','28.24% APR');
@@ -1018,7 +1019,7 @@ function getMonthEvents(year,month,roadmap,balLog){
   }
   if(key<='2027-01')add(13,'PayPal Newegg',-ub('newegg',61),'#d4922a','35.99% APR fixed');
   if(notDone('kpaypal',13))add(13,'Karen PayPal Credit',-ub('karenpaypal',100),'#e8836e','29.64% APR — MANUAL');
-  add(13,'Claude.ai',-ub('claude',20),'#5c5c58','Subscription');
+  add(13,'Claude.ai',-ub('claude',20),'#5c5c58',ubn('claude','Subscription'));
   add(15,'T-Mobile',-ub('tmobile',152),'#a8a69f','Both phones');
   if(notDone('usaaAmex',15))add(15,'USAA Amex (Karen)',-ub('usaaAmex',63),'#e8836e','27.40% APR');
   if(notDone('irs',15)){add(15,'IRS payment #1',-68,'#d4922a','Installment plan');add(16,'IRS payment #2',-35,'#d4922a','Installment plan');}
@@ -1027,7 +1028,7 @@ function getMonthEvents(year,month,roadmap,balLog){
   if(notDone('cap5592',21))add(21,'Cap One #5592 (Karen)',-ub('cap5592',25),'#e8836e','28.99% APR');
   if(notDone('cap7988',21))add(21,'Cap One #7988 (Jon)',-ub('cap7988',30),'#e8836e','29% APR');
   if(key<='2029-10')add(22,'Jon PayPal Credit',-ub('jonpaypal',22),'#a8a69f','0% plan — do NOT overpay · ends Oct 2029');
-  add(22,'Spotify',-ub('spotify',22),'#5c5c58','Subscription');
+  add(22,'Spotify',-ub('spotify',22),'#5c5c58',ubn('spotify','Subscription'));
   if(notDone('tn',22)&&key<='2027-12')add(22,'TN unemployment',-ub('tn',153),'#d4922a','~$153/mo');
   add(23,'State Farm',-ub('statefarm',190),'#a8a69f','Auto insurance');
   if(notDone('chase',26))add(26,'Chase/Amazon',-ub('chase',26),'#a8a69f','APR TBD');
