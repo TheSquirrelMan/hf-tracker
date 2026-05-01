@@ -672,7 +672,7 @@ function getDailyBills(year,month,day,cardBalOverride){
   if(dow===4)push('Karen paycheck',currentKaren,true);
   
   // Groceries (Sunday)
-  if(dow===0)push('Fresh Market',-200);
+  if(dow===0)push('Fresh Market',-ub('freshmarket',200));
 
   // Discretionary allowance -- $50/wk every Sunday baked into projection
   // if(dow===0)push('Discretionary',-50);
@@ -986,7 +986,7 @@ function getMonthEvents(year,month,roadmap,balLog){
       }
       const discAmt = isLastSun ? Math.min(moCap - spentBefore, moCap) : Math.min(wkAmt, moCap - spentBefore);
       
-      add(d,'Fresh Market',-200,'#6b9fd4','$200/wk hard limit');
+      add(d,'Fresh Market',-ub('freshmarket',200),'#6b9fd4',`$${ub('freshmarket',200)}/wk grocery`);
       add(d,'Discretionary',-discAmt,'#5c5c58',`$${wkAmt}/wk · $${moCap}/mo cap`);
     }
   }
