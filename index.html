@@ -1612,7 +1612,10 @@ const LOCKED_BILLS=[
 
 function getUserBills(){
   if(!S.userBills||!S.userBills.length)return DEFAULT_BILLS.map(b=>({...b}));
-  return S.userBills;
+  const saved=S.userBills;
+  const savedIds=new Set(saved.map(b=>b.id));
+  const missing=DEFAULT_BILLS.filter(b=>!savedIds.has(b.id));
+  return missing.length?[...saved,...missing]:saved;
 }
 
 // Bill edit modal state
