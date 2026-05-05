@@ -1242,7 +1242,7 @@ function renderWeek(){
       }
       runBal+=dayNet;
       weekEvtsByDay[day].forEach(e=>{
-        const ac=e.isIncome?'var(--grn)':e.amt<0&&Math.abs(e.amt)>400?'var(--red)':e.color||'var(--t2)';
+        const ac=e.isIncome?'var(--grn)':e.amt<0?'var(--red)':e.color||'var(--t2)';
         const as=e.amt!==0?(e.amt>0?`+$${Math.round(e.amt).toLocaleString()}`:`-$${Math.round(Math.abs(e.amt)).toLocaleString()}`):'';
         html+=`<div class="ev${e.feat?' feat':''}" style="${e.feat?`border-left:2px solid ${e.color};padding-left:8px;margin-left:-8px;`:''}">
           <div class="evdot" style="background:${e.color||'var(--t3)'};${e.feat?'display:none;':''}"></div>
