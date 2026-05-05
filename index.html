@@ -771,8 +771,7 @@ function calcRoadmap(){
   const phasesKey = JSON.stringify(getPhases());
   const phaseDoneKey = JSON.stringify(S.phaseDone || {});
   const cardBalsKey = JSON.stringify(S.cardBals || {});
-  const todayStr=`${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
-  const cacheKey = `${todayStr}-${S.bal4496}-${S.karenLastPay||0}-${S.karenAvgPay||0}-${phasesKey}-${phaseDoneKey}-${cardBalsKey}`;
+  const cacheKey = `${S.bal4496}-${S.karenLastPay||0}-${S.karenAvgPay||0}-${phasesKey}-${phaseDoneKey}-${cardBalsKey}`;
   
   if (_cachedRoadmap && _roadmapCacheKey === cacheKey) {
     return _cachedRoadmap;
