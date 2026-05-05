@@ -1220,11 +1220,13 @@ function renderWeek(){
       const dow=DN[ed.getDay()];
       html+=`<div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:${day===wdays[0]?'0':'8px'} 0 3px;text-transform:uppercase;letter-spacing:.06em;">${isToday?'TODAY · ':''}${dow} ${ed.getDate()}</div>`;
       let dayNet=weekEvtsByDay[day].reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
-      // Skip today's income — already reflected in synced balance
+      // Skip today's income only if this first day is actually today
       if(firstDay){
-        const incomeToday=weekEvtsByDay[day].filter(e=>e.isIncome).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
-        dayNet-=incomeToday;
         firstDay=false;
+        if(isToday){
+          const incomeToday=weekEvtsByDay[day].filter(e=>e.isIncome).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
+          dayNet-=incomeToday;
+        }
       }
       runBal+=dayNet;
       weekEvtsByDay[day].forEach(e=>{
