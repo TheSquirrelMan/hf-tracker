@@ -242,8 +242,17 @@ select.minput option{background:var(--s2);}
     <input class="minput" type="number" id="bm-amt" placeholder="Amount ($)" inputmode="decimal">
     <input class="minput" type="text" id="bm-day" placeholder="Due day e.g. 15 or 4,18 for biweekly" inputmode="numeric">
     <input class="minput" type="text" id="bm-note" placeholder="Note (optional)">
+    <input class="minput" type="text" id="bm-keyword" placeholder="Debit keyword e.g. PUBLIX, T-MOBILE (optional)">
     <button class="btn btng" onclick="saveBillModal()">Save</button>
     <button class="btn btno" onclick="closeBillModal()">Cancel</button>
+  </div>
+</div>
+
+<div class="mbg" id="debit-modal" onclick="closeDebitModal()">
+  <div class="mbox" onclick="event.stopPropagation()" style="max-height:80vh;overflow-y:auto;">
+    <div class="mtitle">Pending Transactions</div>
+    <div id="debit-modal-content"></div>
+    <button class="btn btno" onclick="closeDebitModal()" style="margin-top:8px;">Close</button>
   </div>
 </div>
 
@@ -665,13 +674,13 @@ function getDailyBills(year,month,day,cardBalOverride){
   const cb = cardBalOverride || (S.cardBals || {});
   
   // 4. Define the push helper
-  const push=(label,amt,isIncome=false)=>bills.push({label,amt,isIncome});  // Helper: get bill amount from userBills if edited, else default
+  const push=(label,amt,isIncome=false,billId=null)=>bills.push({label,amt,isIncome,billId});  // Helper: get bill amount from userBills if edited, else default
 
   // User-managed custom bills (added by user, not in defaults)
   if(S.userBills){
     S.userBills.filter(b=>!DEFAULT_BILL_IDS.has(b.id)).forEach(b=>{
       const days=Array.isArray(b.day)?b.day:[b.day];
-      if(days.includes(day))push(b.name,-b.amt);
+      if(days.includes(day))push(b.name,-b.amt,false,b.id);
     });
   }
 
@@ -920,8 +929,8 @@ function getMonthEvents(year,month,roadmap,balLog){
   
   const phaseDone=S.phaseDone||{};
   const cb=S.cardBals||{};
-  const add=(day,title,amt,color,note='',isIncome=false,feat=false,isFinal=false)=>{
-    if(day>=1&&day<=dim)evts.push({day,title,amt,color,note,isIncome,feat,isFinal});
+  const add=(day,title,amt,color,note='',isIncome=false,feat=false,isFinal=false,billId=null)=>{
+    if(day>=1&&day<=dim)evts.push({day,title,amt,color,note,isIncome,feat,isFinal,billId});
   };
 
   const notDone=(id,day=0)=>{
@@ -1107,6 +1116,22 @@ function safeRender(renderFn, fallbackText = 'Error loading data') {
   }
 }
 
+// ══ DEBIT HELPERS ══
+function getPostedEntry(billId,label){
+  const log=S.debitLog||[];
+  if(billId){const m=log.find(d=>d.status==='matched'&&d.bill===billId);if(m)return m;}
+  if(label){
+    const bills=getUserBills();
+    const bill=bills.find(b=>b.name&&b.name.toLowerCase()===label.toLowerCase());
+    if(bill){const m=log.find(d=>d.status==='matched'&&d.bill===bill.id);if(m)return m;}
+  }
+  return null;
+}
+function postedTag(billId,label){
+  const m=getPostedEntry(billId,label);
+  return m?` <span style="color:var(--grn);font-size:10px;font-weight:600;">✓ Posted $${m.amt} · ${m.date}</span>`:'';
+}
+
 // ══ RENDER WEEK ══
 function renderWeek(){
   document.getElementById('b4496').textContent='$'+Math.round(S.bal4496).toLocaleString();
@@ -1151,9 +1176,16 @@ function renderWeek(){
   const nextMsText=nextMilestone
     ?`${nextMilestone.label}${nextMilestone.cost?' ($'+nextMilestone.cost.toLocaleString()+')':''} · ${fmtDate(nextMilestone.date)} (${daysUntil(nextMilestone.date)}d)`
     :'All debts paid off 🎉';
+  const pendingDebits=(S.debitLog||[]).filter(d=>d.status==='pending');
+  const pendingCount=pendingDebits.length;
   html+=`<div class="card" style="border-color:var(--am);background:var(--abg);margin-bottom:8px;">
-    <div style="font-size:13px;font-weight:700;color:var(--amb);">${MN[now.getMonth()]} ${today}, ${now.getFullYear()} · ${DN[now.getDay()]}</div>
-    <div style="font-size:11px;color:var(--t2);margin-top:2px;">Next: ${nextMsText}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--amb);">${MN[now.getMonth()]} ${today}, ${now.getFullYear()} · ${DN[now.getDay()]}</div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px;">Next: ${nextMsText}</div>
+      </div>
+      ${pendingCount>0?`<button onclick="openDebitModal()" style="background:var(--red);border:none;color:#fff;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">&#128179; ${pendingCount} pending</button>`:''}
+    </div>
   </div>`;
 
   // ── Paycheck banners ──
@@ -1175,15 +1207,15 @@ function renderWeek(){
 
   // ── Next 7 days ──
   const weekEvtsByDay={};
-  const addWE=(dayOffset,label,amt,isIncome,color,note='',feat=false)=>{
+  const addWE=(dayOffset,label,amt,isIncome,color,note='',feat=false,billId=null)=>{
     if(!weekEvtsByDay[dayOffset])weekEvtsByDay[dayOffset]=[];
-    weekEvtsByDay[dayOffset].push({label,amt,isIncome,color,note,feat});
+    weekEvtsByDay[dayOffset].push({label,amt,isIncome,color,note,feat,billId});
   };
   // Regular bills
   for(let dd=today;dd<=today+7;dd++){
     const ed=new Date(now.getFullYear(),now.getMonth(),dd);
     getDailyBills(ed.getFullYear(),ed.getMonth(),ed.getDate()).forEach(b=>{
-      addWE(dd,b.label,b.amt,b.isIncome,b.isIncome?'var(--grn)':'var(--t3)');
+      addWE(dd,b.label,b.amt,b.isIncome,b.isIncome?'var(--grn)':'var(--t3)','',false,b.billId||null);
     });
   }  // Today's discretionary log entries
   const todayLocale=new Date().toLocaleDateString();
@@ -1192,7 +1224,8 @@ function renderWeek(){
     if(e.date!==todayLocale)return;
     const catLabel=e.cat&&e.cat!=='discretionary'?e.cat.charAt(0).toUpperCase()+e.cat.slice(1):'Discretionary';
     const catColor=e.cat==='gas'?'#5c5c58':e.cat==='groceries'?'#4a8fa8':'#6b9fd4';
-    addWE(today,e.label||catLabel,-Math.abs(e.amt),false,catColor,'Logged · '+catLabel);
+    const autoTag=e.auto?' \u26a1 auto':'';
+    addWE(today,e.label||catLabel,-Math.abs(e.amt),false,catColor,'Logged · '+catLabel+autoTag);
   });
   // Roadmap milestones in next 7 days
   const todayDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
@@ -1229,13 +1262,12 @@ function renderWeek(){
       const dow=DN[ed.getDay()];
       html+=`<div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:${day===wdays[0]?'0':'8px'} 0 3px;text-transform:uppercase;letter-spacing:.06em;">${isToday?'TODAY · ':''}${dow} ${ed.getDate()}</div>`;
       let dayNet=weekEvtsByDay[day].reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
-      // Skip today's income + logged disc spend - already reflected in synced balance
+      // Skip today's income only if this first day is actually today
       if(firstDay){
         firstDay=false;
         if(isToday){
           const incomeToday=weekEvtsByDay[day].filter(e=>e.isIncome).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
           dayNet-=incomeToday;
-          // Disc log entries are display-only; bal4496 already reflects them
           const discToday=weekEvtsByDay[day].filter(e=>e.note&&e.note.startsWith('Logged')).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
           dayNet-=discToday;
         }
@@ -1249,6 +1281,7 @@ function renderWeek(){
           <div class="evcontent">
             <div class="evtitle" style="${e.feat?`color:${e.color};font-weight:700;`:''}">${e.label}</div>
             ${e.note?`<div class="evsub">${e.note}</div>`:''}
+            ${(()=>{const pm=getPostedEntry(e.billId,e.label);return pm?`<div style="font-size:10px;color:var(--grn);margin-top:1px;">✓ Posted $$${pm.amt} · ${pm.date}</div>`:''})()}
           </div>
           ${as?`<div class="evamt" style="color:${ac};${e.feat?'font-weight:700;':''}">${as}</div>`:''}
         </div>`;
@@ -1412,6 +1445,7 @@ function renderMonth(){
           <div class="evcontent">
             <div class="evtitle" style="font-size:13px;${e.feat?`color:${e.isFinal?'var(--pur)':e.color};`:''}">${e.title}</div>
             ${e.note?`<div class="evsub">${e.note}</div>`:''}
+            ${(()=>{const pm=getPostedEntry(e.billId,e.label);return pm?`<div style="font-size:10px;color:var(--grn);margin-top:1px;">✓ Posted $$${pm.amt} · ${pm.date}</div>`:''})()}
           </div>
           ${as?`<div class="evamt" style="color:${ac};${e.feat?'font-weight:700;':''}">${as}</div>`:''}
         </div>`;
@@ -1664,8 +1698,9 @@ function renderBills(){
     const dayLabel=Array.isArray(b.day)?b.day.map(d=>`~${d}th`).join(' + '):`~${b.day}th`;
     html+=`<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:0.5px solid var(--br);${i===bills.length-1?'border-bottom:none;':''}">
       <div style="flex:1;min-width:0;cursor:pointer;" onclick="editBillItem('${b.id}')">
-        <div style="font-size:14px;font-weight:600;">${b.name}</div>
+        <div style="font-size:14px;font-weight:600;">${b.name}${b.debitKeyword?`<span style="font-size:10px;color:var(--t3);background:var(--s3);padding:2px 5px;border-radius:4px;margin-left:6px;">${b.debitKeyword}</span>`:''}</div>
         <div style="font-size:11px;color:var(--t3);margin-top:1px;">${dayLabel} · ${b.note||''}</div>
+        ${(()=>{const m=(S.debitLog||[]).find(d=>d.status==='matched'&&d.bill===b.id);return m?`<div style="font-size:10px;color:var(--grn);margin-top:2px;">&#10003; Posted $${m.amt} · ${m.date}</div>`:'';})()}
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
         <div style="font-size:15px;font-weight:700;color:var(--red);cursor:pointer;" onclick="editBillItem('${b.id}')">-$${b.amt}</div>
@@ -1714,6 +1749,7 @@ window.editBillItem=function(id){
   document.getElementById('bm-amt').value=b.amt;
   document.getElementById('bm-day').value=Array.isArray(b.day)?b.day.join(','):b.day;
   document.getElementById('bm-note').value=b.note||'';
+  document.getElementById('bm-keyword').value=b.debitKeyword||'';
   document.getElementById('bm-title').textContent='Edit bill';
   modal.classList.add('open');
   setTimeout(()=>document.getElementById('bm-name').focus(),140);
@@ -1726,6 +1762,7 @@ window.addBill=function(){
   document.getElementById('bm-amt').value='';
   document.getElementById('bm-day').value='';
   document.getElementById('bm-note').value='';
+  document.getElementById('bm-keyword').value='';
   document.getElementById('bm-title').textContent='Add bill';
   modal.classList.add('open');
   setTimeout(()=>document.getElementById('bm-name').focus(),140);
@@ -1736,11 +1773,12 @@ window.saveBillModal=function(){
   const amt=parseFloat(document.getElementById('bm-amt').value);
   const dayRaw=document.getElementById('bm-day').value.trim();
   const note=document.getElementById('bm-note').value.trim();
+  const debitKeyword=document.getElementById('bm-keyword').value.trim().toUpperCase();
   // Parse days -- support "15" or "4,18"
   const days=dayRaw.split(',').map(d=>parseInt(d.trim())).filter(d=>!isNaN(d)&&d>=1&&d<=31);
   if(!name||isNaN(amt)||!days.length){toast('Fill in all fields');return;}
   const bills=getUserBills();
-  const billData={name,amt,day:days.length===1?days[0]:days,note};
+  const billData={name,amt,day:days.length===1?days[0]:days,note,debitKeyword};
   if(editingBill){
     const idx=bills.findIndex(b=>b.id===editingBill);
     if(idx>=0)bills[idx]={...bills[idx],...billData};
@@ -1748,6 +1786,10 @@ window.saveBillModal=function(){
     bills.push({id:'bill_'+Date.now(),...billData});
   }
   S.userBills=bills;
+  // Sync billKeywords map for Apps Script matching
+  const kwMap={};
+  bills.forEach(b=>{if(b.debitKeyword)kwMap[b.id]=b.debitKeyword;});
+  S.billKeywords=kwMap;
   save(S);
   closeBillModal();
   renderBills();
@@ -1765,6 +1807,122 @@ window.deleteBill=function(id){
 };
 
 window.closeBillModal=()=>document.getElementById('bill-modal').classList.remove('open');
+
+// ══ DEBIT INBOX MODAL ══
+window.openDebitModal=function(){
+  renderDebitModal();
+  document.getElementById('debit-modal').classList.add('open');
+};
+window.closeDebitModal=()=>document.getElementById('debit-modal').classList.remove('open');
+
+function renderDebitModal(){
+  const pending=(S.debitLog||[]).filter(d=>d.status==='pending');
+  const matched=(S.debitLog||[]).filter(d=>d.status==='matched'||d.status==='autoDisc').slice(0,10);
+  const bills=getUserBills();
+  let html='';
+
+  if(pending.length){
+    html+=`<div style="font-size:11px;font-weight:700;color:var(--red);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">${pending.length} unmatched</div>`;
+    pending.forEach((d,i)=>{
+      const idx=(S.debitLog||[]).indexOf(d);
+      const billOptions=bills.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+      html+=`<div style="border:1px solid var(--br);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <div>
+            <div style="font-size:13px;font-weight:700;">${d.merchant}</div>
+            <div style="font-size:11px;color:var(--t3);">${d.date} · $${d.amt}</div>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:var(--red);">-$${d.amt}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:6px;">
+            <button class="btn btno btnsm" style="flex:1;font-size:11px;" onclick="resolveDebit(${idx},'disc')">Discretionary</button>
+            <button class="btn btna btnsm" style="flex:1;font-size:11px;" onclick="resolveDebit(${idx},'autoDisc')">Always disc.</button>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select id="link-bill-${idx}" style="flex:1;background:var(--s2);border:1px solid var(--br);color:var(--tx);border-radius:6px;padding:6px 8px;font-size:12px;">
+              <option value="">Link to bill...</option>${billOptions}
+            </select>
+            <button class="btn btng btnsm" style="font-size:11px;" onclick="resolveDebit(${idx},'link')">Link</button>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btng btnsm" style="flex:1;font-size:11px;" onclick="resolveDebit(${idx},'newBill')">New bill</button>
+            <button class="btn btnsm" style="flex:1;font-size:11px;background:var(--s3);border:none;color:var(--t2);cursor:pointer;border-radius:6px;" onclick="resolveDebit(${idx},'ignore')">Ignore</button>
+          </div>
+        </div>
+      </div>`;
+    });
+  } else {
+    html+=`<div style="font-size:13px;color:var(--grn);text-align:center;padding:16px 0;">No pending transactions ✓</div>`;
+  }
+
+  if(matched.length){
+    html+=`<div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin:12px 0 8px;">Recent auto-matched</div>`;
+    matched.forEach(d=>{
+      const icon=d.status==='autoDisc'?'⚡':'✓';
+      const label=d.status==='autoDisc'?'Auto disc.':(bills.find(b=>b.id===d.bill)||{}).name||d.bill;
+      html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--br);">
+        <div>
+          <div style="font-size:12px;font-weight:600;">${icon} ${d.merchant}</div>
+          <div style="font-size:10px;color:var(--t3);">${d.date} · ${label}</div>
+        </div>
+        <div style="font-size:12px;color:var(--grn);font-weight:700;">-$${d.amt}</div>
+      </div>`;
+    });
+  }
+
+  document.getElementById('debit-modal-content').innerHTML=html;
+}
+
+window.resolveDebit=function(idx,action){
+  const log=S.debitLog||[];
+  const d=log[idx];
+  if(!d)return;
+
+  if(action==='disc'){
+    d.status='autoDisc';
+    S.discSpent=(S.discSpent||0)+parseFloat(d.amt);
+    (S.discLog=S.discLog||[]).unshift({amt:parseFloat(d.amt),date:d.date,label:d.merchant,cat:'discretionary',auto:true});
+  } else if(action==='autoDisc'){
+    d.status='autoDisc';
+    S.discSpent=(S.discSpent||0)+parseFloat(d.amt);
+    (S.discLog=S.discLog||[]).unshift({amt:parseFloat(d.amt),date:d.date,label:d.merchant,cat:'discretionary',auto:true});
+    S.autoDisc=S.autoDisc||[];
+    if(!S.autoDisc.includes(d.merchant))S.autoDisc.push(d.merchant);
+  } else if(action==='link'){
+    const sel=document.getElementById('link-bill-'+idx);
+    if(!sel||!sel.value){toast('Pick a bill first');return;}
+    d.status='matched';
+    d.bill=sel.value;
+    // Save keyword to that bill for future auto-matching
+    const bills=getUserBills();
+    const bill=bills.find(b=>b.id===sel.value);
+    if(bill&&!bill.debitKeyword){
+      bill.debitKeyword=d.merchant;
+      S.userBills=bills;
+      const kwMap={};
+      bills.forEach(b=>{if(b.debitKeyword)kwMap[b.id]=b.debitKeyword;});
+      S.billKeywords=kwMap;
+    }
+  } else if(action==='newBill'){
+    closeDebitModal();
+    addBill();
+    setTimeout(()=>{
+      document.getElementById('bm-name').value=d.merchant;
+      document.getElementById('bm-amt').value=d.amt;
+      document.getElementById('bm-keyword').value=d.merchant;
+    },160);
+    return;
+  } else if(action==='ignore'){
+    d.status='ignored';
+  }
+
+  S.debitLog=log;
+  save(S);
+  renderDebitModal();
+  renderWeek();
+  renderBills();
+};
 
 // ══ ACTIONS ══
 // Spend log — tracking only, never touches bal4496
