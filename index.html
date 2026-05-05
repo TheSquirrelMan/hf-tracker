@@ -1193,7 +1193,7 @@ function renderWeek(){
     const m=roadmap[p.id];if(!m)return;
     const md=new Date(m.date+'T12:00:00');
     if(md>=todayDate&&md<in7){
-      const diff=Math.round((md-todayDate)/86400000);
+      const mdMid=new Date(m.date+'T00:00:00'); const diff=Math.round((mdMid-todayDate)/86400000);
       addWE(today+diff,p.label.toUpperCase(),-p.cost,false,'var(--amb)',`$${p.cost.toLocaleString()} · calculated safe date`,true);
     }
   });
@@ -1203,7 +1203,7 @@ function renderWeek(){
       const m=roadmap[nxt.id+'-done'];if(m){
         const md=new Date(m.date+'T12:00:00');
         if(md>=todayDate&&md<in7){
-          const diff=Math.round((md-todayDate)/86400000);
+          const mdMid=new Date(m.date+'T00:00:00'); const diff=Math.round((mdMid-todayDate)/86400000);
           addWE(today+diff,`${nxt.label} — PAID OFF`,0,false,'var(--pur)','Snowball clears this debt',true);
         }
       }
