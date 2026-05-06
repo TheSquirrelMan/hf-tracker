@@ -329,6 +329,12 @@ let STATE = null;
 
 // ══ CONSTANTS ══
 const PKEY='hft_auth';
+
+// Prefetch app_config immediately on page load so it's ready when PIN is entered
+let configCache = null;
+const configPromise = get(ref(db, 'app_config')).then(snap => {
+  configCache = snap.val();
+}).catch(() => {});
 const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 //const JON_PAY=1641;
@@ -491,9 +497,8 @@ let pinBuf = '';
 async function checkAuth() {
   if (sessionStorage.getItem(PKEY) === 'ok') {
     try {
-      // We still need to fetch the secret folder name even on refresh
-      const configSnap = await get(ref(db, 'app_config'));
-      const config = configSnap.val();
+      // Use cached config (prefetched on load), fall back to fresh fetch if needed
+      const config = configCache || (await get(ref(db, 'app_config'))).val();
       
       SECRET = config.dataSecret;
       STATE = ref(db, `hft/${SECRET}/state`);
@@ -538,8 +543,8 @@ function updatePinDots(err = false) {
 // NEW SECURE ASYNC CHECK
 async function checkPin() {
   try {
-    const configSnap = await get(ref(db, 'app_config'));
-    const config = configSnap.val();
+    // Use prefetched config cache; fall back to fresh fetch if cache missed
+    const config = configCache || (await get(ref(db, 'app_config'))).val();
 
     const msgUint8 = new TextEncoder().encode(pinBuf);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
@@ -1714,10 +1719,11 @@ function renderBills(){
   html+=`<div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin:14px 0 6px;">Auto-managed · hardcoded logic</div>
   <div class="card" style="padding:0;">`;
   LOCKED_BILLS.forEach((b,i)=>{
-    html+=`<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:0.5px solid var(--br);${i===LOCKED_BILLS.length-1?'border-bottom:none;':''}opacity:0.6;">
+    html+=`<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:0.5px solid var(--br);${i===LOCKED_BILLS.length-1?'border-bottom:none;':''}">
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:600;">${b.name} <span style="font-size:10px;color:var(--t3);background:var(--s3);padding:2px 5px;border-radius:4px;margin-left:4px;">locked</span></div>
         <div style="font-size:11px;color:var(--t3);margin-top:1px;">${b.note}</div>
+        ${(()=>{const m=(S.debitLog||[]).find(d=>d.status==='matched'&&d.bill===b.id);return m?`<div style="font-size:10px;color:var(--grn);margin-top:2px;">&#10003; Posted $${m.amt} · ${m.date}</div>`:'';})()}
       </div>
       <div style="font-size:14px;font-weight:700;color:var(--red);">-$${b.amt}</div>
     </div>`;
@@ -1825,7 +1831,7 @@ function renderDebitModal(){
     html+=`<div style="font-size:11px;font-weight:700;color:var(--red);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">${pending.length} unmatched</div>`;
     pending.forEach((d,i)=>{
       const idx=(S.debitLog||[]).indexOf(d);
-      const billOptions=bills.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+      const allBillOptions=[...bills,...LOCKED_BILLS].map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
       html+=`<div style="border:1px solid var(--br);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
           <div>
@@ -1841,7 +1847,7 @@ function renderDebitModal(){
           </div>
           <div style="display:flex;gap:6px;align-items:center;">
             <select id="link-bill-${idx}" style="flex:1;background:var(--s2);border:1px solid var(--br);color:var(--tx);border-radius:6px;padding:6px 8px;font-size:12px;">
-              <option value="">Link to bill...</option>${billOptions}
+              <option value="">Link to bill...</option>${allBillOptions}
             </select>
             <button class="btn btng btnsm" style="font-size:11px;" onclick="resolveDebit(${idx},'link')">Link</button>
           </div>
@@ -1860,7 +1866,7 @@ function renderDebitModal(){
     html+=`<div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin:12px 0 8px;">Recent auto-matched</div>`;
     matched.forEach(d=>{
       const icon=d.status==='autoDisc'?'⚡':'✓';
-      const label=d.status==='autoDisc'?'Auto disc.':(bills.find(b=>b.id===d.bill)||{}).name||d.bill;
+      const label=d.status==='autoDisc'?'Auto disc.':(bills.find(b=>b.id===d.bill)||LOCKED_BILLS.find(b=>b.id===d.bill)||{}).name||d.bill;
       html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--br);">
         <div>
           <div style="font-size:12px;font-weight:600;">${icon} ${d.merchant}</div>
