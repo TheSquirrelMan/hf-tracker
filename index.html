@@ -1262,10 +1262,21 @@ function renderWeek(){
       const dow=DN[ed.getDay()];
       html+=`<div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:${day===wdays[0]?'0':'8px'} 0 3px;text-transform:uppercase;letter-spacing:.06em;">${isToday?'TODAY · ':''}${dow} ${ed.getDate()}</div>`;
       let dayNet=weekEvtsByDay[day].reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
-      if(firstDay) firstDay=false;
-      // For today, bal4496 is already the live source of truth (synced from USAA).
-      // Don't mutate runBal for today — just show events. Future days accumulate normally.
-      if(!isToday) runBal+=dayNet;
+      // For today: display bal4496 as-is (it's the live synced balance).
+      // For projecting tomorrow+, seed runBal from bal4496 and add today's bills (not income, already in bal4496).
+      if(firstDay){
+        firstDay=false;
+        if(isToday){
+          const incomeToday=weekEvtsByDay[day].filter(e=>e.isIncome).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
+          const discToday=weekEvtsByDay[day].filter(e=>e.note&&e.note.startsWith('Logged')).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
+          // runBal starts at bal4496; add dayNet but remove income (already in bal4496) and disc (already spent)
+          runBal+=dayNet-incomeToday-discToday;
+        } else {
+          runBal+=dayNet;
+        }
+      } else {
+        runBal+=dayNet;
+      }
       weekEvtsByDay[day].forEach(e=>{
         const ac=e.isIncome?'var(--grn)':e.amt<0?'var(--red)':e.color||'var(--t2)';
         const as=e.amt!==0?(e.amt>0?`+$${Math.round(e.amt).toLocaleString()}`:`-$${Math.round(Math.abs(e.amt)).toLocaleString()}`):'';
@@ -1278,16 +1289,15 @@ function renderWeek(){
           ${as?`<div class="evamt" style="color:${ac};${e.feat?'font-weight:700;':''}">${as}</div>`:''}
         </div>`;
       });
-      // Day-end balance (skip today — bal4496 in header is the live source of truth)
-      if(!isToday){
-        const bc=runBal<0?'var(--red)':runBal<300?'var(--amb)':'var(--blu)';
-        const nc=dayNet>0?'var(--grn)':dayNet<0?'var(--red)':'var(--t3)';
-        const ns=dayNet!==0?(dayNet>0?`+$${Math.round(dayNet).toLocaleString()}`:`-$${Math.round(Math.abs(dayNet)).toLocaleString()}`):'';
+      // Day-end balance
+      const dispBal=isToday?S.bal4496:runBal;
+      const bc=dispBal<0?'var(--red)':dispBal<300?'var(--amb)':'var(--blu)';
+      const nc=dayNet>0?'var(--grn)':dayNet<0?'var(--red)':'var(--t3)';
+      const ns=(!isToday&&dayNet!==0)?(dayNet>0?`+$${Math.round(dayNet).toLocaleString()}`:`-$${Math.round(Math.abs(dayNet)).toLocaleString()}`):'';
       html+=`<div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 0 5px;border-top:0.5px solid var(--br);margin-top:2px;">
         ${ns?`<span style="font-size:11px;font-weight:600;color:${nc};">${ns}</span><span style="color:var(--t4);">·</span>`:''}
-        <span style="font-size:12px;font-weight:700;color:${bc};">$${Math.round(runBal).toLocaleString()}${runBal<0?' ⚠':''}</span>
+        <span style="font-size:12px;font-weight:700;color:${bc};">$${Math.round(dispBal).toLocaleString()}${dispBal<0?' ⚠':''}</span>
       </div>`;
-      }
     });
     html+=`</div></div>`;
   }
