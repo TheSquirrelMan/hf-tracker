@@ -809,8 +809,25 @@ function calcRoadmap(){
   if(snowIdx===-1)snowIdx=null;
 
 
+  // Pre-check: if today's actual balance already covers the next phase, lock it to today
+  const todayStr=now.toISOString().split('T')[0];
+  if(pendingPhases.length>0){
+    const phase=pendingPhases[0];
+    const needed=phase.cost+800;
+    if(balance>=needed){
+      milestones[phase.id]={date:todayStr,bal:Math.round(balance)};
+      balance-=phaseAmt(phase.id,phase.cost);
+      lastPhaseDate=new Date(now);
+      pendingPhases.shift();
+      if(pendingPhases.length===0){
+        snowballActive=true;
+        milestones['snowball-start']={date:todayStr};
+      }
+    }
+  }
+
   // Start simulation from tomorrow
-  const d=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
 
   for(let i=0;i<1500;i++){
     const yr=d.getFullYear(),mo=d.getMonth(),dy=d.getDate();
