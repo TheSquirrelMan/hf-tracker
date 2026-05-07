@@ -1286,7 +1286,7 @@ function renderWeek(){
           <div class="evcontent">
             <div class="evtitle" style="${e.feat?`color:${e.color};font-weight:700;`:''}">${e.label}</div>
             ${e.note?`<div class="evsub">${e.note}</div>`:''}
-            ${(()=>{const pm=getPostedEntry(e.billId,e.label);return pm?`<div style="font-size:10px;color:var(--grn);margin-top:1px;">✓ Posted $$${pm.amt} · ${pm.date}</div>`:''})()}
+            ${(()=>{const pm=getPostedEntry(e.billId,e.label);return pm?`<div style="font-size:10px;color:var(--grn);margin-top:1px;">✓ Posted $${pm.amt} · ${pm.date}</div>`:''})()}
           </div>
           ${as?`<div class="evamt" style="color:${ac};${e.feat?'font-weight:700;':''}">${as}</div>`:''}
         </div>`;
@@ -1450,7 +1450,7 @@ function renderMonth(){
           <div class="evcontent">
             <div class="evtitle" style="font-size:13px;${e.feat?`color:${e.isFinal?'var(--pur)':e.color};`:''}">${e.title}</div>
             ${e.note?`<div class="evsub">${e.note}</div>`:''}
-            ${(()=>{const pm=getPostedEntry(e.billId,e.label);return pm?`<div style="font-size:10px;color:var(--grn);margin-top:1px;">✓ Posted $$${pm.amt} · ${pm.date}</div>`:''})()}
+            ${(()=>{const pm=getPostedEntry(e.billId,e.label);return pm?`<div style="font-size:10px;color:var(--grn);margin-top:1px;">✓ Posted $${pm.amt} · ${pm.date}</div>`:''})()}
           </div>
           ${as?`<div class="evamt" style="color:${ac};${e.feat?'font-weight:700;':''}">${as}</div>`:''}
         </div>`;
@@ -1705,7 +1705,6 @@ function renderBills(){
       <div style="flex:1;min-width:0;cursor:pointer;" onclick="editBillItem('${b.id}')">
         <div style="font-size:14px;font-weight:600;">${b.name}${b.debitKeyword?`<span style="font-size:10px;color:var(--t3);background:var(--s3);padding:2px 5px;border-radius:4px;margin-left:6px;">${b.debitKeyword}</span>`:''}</div>
         <div style="font-size:11px;color:var(--t3);margin-top:1px;">${dayLabel} · ${b.note||''}</div>
-        ${(()=>{const m=(S.debitLog||[]).find(d=>d.status==='matched'&&d.bill===b.id);return m?`<div style="font-size:10px;color:var(--grn);margin-top:2px;">&#10003; Posted $${m.amt} · ${m.date}</div>`:'';})()}
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
         <div style="font-size:15px;font-weight:700;color:var(--red);cursor:pointer;" onclick="editBillItem('${b.id}')">-$${b.amt}</div>
@@ -1723,7 +1722,6 @@ function renderBills(){
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:600;">${b.name} <span style="font-size:10px;color:var(--t3);background:var(--s3);padding:2px 5px;border-radius:4px;margin-left:4px;">locked</span></div>
         <div style="font-size:11px;color:var(--t3);margin-top:1px;">${b.note}</div>
-        ${(()=>{const m=(S.debitLog||[]).find(d=>d.status==='matched'&&d.bill===b.id);return m?`<div style="font-size:10px;color:var(--grn);margin-top:2px;">&#10003; Posted $${m.amt} · ${m.date}</div>`:'';})()}
       </div>
       <div style="font-size:14px;font-weight:700;color:var(--red);">-$${b.amt}</div>
     </div>`;
