@@ -329,12 +329,6 @@ let STATE = null;
 
 // ══ CONSTANTS ══
 const PKEY='hft_auth';
-
-// Prefetch app_config immediately on page load so it's ready when PIN is entered
-let configCache = null;
-const configPromise = get(ref(db, 'app_config')).then(snap => {
-  configCache = snap.val();
-}).catch(() => {});
 const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 //const JON_PAY=1641;
@@ -497,8 +491,9 @@ let pinBuf = '';
 async function checkAuth() {
   if (sessionStorage.getItem(PKEY) === 'ok') {
     try {
-      // Use cached config (prefetched on load), fall back to fresh fetch if needed
-      const config = configCache || (await get(ref(db, 'app_config'))).val();
+      // We still need to fetch the secret folder name even on refresh
+      const configSnap = await get(ref(db, 'app_config'));
+      const config = configSnap.val();
       
       SECRET = config.dataSecret;
       STATE = ref(db, `hft/${SECRET}/state`);
@@ -543,8 +538,8 @@ function updatePinDots(err = false) {
 // NEW SECURE ASYNC CHECK
 async function checkPin() {
   try {
-    // Use prefetched config cache; fall back to fresh fetch if cache missed
-    const config = configCache || (await get(ref(db, 'app_config'))).val();
+    const configSnap = await get(ref(db, 'app_config'));
+    const config = configSnap.val();
 
     const msgUint8 = new TextEncoder().encode(pinBuf);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
@@ -1267,17 +1262,10 @@ function renderWeek(){
       const dow=DN[ed.getDay()];
       html+=`<div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:${day===wdays[0]?'0':'8px'} 0 3px;text-transform:uppercase;letter-spacing:.06em;">${isToday?'TODAY · ':''}${dow} ${ed.getDate()}</div>`;
       let dayNet=weekEvtsByDay[day].reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
-      // Skip today's income only if this first day is actually today
-      if(firstDay){
-        firstDay=false;
-        if(isToday){
-          const incomeToday=weekEvtsByDay[day].filter(e=>e.isIncome).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
-          dayNet-=incomeToday;
-          const discToday=weekEvtsByDay[day].filter(e=>e.note&&e.note.startsWith('Logged')).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
-          dayNet-=discToday;
-        }
-      }
-      runBal+=dayNet;
+      if(firstDay) firstDay=false;
+      // For today, bal4496 is already the live source of truth (synced from USAA).
+      // Don't mutate runBal for today — just show events. Future days accumulate normally.
+      if(!isToday) runBal+=dayNet;
       weekEvtsByDay[day].forEach(e=>{
         const ac=e.isIncome?'var(--grn)':e.amt<0?'var(--red)':e.color||'var(--t2)';
         const as=e.amt!==0?(e.amt>0?`+$${Math.round(e.amt).toLocaleString()}`:`-$${Math.round(Math.abs(e.amt)).toLocaleString()}`):'';
@@ -1286,19 +1274,20 @@ function renderWeek(){
           <div class="evcontent">
             <div class="evtitle" style="${e.feat?`color:${e.color};font-weight:700;`:''}">${e.label}</div>
             ${e.note?`<div class="evsub">${e.note}</div>`:''}
-            ${(()=>{const pm=getPostedEntry(e.billId,e.label);return pm?`<div style="font-size:10px;color:var(--grn);margin-top:1px;">✓ Posted $$${pm.amt} · ${pm.date}</div>`:''})()}
           </div>
           ${as?`<div class="evamt" style="color:${ac};${e.feat?'font-weight:700;':''}">${as}</div>`:''}
         </div>`;
       });
-      // Day-end balance
-      const bc=runBal<0?'var(--red)':runBal<300?'var(--amb)':'var(--blu)';
-      const nc=dayNet>0?'var(--grn)':dayNet<0?'var(--red)':'var(--t3)';
-      const ns=dayNet!==0?(dayNet>0?`+$${Math.round(dayNet).toLocaleString()}`:`-$${Math.round(Math.abs(dayNet)).toLocaleString()}`):'';
+      // Day-end balance (skip today — bal4496 in header is the live source of truth)
+      if(!isToday){
+        const bc=runBal<0?'var(--red)':runBal<300?'var(--amb)':'var(--blu)';
+        const nc=dayNet>0?'var(--grn)':dayNet<0?'var(--red)':'var(--t3)';
+        const ns=dayNet!==0?(dayNet>0?`+$${Math.round(dayNet).toLocaleString()}`:`-$${Math.round(Math.abs(dayNet)).toLocaleString()}`):'';
       html+=`<div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 0 5px;border-top:0.5px solid var(--br);margin-top:2px;">
         ${ns?`<span style="font-size:11px;font-weight:600;color:${nc};">${ns}</span><span style="color:var(--t4);">·</span>`:''}
         <span style="font-size:12px;font-weight:700;color:${bc};">$${Math.round(runBal).toLocaleString()}${runBal<0?' ⚠':''}</span>
       </div>`;
+      }
     });
     html+=`</div></div>`;
   }
@@ -1450,7 +1439,6 @@ function renderMonth(){
           <div class="evcontent">
             <div class="evtitle" style="font-size:13px;${e.feat?`color:${e.isFinal?'var(--pur)':e.color};`:''}">${e.title}</div>
             ${e.note?`<div class="evsub">${e.note}</div>`:''}
-            ${(()=>{const pm=getPostedEntry(e.billId,e.label);return pm?`<div style="font-size:10px;color:var(--grn);margin-top:1px;">✓ Posted $$${pm.amt} · ${pm.date}</div>`:''})()}
           </div>
           ${as?`<div class="evamt" style="color:${ac};${e.feat?'font-weight:700;':''}">${as}</div>`:''}
         </div>`;
@@ -1719,11 +1707,10 @@ function renderBills(){
   html+=`<div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin:14px 0 6px;">Auto-managed · hardcoded logic</div>
   <div class="card" style="padding:0;">`;
   LOCKED_BILLS.forEach((b,i)=>{
-    html+=`<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:0.5px solid var(--br);${i===LOCKED_BILLS.length-1?'border-bottom:none;':''}">
+    html+=`<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:0.5px solid var(--br);${i===LOCKED_BILLS.length-1?'border-bottom:none;':''}opacity:0.6;">
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:600;">${b.name} <span style="font-size:10px;color:var(--t3);background:var(--s3);padding:2px 5px;border-radius:4px;margin-left:4px;">locked</span></div>
         <div style="font-size:11px;color:var(--t3);margin-top:1px;">${b.note}</div>
-        ${(()=>{const m=(S.debitLog||[]).find(d=>d.status==='matched'&&d.bill===b.id);return m?`<div style="font-size:10px;color:var(--grn);margin-top:2px;">&#10003; Posted $${m.amt} · ${m.date}</div>`:'';})()}
       </div>
       <div style="font-size:14px;font-weight:700;color:var(--red);">-$${b.amt}</div>
     </div>`;
@@ -1831,7 +1818,7 @@ function renderDebitModal(){
     html+=`<div style="font-size:11px;font-weight:700;color:var(--red);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">${pending.length} unmatched</div>`;
     pending.forEach((d,i)=>{
       const idx=(S.debitLog||[]).indexOf(d);
-      const allBillOptions=[...bills,...LOCKED_BILLS].map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+      const billOptions=bills.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
       html+=`<div style="border:1px solid var(--br);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
           <div>
@@ -1847,7 +1834,7 @@ function renderDebitModal(){
           </div>
           <div style="display:flex;gap:6px;align-items:center;">
             <select id="link-bill-${idx}" style="flex:1;background:var(--s2);border:1px solid var(--br);color:var(--tx);border-radius:6px;padding:6px 8px;font-size:12px;">
-              <option value="">Link to bill...</option>${allBillOptions}
+              <option value="">Link to bill...</option>${billOptions}
             </select>
             <button class="btn btng btnsm" style="font-size:11px;" onclick="resolveDebit(${idx},'link')">Link</button>
           </div>
@@ -1866,7 +1853,7 @@ function renderDebitModal(){
     html+=`<div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin:12px 0 8px;">Recent auto-matched</div>`;
     matched.forEach(d=>{
       const icon=d.status==='autoDisc'?'⚡':'✓';
-      const label=d.status==='autoDisc'?'Auto disc.':(bills.find(b=>b.id===d.bill)||LOCKED_BILLS.find(b=>b.id===d.bill)||{}).name||d.bill;
+      const label=d.status==='autoDisc'?'Auto disc.':(bills.find(b=>b.id===d.bill)||{}).name||d.bill;
       html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--br);">
         <div>
           <div style="font-size:12px;font-weight:600;">${icon} ${d.merchant}</div>
