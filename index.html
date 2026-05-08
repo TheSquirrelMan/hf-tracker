@@ -685,7 +685,7 @@ function getDailyBills(year,month,day,cardBalOverride){
   if(S.userBills){
     S.userBills.filter(b=>!DEFAULT_BILL_IDS.has(b.id)).forEach(b=>{
       const days=Array.isArray(b.day)?b.day:[b.day];
-      if(days.includes(day))push(b.name,-b.amt,false,b.id);
+      if(days.map(Number).includes(day))push(b.name,-b.amt,false,b.id);
     });
   }
 
