@@ -240,22 +240,7 @@ select.minput option{background:var(--s2);}
     <div class="mtitle" id="bm-title">Edit bill</div>
     <input class="minput" type="text" id="bm-name" placeholder="Bill name">
     <input class="minput" type="number" id="bm-amt" placeholder="Amount ($)" inputmode="decimal">
-    <select class="minput" id="bm-frequency" onchange="onBillFrequencyChange()">
-      <option value="monthly">Monthly</option>
-      <option value="weekly">Weekly</option>
-      <option value="biweekly">Biweekly</option>
-    </select>
-    <input class="minput" type="text" id="bm-day" placeholder="Due day e.g. 15 or 4,18 (biweekly) or leave blank for weekly" inputmode="numeric">
-    <select class="minput" id="bm-dow" style="display:none;">
-      <option value="0">Sunday</option>
-      <option value="1">Monday</option>
-      <option value="2">Tuesday</option>
-      <option value="3">Wednesday</option>
-      <option value="4">Thursday</option>
-      <option value="5">Friday</option>
-      <option value="6">Saturday</option>
-    </select>
-    <input class="minput" type="text" id="bm-enddate" placeholder="End date YYYY-MM (optional, e.g. 2027-06)">
+    <input class="minput" type="text" id="bm-day" placeholder="Due day e.g. 15 or 4,18 for biweekly" inputmode="numeric">
     <input class="minput" type="text" id="bm-note" placeholder="Note (optional)">
     <input class="minput" type="text" id="bm-keyword" placeholder="Debit keyword e.g. PUBLIX, T-MOBILE (optional)">
     <button class="btn btng" onclick="saveBillModal()">Save</button>
@@ -388,6 +373,15 @@ const TARGETS=[
   {id:'mazda',   label:'Mazda CX-5',           startBal:20693,minPay:638, apr:0.1272},
 ];
 
+function getAffirmAmt(key) {
+  if (key <= '2026-06') return 188;
+  if (key <= '2026-07') return 152;
+  if (key <= '2026-09') return 108;
+  if (key <= '2026-10') return 95;
+  if (key <= '2027-02') return 82;
+  if (key <= '2028-01') return 59;
+  return 0;
+}
 
 // ══ STATE ══
 let S={};
@@ -404,6 +398,8 @@ function defaultState(){
     discSpent:0,discLog:[],
     discWeekly:50,
     discMonthlyCap:200,
+    weeks:[null,null,null,null],
+    randySessions:[],
     billChecks:{},
     phaseDone:{},
     phases: JSON.parse(JSON.stringify(DEFAULT_PHASES)),
@@ -416,6 +412,7 @@ function defaultState(){
 
 function resetMonthly(s){
   s.mKey=mKey;s.discSpent=0;s.discLog=[];
+  s.weeks=[null,null,null,null];s.randySessions=[];
   s.billChecks={};
   return s;
 }
@@ -640,6 +637,10 @@ if(mMode==='karen-avg'){S.karenAvgPay=amt;
     const id=mMode.replace('card-','');
     if(!S.cardBals)S.cardBals={};
     S.cardBals[id]=amt;
+    if(amt<=0){
+      const endKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      (S.userBills||[]).forEach(b=>{if(b.cardId===id&&!b.endDate)b.endDate=endKey;});
+    }
     _cachedRoadmap = null; // Invalidate roadmap cache
     save(S);renderSnowball();toast('Balance updated');
   }
@@ -650,6 +651,7 @@ window.editBal=a=>{
 };
 
 // Set of default bill IDs for filtering custom-added bills
+const DEFAULT_BILL_IDS=new Set(['mazda','att','tmobile','statefarm','tn','irs1','irs2','merrick','cap3186','usaaAmex','cap4565','cap5592','cap7988','jonpaypal','karenpaypal','chase','spotify','claude','chatgpt','prime','realdebrid','affirm','newegg','ebay','chinese','amazon','freshmarket','gas']);
 
 // ══ DAILY BILLS ENGINE ══
 // Returns array of {label, amt, isIncome} for a given date
@@ -658,55 +660,110 @@ function getDailyBills(year,month,day,cardBalOverride){
   const bills=[];
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dow=new Date(year,month,day).getDay();
-  const cb=cardBalOverride||(S.cardBals||{});
-  const push=(label,amt,isIncome=false,billId=null,color=null,note='')=>bills.push({label,amt,isIncome,billId,color,note});
 
-  // ── Income ──
-  const today=new Date();today.setHours(0,0,0,0);
-  const thisDate=new Date(year,month,day);
-  const isFuture=thisDate>today;
-  const currentKaren=isFuture?Math.floor(S.karenAvgPay||S.karenLastPay||810):(S.karenLastPay||810);
-  const currentJon=isFuture?1641:(S.jonLastPay||1641);
-  if(day===7||day===22)push('Jon paycheck',currentJon,true);
+// 1. Time Gate
+  const today = new Date();
+  today.setHours(0,0,0,0); 
+  const thisDate = new Date(year, month, day);
+  const isFuture = thisDate > today;
+
+  // 2. Karen's Logic: Future gets clean 810, Today/Past gets real sync data
+  let currentKaren = isFuture ? (S.karenAvgPay || S.karenLastPay || 810) : (S.karenLastPay || 810);
+  
+  // 3. Jon's Logic: Future gets clean 1641, Today/Past gets real sync data
+  let currentJon = isFuture ? 1641 : (S.jonLastPay || 1641);
+
+  // 4. Force clean whole numbers ONLY for future Roadmap dates
+  if (isFuture) {
+    currentKaren = Math.floor(currentKaren);
+    currentJon = Math.floor(currentJon);
+  }
+
+  // 3. DEFINE CB HERE (This fixes your current error)
+  const cb = cardBalOverride || (S.cardBals || {});
+  
+  // 4. Define the push helper
+  const push=(label,amt,isIncome=false,billId=null)=>bills.push({label,amt,isIncome,billId});  // Helper: get bill amount from userBills if edited, else default
+
+  // User-managed custom bills (added by user, not in defaults)
+  if(S.userBills){
+    S.userBills.filter(b=>!DEFAULT_BILL_IDS.has(b.id)).forEach(b=>{
+      const days=Array.isArray(b.day)?b.day:[b.day];
+      if(days.map(Number).includes(day))push(b.name,-b.amt,false,b.id);
+    });
+  }
+
+  // Income
+  if(day===7 || day===22) push('Jon paycheck', currentJon, true);
   if(dow===4)push('Karen paycheck',currentKaren,true);
+  
+  // Groceries (Sunday)
+  if(dow===0)push('Fresh Market',-ub('freshmarket',200));
 
-  // ── Discretionary (Sunday) ──
-  if(dow===0){
-    const weeklyAmt=S.discWeekly||50;
-    const monthlyCap=S.discMonthlyCap||200;
-    const lastDay=new Date(year,month+1,0).getDate();
-    const isLastSunday=(day+7)>lastDay;
-    let spent=0;
-    for(let i=1;i<day;i++){if(new Date(year,month,i).getDay()===0)spent+=weeklyAmt;}
-    if(spent<monthlyCap){
-      push('Discretionary',-(isLastSunday?(monthlyCap-spent):Math.min(weeklyAmt,monthlyCap-spent)));
+  // Discretionary allowance -- $50/wk every Sunday baked into projection
+  // if(dow===0)push('Discretionary',-50);
+  // Smart Discretionary Logic: Exactly $200 per month
+if (dow === 0) {
+    const weeklyAmt = S.discWeekly || 50;
+    const monthlyCap = S.discMonthlyCap || 200;
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    
+    // Check if this is the last Sunday of the month
+    const isLastSunday = (day + 7) > lastDay;
+    
+    let spent = 0;
+    for (let i = 1; i < day; i++) {
+      if (new Date(year, month, i).getDay() === 0) spent += weeklyAmt;
+    }
+    
+    if (spent < monthlyCap) {
+      if (isLastSunday) {
+        // Last Sunday: deduct whatever's needed to hit the cap
+        push('Discretionary', -(monthlyCap - spent));
+      } else {
+        // Normal Sunday: deduct weekly amount (but don't exceed cap)
+        push('Discretionary', -Math.min(weeklyAmt, monthlyCap - spent));
+      }
     }
   }
 
-  // ── User bills from Firebase ──
-  (S.userBills||[]).forEach(b=>{
-    // End date check
-    if(b.endDate&&key>b.endDate)return;
-    // Card payoff suppression
-    if(b.cardId){
-      const t=TARGETS.find(x=>x.id===b.cardId);
-      const bal=cb[b.cardId]!==undefined?cb[b.cardId]:(t?t.startBal:1);
-      if(bal<=0)return;
-    }
-    // Frequency matching
-    if(b.frequency==='weekly'){
-      if(dow!==(b.dow??0))return;
-    } else if(b.frequency==='monthly'){
-      if(day!==Number(b.day))return;
-    } else if(b.frequency==='biweekly'){
-      const days=Array.isArray(b.day)?b.day.map(Number):[Number(b.day)];
-      if(!days.includes(day))return;
-    } else {
-      return;
-    }
-    push(b.name,-b.amt,false,b.id,b.color||null,b.note||'');
-  });
+  // Transport
+  if(day===ubday('gas',1))push('Gas',-ub('gas',120));
 
+  // Fixed bills with payoff suppression -- amounts pulled from userBills if edited
+  if(day===1&&key<='2026-07'&&bal(cb,'amazon')>0)push('Amazon Store Card',-29);
+  if(day===ubday('prime',2))push('Amazon Prime',-ub('prime',15));
+  if(day===2&&[0,3,6,9].includes(month))push('Real-Debrid',-11);
+  if(day===4&&key<='2027-08')push('PayPal eBay',-43);
+  if(day===ubday('chatgpt',4))push('ChatGPT',-ub('chatgpt',22));
+  if(day===ubday('mazda',9)&&bal(cb,'mazda')>0)push('Mazda CX-5',-ub('mazda',638));
+  if(day===ubday('merrick',11)&&bal(cb,'merrick')>0)push('Merrick Bank',-ub('merrick',35));
+  if(day===ubday('cap3186',11)&&bal(cb,'cap3186')>0)push('Cap One #3186',-ub('cap3186',25));
+  if(day===13) {
+    const affirmAmt = getAffirmAmt(key);
+    if(affirmAmt > 0) push('Affirm cluster', -affirmAmt);
+  }
+  if(day===13&&key<='2027-01')push('PayPal Newegg',-61);
+  if(day===ubday('karenpaypal',13)&&bal(cb,'kpaypal')>0)push('Karen PayPal Credit',-ub('karenpaypal',100));
+  if(day===ubday('claude',13))push('Claude.ai',-ub('claude',20));
+  if(day===ubday('tmobile',15))push('T-Mobile',-ub('tmobile',152));
+  if(day===ubday('usaaAmex',15)&&bal(cb,'usaaAmex')>0)push('USAA Amex',-ub('usaaAmex',63));
+  if(day===ubday('irs1',15)&&bal(cb,'irs')>0)push('IRS #1',-ub('irs1',68));
+  if(day===ubday('irs2',16)&&bal(cb,'irs')>0)push('IRS #2',-ub('irs2',35));
+  if(day===ubday('att',16))push('AT&T fiber',-ub('att',166));
+  if(day===ubday('cap4565',21)&&bal(cb,'cap4565')>0)push('Cap One #4565',-ub('cap4565',25));
+  if(day===ubday('cap5592',21)&&bal(cb,'cap5592')>0)push('Cap One #5592',-ub('cap5592',25));
+  if(day===ubday('cap7988',21)&&bal(cb,'cap7988')>0)push('Cap One #7988',-ub('cap7988',30));
+  if(day===ubday('jonpaypal',22)&&key<='2029-10')push('Jon PayPal Credit',-ub('jonpaypal',22));
+  if(day===ubday('spotify',22))push('Spotify',-ub('spotify',22));
+  if(day===ubday('tn',22)&&key<='2027-12'&&bal(cb,'tn')>0)push('TN unemployment',-ub('tn',153));
+  if(day===ubday('statefarm',23))push('State Farm',-ub('statefarm',190));
+  if(day===ubday('chase',26)&&bal(cb,'chase')>0)push('Chase/Amazon',-ub('chase',26));
+  if(day===30&&key<='2027-03'&&!(year===2026&&month===3))push('PayPal Chinese',-95);
+
+  // One-time
+  if(year===2026&&month===3&&day===23)push('Vehicle registration',-220);
+  if(year===2026&&month===3&&day===30)push('PayPal Chinese — FIRST PMT',-95);
   return bills.filter(b=>b.amt!==0);
 }
 
@@ -723,6 +780,9 @@ function bal(cb,id){
 let _cachedRoadmap = null;
 let _roadmapCacheKey = '';
 const phaseAmt=(id,def)=>{if(S.phaseCosts&&S.phaseCosts[id]!==undefined)return S.phaseCosts[id];return def;};
+const ub=(id,def)=>{if(S.userBills){const b=S.userBills.find(x=>x.id===id);if(b)return b.amt;}return def;};
+const ubn=(id,def)=>{if(S.userBills){const b=S.userBills.find(x=>x.id===id);if(b&&b.note)return b.note;}return def;};
+const ubday=(id,def)=>{if(S.userBills){const b=S.userBills.find(x=>x.id===id);if(b&&b.day!==undefined)return b.day;}return def;};
 function calcRoadmap(){
   // Build cache key from inputs that affect roadmap calculation
   const phasesKey = JSON.stringify(getPhases());
@@ -968,22 +1028,51 @@ function getMonthEvents(year,month,roadmap,balLog){
         if (new Date(year, month, i).getDay() === 0) spentBefore += wkAmt;
       }
       const discAmt = isLastSun ? Math.min(moCap - spentBefore, moCap) : Math.min(wkAmt, moCap - spentBefore);
-      if(discAmt>0)add(d,'Discretionary',-discAmt,'#5c5c58',`$${wkAmt}/wk · $${moCap}/mo cap`);
-      // Fresh Market comes from getDailyBills (weekly, Sunday)
+      
+      add(d,'Fresh Market',-ub('freshmarket',200),'#6b9fd4',ubn('freshmarket',`$${ub('freshmarket',200)}/wk grocery`));
+      add(d,'Discretionary',-discAmt,'#5c5c58',`$${wkAmt}/wk · $${moCap}/mo cap`);
     }
   }
 
-  // ── User bills via getDailyBills ──
-  for(let d=fromDay;d<=dim;d++){
-    getDailyBills(year,month,d).forEach(b=>{
-      // Skip income and discretionary — already handled above
-      if(b.isIncome)return;
-      if(b.label==='Discretionary')return;
-      // notDone check using roadmap for cardId bills
-      if(!b.isIncome)add(d,b.name||b.label,b.amt,b.color||'#5c5c58',b.note||'',false,false,false,b.billId||null);
-    });
-  }
+  // Transport
+  add(ubday('gas',1),'Gas (monthly est.)',-ub('gas',120),'#5c5c58',ubn('gas','Log actual fill-ups in spend log'));
 
+  // Fixed bills
+  if([0,3,6,9].includes(month))add(2,'Real-Debrid',-11,'#5c5c58','Quarterly $11');
+  if(key<='2026-07'&&notDone('amazon',1))add(1,'Amazon Store Card',-ub('amazon',29),'#e8836e','29.49% APR · $235 balance');
+  add(ubday('prime',2),'Amazon Prime',-ub('prime',15),'#5c5c58','Subscription');
+  if(key<='2027-08')add(4,'PayPal eBay',-ub('ebay',43),'#d4922a','35.99% APR · done Aug 2027');
+  add(ubday('chatgpt',4),'ChatGPT',-ub('chatgpt',22),'#5c5c58',ubn('chatgpt','Karen subscription'));
+  add(ubday('randy',4),'Zelle Randy',-ub('randy',150),'#7aad4e',ubn('randy','Biweekly training'));
+  add(18,'Zelle Randy',-ub('randy',150),'#7aad4e',ubn('randy','Biweekly training'));
+  if(notDone('mazda',ubday('mazda',9)))add(ubday('mazda',9),'Mazda CX-5',-ub('mazda',638),'#d4922a','12.72% APR');
+  if(notDone('merrick',ubday('merrick',11)))add(ubday('merrick',11),'Merrick Bank',-ub('merrick',35),'#e8836e','31.95% APR');
+  if(notDone('cap3186',ubday('cap3186',11)))add(ubday('cap3186',11),'Cap One #3186 (Karen)',-ub('cap3186',25),'#e8836e','28.24% APR');
+  const affirmAmt = getAffirmAmt(key);
+  if(affirmAmt > 0) {
+    add(13, 'Affirm cluster', -affirmAmt, '#a8a69f', '0% APR · steps down over time · ends Jan 2028');
+  }
+  if(key<='2027-01')add(13,'PayPal Newegg',-ub('newegg',61),'#d4922a','35.99% APR fixed');
+  if(notDone('kpaypal',ubday('karenpaypal',13)))add(ubday('karenpaypal',13),'Karen PayPal Credit',-ub('karenpaypal',100),'#e8836e','29.64% APR — MANUAL');
+  add(ubday('claude',13),'Claude.ai',-ub('claude',20),'#5c5c58',ubn('claude','Subscription'));
+  add(ubday('tmobile',15),'T-Mobile',-ub('tmobile',152),'#a8a69f','Both phones');
+  if(notDone('usaaAmex',ubday('usaaAmex',15)))add(ubday('usaaAmex',15),'USAA Amex (Karen)',-ub('usaaAmex',63),'#e8836e','27.40% APR');
+  if(notDone('irs',ubday('irs1',15))){add(ubday('irs1',15),'IRS payment #1',-ub('irs1',68),'#d4922a',ubn('irs1','Installment plan'));add(ubday('irs2',16),'IRS payment #2',-ub('irs2',35),'#d4922a',ubn('irs2','Installment plan'));}
+  add(ubday('att',16),'AT&T fiber',-ub('att',166),'#a8a69f',ubn('att','Internet'));
+  if(notDone('cap4565',ubday('cap4565',21)))add(ubday('cap4565',21),'Cap One #4565 (Jon)',-ub('cap4565',25),'#e8836e','29% APR');
+  if(notDone('cap5592',ubday('cap5592',21)))add(ubday('cap5592',21),'Cap One #5592 (Karen)',-ub('cap5592',25),'#e8836e','28.99% APR');
+  if(notDone('cap7988',ubday('cap7988',21)))add(ubday('cap7988',21),'Cap One #7988 (Jon)',-ub('cap7988',30),'#e8836e','29% APR');
+  if(key<='2029-10')add(ubday('jonpaypal',22),'Jon PayPal Credit',-ub('jonpaypal',22),'#a8a69f','0% plan — do NOT overpay · ends Oct 2029');
+  add(ubday('spotify',22),'Spotify',-ub('spotify',22),'#5c5c58',ubn('spotify','Subscription'));
+  if(notDone('tn',ubday('tn',22))&&key<='2027-12')add(ubday('tn',22),'TN unemployment',-ub('tn',153),'#d4922a',ubn('tn','~$153/mo'));
+  add(ubday('statefarm',23),'State Farm',-ub('statefarm',190),'#a8a69f',ubn('statefarm','Auto insurance'));
+  if(notDone('chase',ubday('chase',26)))add(ubday('chase',26),'Chase/Amazon',-ub('chase',26),'#a8a69f','APR TBD');
+  if(key<='2027-03'&&!(year===2026&&month===3))add(30,'PayPal Chinese vendor',-95,'#d4922a','24.99% APR · ends Mar 2027');
+  if(year===2026&&month===3){
+    add(23,'Vehicle registration',-220,'#e8836e','One-time renewal');
+    add(30,'PayPal Chinese — FIRST PMT',-95,'#d4922a','First payment');
+  }
+  if(year===2026&&month===3)add(23,'Vehicle registration',-220,'#e8836e','One-time renewal');
 
   // Expense phase events from roadmap
   getPhases().forEach(phase=>{
@@ -1057,7 +1146,7 @@ function getPostedEntry(billId,label){
   const log=S.debitLog||[];
   if(billId){const m=log.find(d=>d.status==='matched'&&d.bill===billId);if(m)return m;}
   if(label){
-    const bills=(S.userBills||[]);
+    const bills=getUserBills();
     const bill=bills.find(b=>b.name&&b.name.toLowerCase()===label.toLowerCase());
     if(bill){const m=log.find(d=>d.status==='matched'&&d.bill===bill.id);if(m)return m;}
   }
@@ -1510,27 +1599,29 @@ function renderSnowball(){
   });
   html+=`</div>`;
 
-  // Self-liquidating accounts — derived from userBills with endDate
-  const selfLiqBills = (S.userBills||[]).filter(b=>b.endDate);
-  // Group Affirm bills together
-  const affirmBills = selfLiqBills.filter(b=>b.id.startsWith('affirm'));
-  const otherSelfLiq = selfLiqBills.filter(b=>!b.id.startsWith('affirm'));
-  const SELF_LIQ = [];
-  if(affirmBills.length){
-    const totalAffirm = affirmBills.reduce((a,b)=>a+b.amt,0);
-    const latestEnd = affirmBills.map(b=>b.endDate).sort().pop();
-    SELF_LIQ.push({label:'Affirm plans', pmt:Math.round(totalAffirm*100)/100, end:latestEnd, note:'Fixed installment plans · cannot overpay'});
-  }
-  otherSelfLiq.forEach(b=>{
-    SELF_LIQ.push({label:b.name, pmt:b.amt, end:b.endDate, note:b.note||''});
-  });
+  // Self-liquidating accounts
+  const SELF_LIQ=[
+    {
+      label:'Affirm cluster', 
+      bal:1651, 
+      pmt: getAffirmAmt(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`), 
+      end:'Jan 2028', 
+      note:'0% APR · Payment steps down over time'
+    },
+    {label:'PayPal Chinese',    bal:1139, pmt:95,  end:'Mar 2027', note:'24.99% APR · autopay #4496'},
+    {label:'PayPal eBay',       bal:598,  pmt:43,  end:'Aug 2027', note:'35.99% APR · autopay #4496'},
+    {label:'PayPal Newegg',     bal:546,  pmt:61,  end:'Jan 2027', note:'35.99% APR · autopay #4496'},
+    {label:'Jon PayPal Credit', bal:933,  pmt:22,  end:'Oct 2029', note:'0% Customer Assistance — do NOT overpay'},
+  ];
   html+=`<div class="card"><div class="card-title">Self-liquidating · no action needed</div>
     <div style="font-size:11px;color:var(--t3);margin-bottom:10px;">These pay off automatically on fixed plans. Do not overpay.</div>`;
   SELF_LIQ.forEach(a=>{
+    const pct=Math.min(100,Math.round(((a.bal-(a.pmt*Math.ceil(a.bal/a.pmt)))/a.bal+1)*100));
     html+=`<div class="ms" style="flex-direction:column;align-items:flex-start;gap:4px;">
       <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
         <div style="font-size:14px;font-weight:600;">${a.label}</div>
         <div style="text-align:right;">
+          <div style="font-size:14px;font-weight:700;color:var(--blu);">$${Math.round(a.bal).toLocaleString()}</div>
           <div style="font-size:11px;color:var(--t3);">ends ${a.end}</div>
         </div>
       </div>
@@ -1562,11 +1653,60 @@ function renderSnowball(){
 // ══ BILLS TAB ══
 // Default user-managed bills -- stored in S.userBills
 // Locked/auto-ending bills stay hardcoded in getDailyBills()
+const DEFAULT_BILLS=[
+  {id:'mazda',    name:'Mazda CX-5',           amt:638, day:9,  note:'12.72% APR'},
+  {id:'att',      name:'AT&T Fiber',            amt:166, day:16, note:'Internet'},
+  {id:'tmobile',  name:'T-Mobile',              amt:152, day:15, note:'Both phones'},
+  {id:'statefarm',name:'State Farm',            amt:160, day:23, note:'Auto insurance · confirmed $160.27 Apr'},
+  {id:'tn',       name:'TN Unemployment',       amt:153, day:22, note:'~$3,653 remaining'},
+  {id:'irs1',     name:'IRS payment #1',        amt:68,  day:15, note:'Installment plan'},
+  {id:'irs2',     name:'IRS payment #2',        amt:35,  day:16, note:'Installment plan'},
+  {id:'merrick',  name:'Merrick Bank',          amt:35,  day:11, note:'31.95% APR'},
+  {id:'cap3186',  name:'Cap One #3186 (Karen)', amt:25,  day:11, note:'28.24% APR'},
+  {id:'usaaAmex', name:'USAA Amex (Karen)',     amt:63,  day:15, note:'27.40% APR · min payment'},
+  {id:'cap4565',  name:'Cap One #4565 (Jon)',   amt:25,  day:21, note:'29% APR'},
+  {id:'cap5592',  name:'Cap One #5592 (Karen)', amt:25,  day:21, note:'28.99% APR'},
+  {id:'cap7988',  name:'Cap One #7988 (Jon)',   amt:30,  day:21, note:'29% APR'},
+  {id:'jonpaypal',name:'Jon PayPal Credit',     amt:22,  day:22, note:'0% Customer Assistance — do NOT overpay'},
+  {id:'karenpaypal',name:'Karen PayPal Credit', amt:100, day:13, note:'29.64% APR · MANUAL · hardship plan pending'},
+  {id:'chase',    name:'Chase/Amazon Prime',    amt:26,  day:26, note:'APR TBD'},
+  {id:'spotify',  name:'Spotify',               amt:22,  day:22, note:'Subscription'},
+  {id:'claude',   name:'Claude.ai',             amt:20,  day:13, note:'Subscription'},
+  {id:'chatgpt',  name:'ChatGPT',               amt:22,  day:4,  note:'Karen subscription'},
+  {id:'prime',    name:'Amazon Prime',          amt:15,  day:2,  note:'Subscription'},
+  {id:'randy',    name:'Randy training',        amt:150, day:4,  note:'Biweekly · also ~18th'},
+  {id:'freshmarket', name:'Fresh Market',       amt:200, day:0,  note:'Weekly grocery · every Sunday'},
+  {id:'gas',         name:'Gas (monthly est.)', amt:120, day:1,  note:'Log actual fill-ups in spend log'},
+];
+
+// Locked bills -- hardcoded engine logic, shown read-only
+const LOCKED_BILLS=[
+  {id:'realdebrid', name:'Real-Debrid',         amt:11,  note:'Quarterly · Apr/Jul/Oct/Jan 2nd'},
+  {
+    id:'affirm', 
+    name:'Affirm cluster', 
+    amt: getAffirmAmt(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`), 
+    note:'0% APR · Payment steps down over time · ends Jan 2028'
+  },
+  {id:'newegg',     name:'PayPal Newegg',        amt:61,  note:'35.99% APR · $546 remaining · ends Jan 2027'},
+  {id:'ebay',       name:'PayPal eBay',          amt:43,  note:'35.99% APR · $598 remaining · ends Aug 2027'},
+  {id:'chinese',    name:'PayPal Chinese',       amt:95,  note:'24.99% APR · $1,139 remaining · ends Mar 2027'},
+  {id:'amazon',     name:'Amazon Store Card',    amt:29,  note:'29.49% APR · $235 balance · ends ~Jul 2026'},
+];
+
+function getUserBills(){
+  if(!S.userBills||!S.userBills.length)return DEFAULT_BILLS.map(b=>({...b}));
+  const saved=S.userBills;
+  const savedIds=new Set(saved.map(b=>b.id));
+  const missing=DEFAULT_BILLS.filter(b=>!savedIds.has(b.id));
+  return missing.length?[...saved,...missing]:saved;
+}
+
 // Bill edit modal state
 let editingBill=null;
 
 function renderBills(){
-  const bills=(S.userBills||[]);
+  const bills=getUserBills();
   const totalAmt=bills.reduce((a,b)=>a+b.amt,0);
 
   let html=`<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;">
@@ -1580,19 +1720,32 @@ function renderBills(){
   // User-managed bills
   html+=`<div class="card" style="padding:0;">`;
   bills.forEach((b,i)=>{
-    const DOW_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const dayLabel=b.frequency==='weekly'?`Every ${DOW_NAMES[b.dow??0]}`:b.frequency==='biweekly'?(Array.isArray(b.day)?b.day.map(d=>`~${d}th`).join(' + '):`~${b.day}th`):`~${b.day}th`;
-    const endLabel=b.endDate?` · ends ${b.endDate}`:'';
+    const dayLabel=Array.isArray(b.day)?b.day.map(d=>`~${d}th`).join(' + '):`~${b.day}th`;
     html+=`<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:0.5px solid var(--br);${i===bills.length-1?'border-bottom:none;':''}">
       <div style="flex:1;min-width:0;cursor:pointer;" onclick="editBillItem('${b.id}')">
         <div style="font-size:14px;font-weight:600;">${b.name}${b.debitKeyword?`<span style="font-size:10px;color:var(--t3);background:var(--s3);padding:2px 5px;border-radius:4px;margin-left:6px;">${b.debitKeyword}</span>`:''}</div>
-        <div style="font-size:11px;color:var(--t3);margin-top:1px;">${dayLabel}${endLabel}${b.note?' · '+b.note:''}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:1px;">${dayLabel} · ${b.note||''}</div>
         ${(()=>{const m=(S.debitLog||[]).find(d=>d.status==='matched'&&d.bill===b.id);return m?`<div style="font-size:10px;color:var(--grn);margin-top:2px;">&#10003; Posted $${m.amt} · ${m.date}</div>`:'';})()}
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
         <div style="font-size:15px;font-weight:700;color:var(--red);cursor:pointer;" onclick="editBillItem('${b.id}')">-$${b.amt}</div>
         <button style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:2px 4px;line-height:1;" onclick="deleteBill('${b.id}')">×</button>
       </div>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // Locked bills
+  html+=`<div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin:14px 0 6px;">Auto-managed · hardcoded logic</div>
+  <div class="card" style="padding:0;">`;
+  LOCKED_BILLS.forEach((b,i)=>{
+    html+=`<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:0.5px solid var(--br);${i===LOCKED_BILLS.length-1?'border-bottom:none;':''}">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;">${b.name} <span style="font-size:10px;color:var(--t3);background:var(--s3);padding:2px 5px;border-radius:4px;margin-left:4px;">locked</span></div>
+        <div style="font-size:11px;color:var(--t3);margin-top:1px;">${b.note}</div>
+        ${(()=>{const m=(S.debitLog||[]).find(d=>d.status==='matched'&&d.bill===b.id);return m?`<div style="font-size:10px;color:var(--grn);margin-top:2px;">&#10003; Posted $${m.amt} · ${m.date}</div>`:'';})()}
+      </div>
+      <div style="font-size:14px;font-weight:700;color:var(--red);">-$${b.amt}</div>
     </div>`;
   });
   html+=`</div>`;
@@ -1612,28 +1765,17 @@ function renderBills(){
 }
 
 window.editBillItem=function(id){
-  const bills=(S.userBills||[]);
+  const bills=getUserBills();
   const b=bills.find(x=>x.id===id);
   if(!b)return;
   editingBill=id;
+  // Show edit modal
   const modal=document.getElementById('bill-modal');
   document.getElementById('bm-name').value=b.name;
   document.getElementById('bm-amt').value=b.amt;
-  document.getElementById('bm-frequency').value=b.frequency||'monthly';
-  const dayField=document.getElementById('bm-day');
-  const dowField=document.getElementById('bm-dow');
-  if(b.frequency==='weekly'){
-    dayField.style.display='none';
-    dowField.style.display='';
-    dowField.value=b.dow??0;
-  } else {
-    dayField.style.display='';
-    dowField.style.display='none';
-    dayField.value=Array.isArray(b.day)?b.day.join(','):(b.day||'');
-  }
-  document.getElementById('bm-enddate').value=b.endDate||'';
+  document.getElementById('bm-day').value=Array.isArray(b.day)?b.day.join(','):b.day;
   document.getElementById('bm-note').value=b.note||'';
-  document.getElementById('bm-keyword').value=b.keyword||b.debitKeyword||'';
+  document.getElementById('bm-keyword').value=b.debitKeyword||'';
   document.getElementById('bm-title').textContent='Edit bill';
   modal.classList.add('open');
   setTimeout(()=>document.getElementById('bm-name').focus(),140);
@@ -1644,11 +1786,7 @@ window.addBill=function(){
   const modal=document.getElementById('bill-modal');
   document.getElementById('bm-name').value='';
   document.getElementById('bm-amt').value='';
-  document.getElementById('bm-frequency').value='monthly';
   document.getElementById('bm-day').value='';
-  document.getElementById('bm-day').style.display='';
-  document.getElementById('bm-dow').style.display='none';
-  document.getElementById('bm-enddate').value='';
   document.getElementById('bm-note').value='';
   document.getElementById('bm-keyword').value='';
   document.getElementById('bm-title').textContent='Add bill';
@@ -1659,25 +1797,14 @@ window.addBill=function(){
 window.saveBillModal=function(){
   const name=document.getElementById('bm-name').value.trim();
   const amt=parseFloat(document.getElementById('bm-amt').value);
-  const frequency=document.getElementById('bm-frequency').value||'monthly';
   const dayRaw=document.getElementById('bm-day').value.trim();
-  const dow=parseInt(document.getElementById('bm-dow').value)||0;
-  const endDate=document.getElementById('bm-enddate').value.trim()||null;
   const note=document.getElementById('bm-note').value.trim();
-  const keyword=document.getElementById('bm-keyword').value.trim().toUpperCase()||null;
-
-  if(!name||isNaN(amt)){toast('Fill in name and amount');return;}
-
-  let day=null;
-  if(frequency==='monthly'||frequency==='biweekly'){
-    const days=dayRaw.split(',').map(d=>parseInt(d.trim())).filter(d=>!isNaN(d)&&d>=1&&d<=31);
-    if(!days.length){toast('Enter a due day');return;}
-    day=days.length===1?days[0]:days;
-  }
-
-  const bills=(S.userBills||[]);
-  const billData={name,amt,frequency,day,dow:frequency==='weekly'?dow:null,endDate,note,keyword,color:null,cardId:null};
-
+  const debitKeyword=document.getElementById('bm-keyword').value.trim().toUpperCase();
+  // Parse days -- support "15" or "4,18"
+  const days=dayRaw.split(',').map(d=>parseInt(d.trim())).filter(d=>!isNaN(d)&&d>=1&&d<=31);
+  if(!name||isNaN(amt)||!days.length){toast('Fill in all fields');return;}
+  const bills=getUserBills();
+  const billData={name,amt,day:days.length===1?days[0]:days,note,debitKeyword};
   if(editingBill){
     const idx=bills.findIndex(b=>b.id===editingBill);
     if(idx>=0)bills[idx]={...bills[idx],...billData};
@@ -1687,7 +1814,7 @@ window.saveBillModal=function(){
   S.userBills=bills;
   // Sync billKeywords map for Apps Script matching
   const kwMap={};
-  bills.forEach(b=>{if(b.keyword)kwMap[b.id]=b.keyword;});
+  bills.forEach(b=>{if(b.debitKeyword)kwMap[b.id]=b.debitKeyword;});
   S.billKeywords=kwMap;
   save(S);
   closeBillModal();
@@ -1697,7 +1824,7 @@ window.saveBillModal=function(){
 };
 
 window.deleteBill=function(id){
-  const bills=(S.userBills||[]);
+  const bills=getUserBills();
   const b=bills.find(x=>x.id===id);
   if(!b)return;
   if(!confirm(`Delete "${b.name}"?`))return;
@@ -1706,19 +1833,6 @@ window.deleteBill=function(id){
 };
 
 window.closeBillModal=()=>document.getElementById('bill-modal').classList.remove('open');
-
-window.onBillFrequencyChange=function(){
-  const freq=document.getElementById('bm-frequency').value;
-  const dayField=document.getElementById('bm-day');
-  const dowField=document.getElementById('bm-dow');
-  if(freq==='weekly'){
-    dayField.style.display='none';
-    dowField.style.display='';
-  } else {
-    dayField.style.display='';
-    dowField.style.display='none';
-  }
-};
 
 // ══ DEBIT INBOX MODAL ══
 window.openDebitModal=function(){
@@ -1730,14 +1844,14 @@ window.closeDebitModal=()=>document.getElementById('debit-modal').classList.remo
 function renderDebitModal(){
   const pending=(S.debitLog||[]).filter(d=>d.status==='pending');
   const matched=(S.debitLog||[]).filter(d=>d.status==='matched'||d.status==='autoDisc').slice(0,10);
-  const bills=(S.userBills||[]);
+  const bills=getUserBills();
   let html='';
 
   if(pending.length){
     html+=`<div style="font-size:11px;font-weight:700;color:var(--red);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">${pending.length} unmatched</div>`;
     pending.forEach((d,i)=>{
       const idx=(S.debitLog||[]).indexOf(d);
-      const allBillOptions=bills.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+      const allBillOptions=[...bills,...LOCKED_BILLS].map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
       html+=`<div style="border:1px solid var(--br);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
           <div>
@@ -1772,7 +1886,7 @@ function renderDebitModal(){
     html+=`<div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin:12px 0 8px;">Recent auto-matched</div>`;
     matched.forEach(d=>{
       const icon=d.status==='autoDisc'?'⚡':'✓';
-      const label=d.status==='autoDisc'?'Auto disc.':(bills.find(b=>b.id===d.bill)||{}).name||d.bill;
+      const label=d.status==='autoDisc'?'Auto disc.':(bills.find(b=>b.id===d.bill)||LOCKED_BILLS.find(b=>b.id===d.bill)||{}).name||d.bill;
       html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--br);">
         <div>
           <div style="font-size:12px;font-weight:600;">${icon} ${d.merchant}</div>
@@ -1832,7 +1946,7 @@ window.resolveDebit=function(idx,action){
     d.status='matched';
     d.bill=sel.value;
     // Save keyword to that bill for future auto-matching
-    const bills=(S.userBills||[]);
+    const bills=getUserBills();
     const bill=bills.find(b=>b.id===sel.value);
     if(bill&&!bill.debitKeyword){
       bill.debitKeyword=d.merchant;
@@ -1885,8 +1999,20 @@ window.toggleSpendLog = function() {
 };
 window.resetDisc=function(){
   if(!confirm('Reset discretionary log for this month?'))return;
-  S.discSpent=0;S.discLog=[];
+  S.discSpent=0;S.discLog=[];S.weeks=[null,null,null,null];
   save(S);renderWeek();toast('Reset');
+};
+
+// Randy — tracking only, does not touch bal4496
+window.logRandy=function(){
+  if(!S.randySessions)S.randySessions=[];
+  S.randySessions.unshift({date:new Date().toLocaleDateString(),amt:150});
+  save(S);renderWeek();toast('Session logged — $150');
+};
+window.undoRandy=function(){
+  if(!S.randySessions||!S.randySessions.length)return;
+  S.randySessions.shift();
+  save(S);renderWeek();toast('Removed');
 };
 
 // Snowball
@@ -1897,6 +2023,10 @@ function logSnowballPmt(amt){
   if(!S.cardBals)S.cardBals={};
   const prev=S.cardBals[ct.id]!==undefined?S.cardBals[ct.id]:ct.startBal;
   S.cardBals[ct.id]=Math.max(0,prev-amt);
+  if(S.cardBals[ct.id]<=0){
+    const endKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    (S.userBills||[]).forEach(b=>{if(b.cardId===ct.id&&!b.endDate)b.endDate=endKey;});
+  }
   S.snowballLog.unshift({amt,target:ct.label,date:new Date().toLocaleDateString()});
   _cachedRoadmap = null; // Invalidate roadmap cache
   save(S);renderSnowball();toast(`$${Math.round(amt).toLocaleString()} paid to ${ct.label} ✓`);
