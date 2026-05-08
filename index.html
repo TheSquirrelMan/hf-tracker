@@ -399,7 +399,6 @@ function defaultState(){
     discWeekly:50,
     discMonthlyCap:200,
     weeks:[null,null,null,null],
-    randySessions:[],
     billChecks:{},
     phaseDone:{},
     phases: JSON.parse(JSON.stringify(DEFAULT_PHASES)),
@@ -412,7 +411,7 @@ function defaultState(){
 
 function resetMonthly(s){
   s.mKey=mKey;s.discSpent=0;s.discLog=[];
-  s.weeks=[null,null,null,null];s.randySessions=[];
+  s.weeks=[null,null,null,null];
   s.billChecks={};
   return s;
 }
@@ -1039,8 +1038,6 @@ function getMonthEvents(year,month,roadmap,balLog){
   add(ubday('prime',2),'Amazon Prime',-ub('prime',15),'#5c5c58','Subscription');
   if(key<='2027-08')add(4,'PayPal eBay',-ub('ebay',43),'#d4922a','35.99% APR · done Aug 2027');
   add(ubday('chatgpt',4),'ChatGPT',-ub('chatgpt',22),'#5c5c58',ubn('chatgpt','Karen subscription'));
-  add(ubday('randy',4),'Zelle Randy',-ub('randy',150),'#7aad4e',ubn('randy','Biweekly training'));
-  add(18,'Zelle Randy',-ub('randy',150),'#7aad4e',ubn('randy','Biweekly training'));
   if(notDone('mazda',ubday('mazda',9)))add(ubday('mazda',9),'Mazda CX-5',-ub('mazda',638),'#d4922a','12.72% APR');
   if(notDone('merrick',ubday('merrick',11)))add(ubday('merrick',11),'Merrick Bank',-ub('merrick',35),'#e8836e','31.95% APR');
   if(notDone('cap3186',ubday('cap3186',11)))add(ubday('cap3186',11),'Cap One #3186 (Karen)',-ub('cap3186',25),'#e8836e','28.24% APR');
@@ -1670,7 +1667,6 @@ const DEFAULT_BILLS=[
   {id:'claude',   name:'Claude.ai',             amt:20,  day:13, note:'Subscription'},
   {id:'chatgpt',  name:'ChatGPT',               amt:22,  day:4,  note:'Karen subscription'},
   {id:'prime',    name:'Amazon Prime',          amt:15,  day:2,  note:'Subscription'},
-  {id:'randy',    name:'Randy training',        amt:150, day:4,  note:'Biweekly · also ~18th'},
   {id:'freshmarket', name:'Fresh Market',       amt:200, day:0,  note:'Weekly grocery · every Sunday'},
   {id:'gas',         name:'Gas (monthly est.)', amt:120, day:1,  note:'Log actual fill-ups in spend log'},
 ];
@@ -1999,17 +1995,7 @@ window.resetDisc=function(){
   save(S);renderWeek();toast('Reset');
 };
 
-// Randy — tracking only, does not touch bal4496
-window.logRandy=function(){
-  if(!S.randySessions)S.randySessions=[];
-  S.randySessions.unshift({date:new Date().toLocaleDateString(),amt:150});
-  save(S);renderWeek();toast('Session logged — $150');
-};
-window.undoRandy=function(){
-  if(!S.randySessions||!S.randySessions.length)return;
-  S.randySessions.shift();
-  save(S);renderWeek();toast('Removed');
-};
+
 
 // Snowball
 function logSnowballPmt(amt){
