@@ -974,8 +974,14 @@ function getMonthEvents(year,month,roadmap,balLog){
   }
 
   // ── User bills via getDailyBills ──
+  // Build milestone-aware card balances so paid-off bills don't show in future months
+  const mCardBals={...(S.cardBals||{})};
+  TARGETS.forEach(t=>{
+    const done=roadmap[t.id+'-done'];
+    if(done&&done.date<`${year}-${String(month+1).padStart(2,'0')}-32`)mCardBals[t.id]=0;
+  });
   for(let d=fromDay;d<=dim;d++){
-    getDailyBills(year,month,d).forEach(b=>{
+    getDailyBills(year,month,d,mCardBals).forEach(b=>{
       // Skip income and discretionary — already handled above
       if(b.isIncome)return;
       if(b.label==='Discretionary')return;
