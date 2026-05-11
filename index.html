@@ -1745,7 +1745,7 @@ function renderDebitModal(){
     html+=`<div style="font-size:11px;font-weight:700;color:var(--red);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">${pending.length} unmatched</div>`;
     pending.forEach((d,i)=>{
       const idx=(S.debitLog||[]).indexOf(d);
-      const allBillOptions=[...bills,...LOCKED_BILLS].map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+      const allBillOptions=bills.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
       html+=`<div style="border:1px solid var(--br);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
           <div>
@@ -1780,7 +1780,7 @@ function renderDebitModal(){
     html+=`<div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin:12px 0 8px;">Recent auto-matched</div>`;
     matched.forEach(d=>{
       const icon=d.status==='autoDisc'?'⚡':'✓';
-      const label=d.status==='autoDisc'?'Auto disc.':(bills.find(b=>b.id===d.bill)||LOCKED_BILLS.find(b=>b.id===d.bill)||{}).name||d.bill;
+      const label=d.status==='autoDisc'?'Auto disc.':(bills.find(b=>b.id===d.bill)||{}).name||d.bill;
       html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--br);">
         <div>
           <div style="font-size:12px;font-weight:600;">${icon} ${d.merchant}</div>
