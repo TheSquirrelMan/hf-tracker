@@ -334,40 +334,6 @@ const CARD_START_BALS = {
   chase: 951, tn: 3653, irs: 4767, mazda: 20693
 };
 
-// ══ DEFAULT USER BILLS (seeded to Firebase on first load) ══
-const DEFAULT_USER_BILLS = [
-  // Fixed-term debts (have endDate + cardId for snowball)
-  { id: 'mazda', name: 'Mazda CX-5', amt: 638, day: 9, endDate: '2030-01', cardId: 'mazda', debitKeyword: 'MAZDA', note: '12.72% APR' },
-  { id: 'merrick', name: 'Merrick Bank', amt: 35, day: 11, endDate: '2026-11', cardId: 'merrick', debitKeyword: 'MERRICK', note: '31.95% APR' },
-  { id: 'cap3186', name: 'Cap One #3186 (Karen)', amt: 25, day: 11, endDate: '2026-10', cardId: 'cap3186', debitKeyword: 'CAPITAL ONE', note: '28.24% APR' },
-  { id: 'kpaypal', name: "Karen's PayPal Credit", amt: 100, day: 13, endDate: '2027-05', cardId: 'kpaypal', debitKeyword: 'PAYPAL', note: '29.64% APR — MANUAL' },
-  { id: 'usaaAmex', name: 'USAA Amex (Karen)', amt: 63, day: 15, endDate: '2027-02', cardId: 'usaaAmex', debitKeyword: 'USAA', note: '27.40% APR' },
-  { id: 'irs1', name: 'IRS payment #1', amt: 68, day: 15, endDate: '2028-06', cardId: 'irs', debitKeyword: 'IRS', note: 'Installment plan' },
-  { id: 'irs2', name: 'IRS payment #2', amt: 35, day: 16, endDate: '2028-06', cardId: 'irs', debitKeyword: 'IRS', note: 'Installment plan' },
-  { id: 'cap4565', name: 'Cap One #4565 (Jon)', amt: 25, day: 21, endDate: '2026-12', cardId: 'cap4565', debitKeyword: 'CAPITAL ONE', note: '29% APR' },
-  { id: 'cap5592', name: 'Cap One #5592 (Karen)', amt: 25, day: 21, endDate: '2026-12', cardId: 'cap5592', debitKeyword: 'CAPITAL ONE', note: '28.99% APR' },
-  { id: 'cap7988', name: 'Cap One #7988 (Jon)', amt: 30, day: 21, endDate: '2027-01', cardId: 'cap7988', debitKeyword: 'CAPITAL ONE', note: '29% APR' },
-  { id: 'chase', name: 'Chase/Amazon Prime', amt: 26, day: 26, endDate: '2027-04', cardId: 'chase', debitKeyword: 'CHASE', note: 'APR TBD' },
-  { id: 'tn', name: 'TN Unemployment', amt: 153, day: 22, endDate: '2027-12', cardId: 'tn', debitKeyword: 'TN', note: '~$153/mo' },
-  
-  // Recurring bills (no endDate — these continue indefinitely)
-  { id: 'amazon', name: 'Amazon Store Card', amt: 29, day: 1, note: '29.49% APR', cardId: 'amazon' },
-  { id: 'prime', name: 'Amazon Prime', amt: 15, day: 2, note: 'Subscription' },
-  { id: 'realdebrid', name: 'Real-Debrid', amt: 11, day: 2, note: 'Quarterly $11', frequency: 'quarterly', frequencyMonths: [0, 3, 6, 9] },
-  { id: 'ebay', name: 'PayPal eBay', amt: 43, day: 4, note: '35.99% APR', conditionEnd: '2027-08' },
-  { id: 'chatgpt', name: 'ChatGPT', amt: 22, day: 4, note: 'Karen subscription' },
-  { id: 'newegg', name: 'PayPal Newegg', amt: 61, day: 13, note: '35.99% APR fixed', conditionEnd: '2027-01' },
-  { id: 'claude', name: 'Claude.ai', amt: 20, day: 13, note: 'Subscription' },
-  { id: 'tmobile', name: 'T-Mobile', amt: 152, day: 15, note: 'Both phones' },
-  { id: 'att', name: 'AT&T fiber', amt: 166, day: 16, note: 'Internet' },
-  { id: 'jonpaypal', name: 'Jon PayPal Credit', amt: 22, day: 22, note: '0% plan · do NOT overpay', conditionEnd: '2029-10' },
-  { id: 'spotify', name: 'Spotify', amt: 22, day: 22, note: 'Subscription' },
-  { id: 'statefarm', name: 'State Farm', amt: 190, day: 23, note: 'Auto insurance' },
-  { id: 'freshmarket', name: 'Fresh Market', amt: 200, day: 0, frequency: 'weekly', dow: 0, note: '$200/wk grocery' },
-  { id: 'gas', name: 'Gas (monthly est.)', amt: 120, day: 1, note: 'Log actual fill-ups in spend log' },
-  { id: 'chinese', name: 'PayPal Chinese vendor', amt: 95, day: 30, note: '24.99% APR', conditionEnd: '2027-03' },
-];
-
 // Set of default bill IDs for filtering custom-added bills
 const DEFAULT_BILL_IDS = new Set(DEFAULT_USER_BILLS.map(b => b.id));
 
