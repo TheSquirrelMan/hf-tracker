@@ -334,6 +334,8 @@ const CARD_START_BALS = {
   chase: 951, tn: 3653, irs: 4767, mazda: 20693
 };
 
+const DEFAULT_USER_BILLS = []; // Seeded from Apps Script — run seedDefaultBills() if empty
+
 // Set of default bill IDs for filtering custom-added bills
 const DEFAULT_BILL_IDS = new Set(DEFAULT_USER_BILLS.map(b => b.id));
 
