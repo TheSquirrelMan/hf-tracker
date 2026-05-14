@@ -376,7 +376,6 @@ function defaultState(){
 
 function resetMonthly(s){
   s.mKey=mKey;s.discSpent=0;s.discLog=[];
-  s.weeks=[];s.randySessions=[];
   s.billChecks={};
   return s;
 }
@@ -1764,20 +1763,10 @@ window.toggleSpendLog = function() {
 };
 window.resetDisc=function(){
   if(!confirm('Reset discretionary log for this month?'))return;
-  S.discSpent=0;S.discLog=[];S.weeks=[null,null,null,null];
+  S.discSpent=0;S.discLog=[];
   save(S);renderWeek();toast('Reset');
 };
 
-window.logRandy=function(){
-  if(!S.randySessions)S.randySessions=[];
-  S.randySessions.unshift({date:new Date().toLocaleDateString(),amt:150});
-  save(S);renderWeek();toast('Session logged — $150');
-};
-window.undoRandy=function(){
-  if(!S.randySessions||!S.randySessions.length)return;
-  S.randySessions.shift();
-  save(S);renderWeek();toast('Removed');
-};
 
 function logSnowballPmt(amt){
   if(!S.snowballLog)S.snowballLog=[];
