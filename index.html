@@ -1795,6 +1795,138 @@ function logSnowballPmt(amt){
   save(S);renderSnowball();toast(`$${Math.round(amt).toLocaleString()} paid to ${ct.label} ✓`);
 }
 
+window.dumpAll = function() {
+  const data = calcRoadmap();
+  const out = [];
+  
+  out.push('═══ COMPLETE SITE DUMP ═══');
+  out.push('');
+  
+  // ACCOUNTS
+  out.push('── Accounts ──');
+  out.push(`  #4496 checking: $${S.bal4496}`);
+  out.push(`  #6764 transitional: $${S.bal6764}`);
+  out.push(`  #0725 savings: $${S.bal0725}`);
+  out.push(`  Karen last pay: $${S.karenLastPay}`);
+  out.push(`  Karen avg pay: $${S.karenAvgPay || S.karenLastPay || 810}`);
+  out.push(`  Jon last pay: $${S.jonLastPay || 1641}`);
+  out.push('');
+  
+  // PHASES
+  out.push('── Phases (in order) ──');
+  getPhases().forEach((p, i) => {
+    const done = (S.phaseDone || {})[p.id];
+    const cost = (S.phaseCosts && S.phaseCosts[p.id]) || p.cost;
+    const m = data.milestones[p.id];
+    out.push(`  ${i+1}. ${p.label}: $${cost} | ${done ? '✓ DONE' : m ? m.date : 'calculating...'}`);
+  });
+  out.push('');
+  
+  // ALL BILLS
+  out.push('── All Bills (userBills) ──');
+  const bills = S.userBills || [];
+  bills.forEach((b, i) => {
+    const type = b.endDate ? 'FIXED' : 'RECURRING';
+    const dayStr = Array.isArray(b.day) ? b.day.join(',') : b.day;
+    out.push(`  ${i+1}. [${type}] ${b.name}: $${b.amt} | day ${dayStr} | cardId: ${b.cardId || 'none'} | endDate: ${b.endDate || 'none'} | conditionEnd: ${b.conditionEnd || 'none'} | keyword: ${b.debitKeyword || 'none'}`);
+  });
+  out.push('');
+  
+  // FIXED-TERM (SNOWBALL)
+  out.push('── Fixed-term (Snowball) Debts ──');
+  const targets = getSnowballTargets();
+  if (targets.length === 0) {
+    out.push('  NONE');
+  } else {
+    targets.forEach((t, i) => {
+      const bal = (S.cardBals && S.cardBals[t.id] !== undefined) ? S.cardBals[t.id] : (CARD_START_BALS[t.id] || 0);
+      const done = data.milestones[t.id + '-done'];
+      out.push(`  ${i+1}. ${t.label}: $${bal.toLocaleString()} owed | $${t.minPay}/mo min | ${done ? 'PAID OFF ' + done.date : 'active'}`);
+    });
+  }
+  out.push('');
+  
+  // CARD BALANCES
+  out.push('── Card Balances (S.cardBals) ──');
+  const cb = S.cardBals || {};
+  const allCardIds = [...new Set([...Object.keys(CARD_START_BALS), ...Object.keys(cb)])];
+  allCardIds.forEach(id => {
+    const actual = cb[id];
+    const fallback = CARD_START_BALS[id] || 0;
+    out.push(`  ${id}: $${actual !== undefined ? actual : fallback}${actual !== undefined ? '' : ' (default)'}`);
+  });
+  out.push('');
+  
+  // MILESTONES (first 20)
+  out.push('── Roadmap Milestones ──');
+  const ms = Object.entries(data.milestones).slice(0, 30);
+  if (ms.length === 0) {
+    out.push('  NONE');
+  } else {
+    ms.forEach(([key, val]) => {
+      out.push(`  ${key}: ${val.date || val} ${val.bal ? '($' + val.bal + ')' : ''}`);
+    });
+  }
+  out.push('');
+  
+  // BALANCE LOG (key dates)
+  out.push('── Balance Log (paydays & milestones) ──');
+  const importantDates = new Set();
+  // Add all milestone dates
+  Object.values(data.milestones).forEach(m => {
+    if (m.date) importantDates.add(m.date);
+  });
+  // Add paydays for next 6 months
+  const today = new Date();
+  for (let i = 0; i < 180; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    if (d.getDate() === 7 || d.getDate() === 22 || d.getDay() === 4) {
+      importantDates.add(d.toISOString().split('T')[0]);
+    }
+  }
+  const sorted = [...importantDates].sort();
+  sorted.forEach(date => {
+    const bal = data.balLog[date];
+    if (bal !== undefined) {
+      out.push(`  ${date}: $${bal.toLocaleString()}`);
+    }
+  });
+  out.push('');
+  
+  // MONTHLY TOTALS
+  out.push('── Monthly Breakdown ──');
+  const monthlyBills = bills.reduce((sum, b) => {
+    if (b.frequency === 'weekly') return sum + (b.amt * 4.33);
+    if (b.frequency === 'quarterly') return sum + (b.amt / 3);
+    return sum + (b.amt || 0);
+  }, 0);
+  const monthlyIncome = (S.karenAvgPay || S.karenLastPay || 810) * 4.33 + (S.jonLastPay || 1641) * 2;
+  out.push(`  Monthly income: $${Math.round(monthlyIncome).toLocaleString()}`);
+  out.push(`  Monthly bills: $${Math.round(monthlyBills).toLocaleString()}`);
+  out.push(`  Discretionary cap: $${S.discMonthlyCap || 200}`);
+  out.push(`  Net surplus: $${Math.round(monthlyIncome - monthlyBills - (S.discMonthlyCap || 200)).toLocaleString()}`);
+  out.push('');
+  
+  out.push('═══ END DUMP ═══');
+  
+  const text = out.join('\n');
+  console.log(text);
+  
+  // Copy button
+  const btn = document.createElement('button');
+  btn.textContent = '📋 Click to copy full dump';
+  btn.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;padding:20px 30px;background:#242422;color:#f0efe9;border:1px solid #7aad4e;border-radius:12px;font-size:16px;cursor:pointer;font-family:sans-serif;';
+  btn.onclick = async () => {
+    await navigator.clipboard.writeText(text);
+    btn.textContent = '✅ Copied! Paste to chat.';
+    setTimeout(() => btn.remove(), 2500);
+  };
+  document.body.appendChild(btn);
+  
+  return text;
+};
+
 // ══ PHASE MANAGEMENT ══
 let editingPhaseId = null;
 
