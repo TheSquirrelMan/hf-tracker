@@ -358,6 +358,7 @@ function defaultState(){
     bal4496:0,bal6764:19,bal0725:654,
     karenLastPay:810,karenAvgPay:810,
     jonLastPay:1641,
+    jonAvgPay:1641,
     discSpent:0,discLog:[],
     discWeekly:50,
     discMonthlyCap:200,
@@ -437,6 +438,7 @@ async function loadFB(){
       S.bal0725 = remote.bal0725;
       S.karenLastPay = remote.karenLastPay;
       S.jonLastPay = remote.jonLastPay;
+      S.jonAvgPay = remote.jonAvgPay;
       if(remote.phases) S.phases = remote.phases;
       if(remote.userBills) S.userBills = remote.userBills;
       if(remote.cardStartBals) S.cardStartBals = remote.cardStartBals;
@@ -622,7 +624,7 @@ function getDailyBills(year, month, day, cardBalOverride) {
 
   // Income
   let currentKaren = isFuture ? (S.karenAvgPay || S.karenLastPay || 810) : (S.karenLastPay || 810);
-  let currentJon = isFuture ? 1641 : (S.jonLastPay || 1641);
+  let currentJon = isFuture ? (S.jonAvgPay || S.jonLastPay || 1641) : (S.jonLastPay || 1641);
   if (isFuture) { currentKaren = Math.floor(currentKaren); currentJon = Math.floor(currentJon); }
 
   if (day === 7 || day === 22) bills.push({ label: 'Jon paycheck', amt: currentJon, isIncome: true });
@@ -1796,6 +1798,7 @@ window.dumpAll = function() {
   out.push(`  Karen last pay: $${S.karenLastPay}`);
   out.push(`  Karen avg pay: $${S.karenAvgPay || S.karenLastPay || 810}`);
   out.push(`  Jon last pay: $${S.jonLastPay || 1641}`);
+  out.push(`  Jon avg pay: $${S.jonAvgPay || S.jonLastPay || 1641}`);
   out.push('');
   
   // ══ PHASES ══
