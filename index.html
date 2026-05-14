@@ -1837,9 +1837,9 @@ window.dumpAll = function() {
     out.push('  NONE');
   } else {
     targets.forEach((t, i) => {
-      const bal = (S.cardBals && S.cardBals[t.id] !== undefined) ? S.cardBals[t.id] : (CARD_START_BALS[t.id] || 0);
+      const balAmt = bal(S.cardBals || {}, t.id);
       const done = data.milestones[t.id + '-done'];
-      out.push(`  ${i+1}. ${t.label}: $${bal.toLocaleString()} owed | $${t.minPay}/mo min | ${done ? 'PAID OFF ' + done.date : 'active'}`);
+      out.push(`  ${i+1}. ${t.label}: $${balAmt.toLocaleString()} owed | $${t.minPay}/mo min | ${done ? 'PAID OFF ' + done.date : 'active'}`);
     });
   }
   out.push('');
