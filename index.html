@@ -326,18 +326,10 @@ const DEFAULT_PHASES=[
   {id:'glasses',    label:'Glasses — Jon + Karen', cost:1000},
 ];
 
-// ══ CARD STARTING BALANCES (for snowball targets) ══
-// These are initial balances that get overridden by S.cardBals once edited
-const CARD_START_BALS = {
-  amazon: 235, merrick: 926, cap3186: 491, kpaypal: 1958,
-  usaaAmex: 1847, cap4565: 726, cap5592: 731, cap7988: 843,
-  chase: 951, tn: 3653, irs: 4767, mazda: 20693
-};
+// ══ CARD STARTING BALANCES (loaded from Firebase, seeded by Apps Script) ══
+// Falls back to empty — run seedDefaultBills() in Apps Script if missing
 
 const DEFAULT_USER_BILLS = []; // Seeded from Apps Script — run seedDefaultBills() if empty
-
-// Set of default bill IDs for filtering custom-added bills
-const DEFAULT_BILL_IDS = new Set(DEFAULT_USER_BILLS.map(b => b.id));
 
 function getPhases() {
   return (S && S.phases && S.phases.length > 0) ? S.phases : DEFAULT_PHASES;
@@ -379,6 +371,7 @@ function defaultState(){
     confirmed:{},
     notified:{},
     userBills: JSON.parse(JSON.stringify(DEFAULT_USER_BILLS)),
+    cardStartBals: {},
   };
 }
 
@@ -419,6 +412,9 @@ async function loadFB(){
     if(!S.userBills || S.userBills.length === 0) {
       S.userBills = JSON.parse(JSON.stringify(DEFAULT_USER_BILLS));
     }
+    if(!S.cardStartBals) {
+      S.cardStartBals = {}; // Seeded by Apps Script seedDefaultBills()
+    }
     setSS('ok');
   }catch(e){
     console.warn('load fail',e);
@@ -445,6 +441,7 @@ async function loadFB(){
       S.jonLastPay = remote.jonLastPay;
       if(remote.phases) S.phases = remote.phases;
       if(remote.userBills) S.userBills = remote.userBills;
+      if(remote.cardStartBals) S.cardStartBals = remote.cardStartBals;
     } else {
       S = {...defaultState(), ...remote};
       if (S.mKey !== mKey) S = resetMonthly(S);
@@ -608,9 +605,10 @@ window.editBal=a=>{
 
 // ══ HELPER: Get card balance (from S.cardBals or CARD_START_BALS fallback) ══
 function bal(cb, id) {
-  const startBal = CARD_START_BALS[id];
-  if (startBal === undefined) return 0;
-  return cb[id] !== undefined ? cb[id] : startBal;
+  // First check S.cardBals, then S.cardStartBals from Firebase
+  if (cb && cb[id] !== undefined) return cb[id];
+  if (S.cardStartBals && S.cardStartBals[id] !== undefined) return S.cardStartBals[id];
+  return 0;
 }
 
 // ══ DAILY BILLS ENGINE (Firebase-driven) ══
@@ -715,7 +713,7 @@ function getSnowballTargets() {
       targets.push({
         id: b.cardId,
         label: b.name,
-        startBal: CARD_START_BALS[b.cardId] || 0,
+        startBal: bal(S.cardBals || {}, b.cardId),
         minPay: b.amt || 0
       });
     }
@@ -1847,13 +1845,14 @@ window.dumpAll = function() {
   out.push('');
   
   // CARD BALANCES
-  out.push('── Card Balances (S.cardBals) ──');
+  out.push('── Card Balances ──');
   const cb = S.cardBals || {};
-  const allCardIds = [...new Set([...Object.keys(CARD_START_BALS), ...Object.keys(cb)])];
+  const startBals = S.cardStartBals || {};
+  const allCardIds = [...new Set([...Object.keys(startBals), ...Object.keys(cb)])];
   allCardIds.forEach(id => {
     const actual = cb[id];
-    const fallback = CARD_START_BALS[id] || 0;
-    out.push(`  ${id}: $${actual !== undefined ? actual : fallback}${actual !== undefined ? '' : ' (default)'}`);
+    const fallback = startBals[id] || 0;
+    out.push(`  ${id}: $${actual !== undefined ? actual : fallback}${actual !== undefined ? '' : ' (start)'}`);
   });
   out.push('');
   
