@@ -1797,10 +1797,10 @@ window.dumpAll = function() {
   const data = calcRoadmap();
   const out = [];
   
-  out.push('═══ COMPLETE SITE DUMP ═══');
+  out.push('═══ 1:1 SITE DUMP (matches Month Plan exactly) ═══');
   out.push('');
   
-  // ACCOUNTS
+  // ══ ACCOUNTS ══
   out.push('── Accounts ──');
   out.push(`  #4496 checking: $${S.bal4496}`);
   out.push(`  #6764 transitional: $${S.bal6764}`);
@@ -1810,7 +1810,7 @@ window.dumpAll = function() {
   out.push(`  Jon last pay: $${S.jonLastPay || 1641}`);
   out.push('');
   
-  // PHASES
+  // ══ PHASES ══
   out.push('── Phases (in order) ──');
   getPhases().forEach((p, i) => {
     const done = (S.phaseDone || {})[p.id];
@@ -1820,7 +1820,7 @@ window.dumpAll = function() {
   });
   out.push('');
   
-  // ALL BILLS
+  // ══ ALL BILLS ══
   out.push('── All Bills (userBills) ──');
   const bills = S.userBills || [];
   bills.forEach((b, i) => {
@@ -1830,71 +1830,109 @@ window.dumpAll = function() {
   });
   out.push('');
   
-  // FIXED-TERM (SNOWBALL)
-  out.push('── Fixed-term (Snowball) Debts ──');
+  // ══ SNOWBALL TARGETS ══
+  out.push('── Snowball Targets (in order) ──');
   const targets = getSnowballTargets();
-  if (targets.length === 0) {
-    out.push('  NONE');
-  } else {
-    targets.forEach((t, i) => {
-      const balAmt = bal(S.cardBals || {}, t.id);
-      const done = data.milestones[t.id + '-done'];
-      out.push(`  ${i+1}. ${t.label}: $${balAmt.toLocaleString()} owed | $${t.minPay}/mo min | ${done ? 'PAID OFF ' + done.date : 'active'}`);
-    });
-  }
+  targets.forEach((t, i) => {
+    const balAmt = bal(S.cardBals || {}, t.id);
+    const done = data.milestones[t.id + '-done'];
+    out.push(`  ${i+1}. ${t.label}: $${balAmt.toLocaleString()} owed | $${t.minPay}/mo min | ${done ? 'PAID OFF ' + done.date : 'active'}`);
+  });
   out.push('');
   
-  // CARD BALANCES
+  // ══ CARD BALANCES ══
   out.push('── Card Balances ──');
   const cb = S.cardBals || {};
   const startBals = S.cardStartBals || {};
   const allCardIds = [...new Set([...Object.keys(startBals), ...Object.keys(cb)])];
-  allCardIds.forEach(id => {
-    const actual = cb[id];
-    const fallback = startBals[id] || 0;
-    out.push(`  ${id}: $${actual !== undefined ? actual : fallback}${actual !== undefined ? '' : ' (start)'}`);
-  });
-  out.push('');
-  
-  // MILESTONES (first 20)
-  out.push('── Roadmap Milestones ──');
-  const ms = Object.entries(data.milestones).slice(0, 30);
-  if (ms.length === 0) {
-    out.push('  NONE');
+  if (allCardIds.length === 0) {
+    out.push('  No card balances — run seedCardStartBals() in Apps Script');
   } else {
-    ms.forEach(([key, val]) => {
-      out.push(`  ${key}: ${val.date || val} ${val.bal ? '($' + val.bal + ')' : ''}`);
+    allCardIds.forEach(id => {
+      const actual = cb[id];
+      const fallback = startBals[id] || 0;
+      out.push(`  ${id}: $${actual !== undefined ? actual : fallback}${actual !== undefined ? '' : ' (start)'}`);
     });
   }
   out.push('');
   
-  // BALANCE LOG (key dates)
-  out.push('── Balance Log (paydays & milestones) ──');
-  const importantDates = new Set();
-  // Add all milestone dates
-  Object.values(data.milestones).forEach(m => {
-    if (m.date) importantDates.add(m.date);
-  });
-  // Add paydays for next 6 months
-  const today = new Date();
-  for (let i = 0; i < 180; i++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() + i);
-    if (d.getDate() === 7 || d.getDate() === 22 || d.getDay() === 4) {
-      importantDates.add(d.toISOString().split('T')[0]);
-    }
-  }
-  const sorted = [...importantDates].sort();
-  sorted.forEach(date => {
-    const bal = data.balLog[date];
-    if (bal !== undefined) {
-      out.push(`  ${date}: $${bal.toLocaleString()}`);
-    }
+  // ══ MILESTONES ══
+  out.push('── All Milestones ──');
+  Object.entries(data.milestones).forEach(([key, val]) => {
+    out.push(`  ${key}: ${val.date || val} ${val.bal ? '($' + val.bal.toLocaleString() + ')' : ''}`);
   });
   out.push('');
   
-  // MONTHLY TOTALS
-  out.push('── Monthly Breakdown ──');
+  // ══ MONTH-BY-MONTH (runs EXACT same functions as Month Plan tab) ══
+  out.push('═══ MONTH-BY-MONTH (matches Month Plan tab exactly) ═══');
+  out.push('');
+  
+  const startMonth = now.getMonth();
+  const startYear = now.getFullYear();
+  
+  for (let m = 0; m < 12; m++) {
+    const month = (startMonth + m) % 12;
+    const year = startYear + Math.floor((startMonth + m) / 12);
+    
+    // These are the EXACT same functions the Month Plan tab calls
+    const evts = getMonthEvents(year, month, data, data.balLog);
+    const startDay = (year === 2026 && month === 3) ? 22 : 1;
+    
+    const totalIn = evts.filter(e => e.isIncome && e.day >= startDay).reduce((a, e) => a + (e.amt || 0), 0);
+    const totalOut = evts.filter(e => !e.isIncome && e.day >= startDay && e.amt < 0).reduce((a, e) => a + Math.abs(e.amt), 0);
+    
+    // Get starting balance from balLog
+    let startBal = null;
+    const firstDay = new Date(year, month, startDay);
+    for (let d = new Date(firstDay); d >= new Date(now.getFullYear(), now.getMonth(), now.getDate()); d.setDate(d.getDate() - 1)) {
+      const k = d.toISOString().split('T')[0];
+      if (data.balLog[k] !== undefined) { startBal = data.balLog[k]; break; }
+    }
+    if (startBal === null) startBal = S.bal4496;
+    
+    out.push(`── ${MN[month]} ${year} ──`);
+    out.push(`  Starting balance: $${startBal.toLocaleString()}`);
+    out.push(`  Income: +$${Math.round(totalIn).toLocaleString()}`);
+    out.push(`  Bills + spending: -$${Math.round(totalOut).toLocaleString()}`);
+    out.push(`  Net: ${totalIn - totalOut >= 0 ? '+' : '-'}$${Math.round(Math.abs(totalIn - totalOut)).toLocaleString()}`);
+    
+    // Show key events by week
+    const byDay = {};
+    evts.forEach(e => { if (e.day >= startDay) { if (!byDay[e.day]) byDay[e.day] = []; byDay[e.day].push(e); } });
+    const sortedDays = Object.keys(byDay).map(Number).sort((a, b) => a - b);
+    let wdays = [], weeks = [];
+    sortedDays.forEach((day, i) => {
+      wdays.push(day);
+      if (new Date(year, month, day).getDay() === 6 || i === sortedDays.length - 1) { weeks.push([...wdays]); wdays = []; }
+    });
+    
+    weeks.forEach(wds => {
+      const wStart = wds[0], wEnd = wds[wds.length - 1];
+      const allW = wds.flatMap(d => byDay[d] || []);
+      const wIn = allW.filter(e => e.isIncome).reduce((a, e) => a + (e.amt || 0), 0);
+      const wOut = allW.filter(e => !e.isIncome && e.amt < 0).reduce((a, e) => a + Math.abs(e.amt), 0);
+      
+      // Only show weeks with significant events
+      const hasSnowball = allW.some(e => e.feat && e.title.includes('CLEARED'));
+      const hasPhase = allW.some(e => e.feat && !e.title.includes('CLEARED') && !e.title.startsWith('Pay'));
+      const label = hasSnowball ? ' 🎉' : hasPhase ? ' 💾' : '';
+      out.push(`  ${MN[month].substring(0,3)} ${wStart}–${wEnd}:${label} +$${Math.round(wIn).toLocaleString()} / -$${Math.round(wOut).toLocaleString()}`);
+      
+      // Show significant events
+      wds.forEach(day => {
+        (byDay[day] || []).forEach(e => {
+          if (e.feat || Math.abs(e.amt) > 200) {
+            const prefix = e.isIncome ? '+' : '-';
+            out.push(`    ${String(day).padStart(2)} ${e.title}: ${prefix}$${Math.round(Math.abs(e.amt)).toLocaleString()}`);
+          }
+        });
+      });
+    });
+    out.push('');
+  }
+  
+  // ══ SUMMARY ══
+  out.push('── Summary ──');
   const monthlyBills = bills.reduce((sum, b) => {
     if (b.frequency === 'weekly') return sum + (b.amt * 4.33);
     if (b.frequency === 'quarterly') return sum + (b.amt / 3);
@@ -1905,21 +1943,21 @@ window.dumpAll = function() {
   out.push(`  Monthly bills: $${Math.round(monthlyBills).toLocaleString()}`);
   out.push(`  Discretionary cap: $${S.discMonthlyCap || 200}`);
   out.push(`  Net surplus: $${Math.round(monthlyIncome - monthlyBills - (S.discMonthlyCap || 200)).toLocaleString()}`);
+  out.push(`  Total debt: $${targets.reduce((s, t) => s + bal(S.cardBals || {}, t.id), 0).toLocaleString()}`);
+  out.push(`  Debt-free date: ${data.milestones['debt-free'] ? data.milestones['debt-free'].date : 'unknown'}`);
   out.push('');
-  
-  out.push('═══ END DUMP ═══');
+  out.push('═══ END 1:1 DUMP ═══');
   
   const text = out.join('\n');
   console.log(text);
   
-  // Copy button
   const btn = document.createElement('button');
   btn.textContent = '📋 Click to copy full dump';
   btn.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;padding:20px 30px;background:#242422;color:#f0efe9;border:1px solid #7aad4e;border-radius:12px;font-size:16px;cursor:pointer;font-family:sans-serif;';
   btn.onclick = async () => {
     await navigator.clipboard.writeText(text);
-    btn.textContent = '✅ Copied! Paste to chat.';
-    setTimeout(() => btn.remove(), 2500);
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.remove(), 2000);
   };
   document.body.appendChild(btn);
   
