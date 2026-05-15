@@ -589,7 +589,6 @@ window.submitModal=function(){
   if(mMode==='karen-pay'){S.karenLastPay=amt;save(S);renderWeek();toast(`Karen pay $${amt} saved`);}
   if(mMode==='karen-avg'){S.karenAvgPay=amt;save(S);renderAll();toast(`Karen avg pay $${amt} saved`);}
   if(mMode==='spend'){addSpend(amt,label);}
-  if(mMode==='snowball-pmt'){logSnowballPmt(amt);}
   if(mMode.startsWith('card-')){
     const id=mMode.replace('card-','');
     if(!S.cardBals)S.cardBals={};
@@ -699,9 +698,6 @@ function getDailyBills(year, month, day, cardBalOverride) {
 let _cachedRoadmap = null;
 let _roadmapCacheKey = '';
 const phaseAmt=(id,def)=>{if(S.phaseCosts&&S.phaseCosts[id]!==undefined)return S.phaseCosts[id];return def;};
-const ub=(id,def)=>{if(S.userBills){const b=S.userBills.find(x=>x.id===id);if(b)return b.amt;}return def;};
-const ubn=(id,def)=>{if(S.userBills){const b=S.userBills.find(x=>x.id===id);if(b&&b.note)return b.note;}return def;};
-const ubday=(id,def)=>{if(S.userBills){const b=S.userBills.find(x=>x.id===id);if(b&&b.day!==undefined)return b.day;}return def;};
 
 function getSnowballTargets() {
   // Build targets from userBills that have cardId and endDate (fixed-term debts)
@@ -885,18 +881,13 @@ function getMonthEvents(year,month,roadmap,balLog){
   const fromDay=(year===2026&&month===3)?22:1;
   
   const phaseDone=S.phaseDone||{};
-  const cb=S.cardBals||{};
+  const cb={...(S.cardBals||{})};
+  getSnowballTargets().forEach(t=>{
+    const done=roadmap[t.id+'-done'];
+    if(done&&done.date.substring(0,7)<=key)cb[t.id]=0;
+  });
   const add=(day,title,amt,color,note='',isIncome=false,feat=false,isFinal=false,billId=null)=>{
     if(day>=1&&day<=dim)evts.push({day,title,amt,color,note,isIncome,feat,isFinal,billId});
-  };
-
-  const notDone=(id,day=0)=>{
-    const m=roadmap[id+'-done'];
-    if(!m)return true;
-    if(m.date.substring(0,7)>key)return true;
-    if(m.date.substring(0,7)<key)return false;
-    const payoffDay=parseInt(m.date.substring(8,10));
-    return day<=payoffDay;
   };
 
   const todayDate = new Date();
@@ -917,11 +908,11 @@ function getMonthEvents(year,month,roadmap,balLog){
 
   // Paychecks
   if(7>=fromDay) {
-    let amt = checkFuture(7) ? 1641 : (S.jonLastPay || 1641);
+    let amt = checkFuture(7) ? (S.jonAvgPay || S.jonLastPay || 1641) : (S.jonLastPay || 1641);
     add(7, 'Jon paycheck', amt, '#7aad4e', pcNote, true);
   }
   if(22>=fromDay) {
-    let amt = checkFuture(22) ? 1641 : (S.jonLastPay || 1641);
+    let amt = checkFuture(22) ? (S.jonAvgPay || S.jonLastPay || 1641) : (S.jonLastPay || 1641);
     add(22, 'Jon paycheck', amt, '#7aad4e', pcNote, true);
   }
 
@@ -1537,7 +1528,7 @@ window.editBillItem=function(id){
   document.getElementById('bm-amt').value=b.amt;
   document.getElementById('bm-day').value=Array.isArray(b.day)?b.day.join(','):b.day;
   document.getElementById('bm-note').value=b.note||'';
-  document.getElementById('bm-keyword').value=b.debitKeyword||'';
+  document.getElementById('bm-keyword').value=b.keyword||b.debitKeyword||'';
   document.getElementById('bm-enddate').value=b.endDate||'';
   document.getElementById('bm-cardid').value=b.cardId||'';
   document.getElementById('bm-title').textContent='Edit bill';
@@ -1565,13 +1556,13 @@ window.saveBillModal=function(){
   const amt=parseFloat(document.getElementById('bm-amt').value);
   const dayRaw=document.getElementById('bm-day').value.trim();
   const note=document.getElementById('bm-note').value.trim();
-  const debitKeyword=document.getElementById('bm-keyword').value.trim().toUpperCase();
+  const keyword=document.getElementById('bm-keyword').value.trim().toUpperCase();
   const endDate=document.getElementById('bm-enddate').value.trim();
   const cardId=document.getElementById('bm-cardid').value.trim();
   const days=dayRaw.split(',').map(d=>parseInt(d.trim())).filter(d=>!isNaN(d)&&d>=1&&d<=31);
   if(!name||isNaN(amt)||!days.length){toast('Fill in all required fields');return;}
   const bills=(S.userBills||[]);
-  const billData={name,amt,day:days.length===1?days[0]:days,note,debitKeyword};
+  const billData={name,amt,day:days.length===1?days[0]:days,note,keyword};
   if(endDate)billData.endDate=endDate;
   if(cardId)billData.cardId=cardId;
   if(editingBill){
@@ -1581,9 +1572,6 @@ window.saveBillModal=function(){
     bills.push({id:'bill_'+Date.now(),...billData});
   }
   S.userBills=bills;
-  const kwMap={};
-  bills.forEach(b=>{if(b.debitKeyword)kwMap[b.id]=b.debitKeyword;});
-  S.billKeywords=kwMap;
   _cachedRoadmap = null;
   save(S);
   closeBillModal();
@@ -1715,12 +1703,9 @@ window.resolveDebit=function(idx,action){
     d.bill=sel.value;
     const bills=(S.userBills||[]);
     const bill=bills.find(b=>b.id===sel.value);
-    if(bill&&!bill.debitKeyword){
-      bill.debitKeyword=d.merchant;
+    if(bill&&!bill.keyword&&!bill.debitKeyword){
+      bill.keyword=d.merchant;
       S.userBills=bills;
-      const kwMap={};
-      bills.forEach(b=>{if(b.debitKeyword)kwMap[b.id]=b.debitKeyword;});
-      S.billKeywords=kwMap;
     }
   } else if(action==='newBill'){
     closeDebitModal();
@@ -1770,18 +1755,6 @@ window.resetDisc=function(){
 };
 
 
-function logSnowballPmt(amt){
-  if(!S.snowballLog)S.snowballLog=[];
-  const TARGETS = getSnowballTargets();
-  const ct=TARGETS.find(t=>bal(S.cardBals||{},t.id)>0);
-  if(!ct){toast('No active target');return;}
-  if(!S.cardBals)S.cardBals={};
-  const prev=S.cardBals[ct.id]!==undefined?S.cardBals[ct.id]:ct.startBal;
-  S.cardBals[ct.id]=Math.max(0,prev-amt);
-  S.snowballLog.unshift({amt,target:ct.label,date:new Date().toLocaleDateString()});
-  _cachedRoadmap = null;
-  save(S);renderSnowball();toast(`$${Math.round(amt).toLocaleString()} paid to ${ct.label} ✓`);
-}
 
 window.dumpAll = function() {
   const data = calcRoadmap();
@@ -1817,7 +1790,7 @@ window.dumpAll = function() {
   bills.forEach((b, i) => {
     const type = b.endDate ? 'FIXED' : 'RECURRING';
     const dayStr = Array.isArray(b.day) ? b.day.join(',') : b.day;
-    out.push(`  ${i+1}. [${type}] ${b.name}: $${b.amt} | day ${dayStr} | cardId: ${b.cardId || 'none'} | endDate: ${b.endDate || 'none'} | conditionEnd: ${b.conditionEnd || 'none'} | keyword: ${b.debitKeyword || 'none'}`);
+    out.push(`  ${i+1}. [${type}] ${b.name}: $${b.amt} | day ${dayStr} | cardId: ${b.cardId || 'none'} | endDate: ${b.endDate || 'none'} | conditionEnd: ${b.conditionEnd || 'none'} | keyword: ${b.keyword || b.debitKeyword || 'none'}`);
   });
   out.push('');
   
@@ -1866,7 +1839,7 @@ window.dumpAll = function() {
     const year = startYear + Math.floor((startMonth + m) / 12);
     
     // These are the EXACT same functions the Month Plan tab calls
-    const evts = getMonthEvents(year, month, data, data.balLog);
+    const evts = getMonthEvents(year, month, data.milestones, data.balLog);
     const startDay = (year === 2026 && month === 3) ? 22 : 1;
     
     const totalIn = evts.filter(e => e.isIncome && e.day >= startDay).reduce((a, e) => a + (e.amt || 0), 0);
