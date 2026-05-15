@@ -686,11 +686,6 @@ function getDailyBills(year, month, day, cardBalOverride) {
     bills.push({ label: 'Affirm cluster', amt: -affirmAmt, isIncome: false, billId: 'affirm' });
   }
 
-  // Vehicle registration one-time
-  if (year === 2026 && month === 3 && day === 23) {
-    bills.push({ label: 'Vehicle registration', amt: -220, isIncome: false });
-  }
-
   return bills.filter(b => b.amt !== 0);
 }
 
