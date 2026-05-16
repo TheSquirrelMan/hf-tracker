@@ -335,8 +335,16 @@ function getPhases() {
   return (S && S.phases && S.phases.length > 0) ? S.phases : DEFAULT_PHASES;
 }
 
-// ══ AFFIRM SCHEDULE (special case — steps down over time) ══
+// ══ AFFIRM SCHEDULE (steps down as plans expire — edit S.affirmSchedule in Firebase) ══
 function getAffirmAmt(key) {
+  const schedule = S && S.affirmSchedule;
+  if (schedule && schedule.length) {
+    for (const step of schedule) {
+      if (key <= step.through) return step.amt;
+    }
+    return 0;
+  }
+  // Hardcoded fallback until affirmSchedule is seeded to Firebase
   if (key <= '2026-06') return 188;
   if (key <= '2026-07') return 152;
   if (key <= '2026-09') return 108;
@@ -357,6 +365,7 @@ function defaultState(){
     mKey,
     bal4496:0,bal6764:19,bal0725:654,
     karenLastPay:810,karenAvgPay:810,
+    karenLastPayDate:'',
     jonLastPay:1641,
     jonAvgPay:1641,
     discSpent:0,discLog:[],
@@ -372,6 +381,14 @@ function defaultState(){
     notified:{},
     userBills: JSON.parse(JSON.stringify(DEFAULT_USER_BILLS)),
     cardStartBals: {},
+    affirmSchedule: [
+      {through:'2026-06',amt:188},
+      {through:'2026-07',amt:152},
+      {through:'2026-09',amt:108},
+      {through:'2026-10',amt: 95},
+      {through:'2027-02',amt: 82},
+      {through:'2028-01',amt: 59},
+    ],
   };
 }
 
@@ -442,6 +459,8 @@ async function loadFB(){
       if(remote.phases) S.phases = remote.phases;
       if(remote.userBills) S.userBills = remote.userBills;
       if(remote.cardStartBals) S.cardStartBals = remote.cardStartBals;
+      if(remote.karenLastPayDate) S.karenLastPayDate = remote.karenLastPayDate;
+      if(remote.affirmSchedule) S.affirmSchedule = remote.affirmSchedule;
     } else {
       S = {...defaultState(), ...remote};
       if (S.mKey !== mKey) S = resetMonthly(S);
@@ -610,6 +629,16 @@ function bal(cb, id) {
   return 0;
 }
 
+// ══ KAREN PAYDAY (biweekly anchor from last synced paydate) ══
+function isKarenPayday(year, month, day) {
+  const anchor = S.karenLastPayDate;
+  if (!anchor) return new Date(year, month, day).getDay() === 4; // fallback: every Thursday
+  const anchorMs = new Date(anchor + 'T12:00:00').getTime();
+  const thisMs   = new Date(year, month, day).getTime();
+  const diff     = Math.round((thisMs - anchorMs) / 86400000);
+  return diff % 14 === 0;
+}
+
 // ══ DAILY BILLS ENGINE (Firebase-driven) ══
 function getDailyBills(year, month, day, cardBalOverride) {
   const bills = [];
@@ -627,7 +656,7 @@ function getDailyBills(year, month, day, cardBalOverride) {
   if (isFuture) { currentKaren = Math.floor(currentKaren); currentJon = Math.floor(currentJon); }
 
   if (day === 7 || day === 22) bills.push({ label: 'Jon paycheck', amt: currentJon, isIncome: true });
-  if (dow === 4) bills.push({ label: 'Karen paycheck', amt: currentKaren, isIncome: true });
+  if (isKarenPayday(year, month, day)) bills.push({ label: 'Karen paycheck', amt: currentKaren, isIncome: true });
 
   // Process all userBills from Firebase
   const userBills = S.userBills || [];
@@ -717,7 +746,7 @@ function calcRoadmap(){
   const phaseDoneKey = JSON.stringify(S.phaseDone || {});
   const cardBalsKey = JSON.stringify(S.cardBals || {});
   const userBillsKey = JSON.stringify((S.userBills || []).filter(b => b.endDate).map(b => b.id));
-  const cacheKey = `${S.bal4496}-${S.karenLastPay||0}-${S.karenAvgPay||0}-${phasesKey}-${phaseDoneKey}-${cardBalsKey}-${userBillsKey}`;
+  const cacheKey = `${S.bal4496}-${S.karenLastPay||0}-${S.karenAvgPay||0}-${S.karenLastPayDate||''}-${phasesKey}-${phaseDoneKey}-${cardBalsKey}-${userBillsKey}`;
   
   if (_cachedRoadmap && _roadmapCacheKey === cacheKey) {
     return _cachedRoadmap;
@@ -811,7 +840,7 @@ function calcRoadmap(){
     }
 
     // Snowball payments on paycheck days
-    if(snowballActive&&snowIdx!==null&&(dy===7||dy===22||d.getDay()===4)){
+    if(snowballActive&&snowIdx!==null&&(dy===7||dy===22||isKarenPayday(yr,mo,dy))){
       const target=TARGETS[snowIdx];
       let reserve=300;
       const nextJonDay=dy<7?7:dy<22?22:7;
@@ -873,7 +902,7 @@ function getMonthEvents(year,month,roadmap,balLog){
   const evts=[];
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dim=new Date(year,month+1,0).getDate();
-  const fromDay=(year===2026&&month===3)?22:1;
+  const fromDay = 1;
   
   const phaseDone=S.phaseDone||{};
   const cb={...(S.cardBals||{})};
@@ -912,8 +941,8 @@ function getMonthEvents(year,month,roadmap,balLog){
   }
 
   for(let d=fromDay; d<=dim; d++) {
-    if(new Date(year,month,d).getDay()===4) {
-      let amt = checkFuture(d) ? (S.karenAvgPay || S.karenLastPay || 810) : (S.karenLastPay || 810); 
+    if(isKarenPayday(year,month,d)) {
+      let amt = checkFuture(d) ? (S.karenAvgPay || S.karenLastPay || 810) : (S.karenLastPay || 810);
       add(d, 'Karen paycheck — Copans', amt, '#7aad4e', 'Direct deposit to #4496', true);
     }
   }
@@ -950,7 +979,7 @@ function getMonthEvents(year,month,roadmap,balLog){
     const TARGETS = getSnowballTargets();
     for(let dd=fromDay;dd<=dim;dd++){
       const edow=new Date(year,month,dd).getDay();
-      if(!(dd===7||dd===22||edow===4))continue;
+      if(!(dd===7||dd===22||isKarenPayday(year,month,dd)))continue;
       const eventDate=`${year}-${String(month+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
       if(eventDate<ssDate)continue;
       const activeTarget=TARGETS.find(t=>{
@@ -1075,7 +1104,7 @@ function renderWeek(){
       <button class="btn btng btnsm" onclick="confirmAction('jon-${todayKey}')">✓ Got it</button>
     </div>`;
   }
-  if(now.getDay()===4&&!(S.confirmed&&S.confirmed[`karen-${todayKey}`])){
+  if(isKarenPayday(now.getFullYear(),now.getMonth(),now.getDate())&&!(S.confirmed&&S.confirmed[`karen-${todayKey}`])){
     html+=`<div class="banner">
       <div class="banner-title">💰 Karen paycheck expected today</div>
       <div class="banner-sub">Auto-syncing from USAA deposit notification · affects projections</div>
@@ -1897,7 +1926,7 @@ window.dumpAll = function() {
     if (b.frequency === 'quarterly') return sum + (b.amt / 3);
     return sum + (b.amt || 0);
   }, 0);
-  const monthlyIncome = (S.karenAvgPay || S.karenLastPay || 810) * 4.33 + (S.jonLastPay || 1641) * 2;
+  const monthlyIncome = (S.karenAvgPay || S.karenLastPay || 810) * 2 + (S.jonLastPay || 1641) * 2;
   out.push(`  Monthly income: $${Math.round(monthlyIncome).toLocaleString()}`);
   out.push(`  Monthly bills: $${Math.round(monthlyBills).toLocaleString()}`);
   out.push(`  Discretionary cap: $${S.discMonthlyCap || 200}`);
