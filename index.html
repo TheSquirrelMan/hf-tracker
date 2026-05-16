@@ -688,7 +688,8 @@ function getDailyBills(year, month, day, cardBalOverride) {
         label: b.name,
         amt: -Math.abs(b.amt),
         isIncome: false,
-        billId: b.id
+        billId: b.id,
+        ...(b.cardId ? { cardId: b.cardId } : {})
       });
     }
   });
@@ -802,7 +803,12 @@ function calcRoadmap(){
     const dayBills=getDailyBills(yr,mo,dy,cardBals);
     S.cardBals=origCB;
 
-    dayBills.forEach(b=>{balance+=b.amt;});
+    dayBills.forEach(b=>{
+      balance+=b.amt;
+      if(b.cardId&&cardBals[b.cardId]!==undefined){
+        cardBals[b.cardId]=Math.max(0,cardBals[b.cardId]+b.amt);
+      }
+    });
 
     // Check expense phase affordability
     if(!snowballActive&&pendingPhases.length>0){
