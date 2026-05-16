@@ -664,6 +664,8 @@ function getDailyBills(year, month, day, cardBalOverride) {
   userBills.forEach(b => {
     // Check conditionEnd (e.g., "2027-03" — skip if past end date)
     if (b.conditionEnd && key > b.conditionEnd) return;
+    // Self-liquidating bills (endDate set, no cardId) — stop after end month
+    if (!b.cardId && b.endDate && key > b.endDate) return;
     // Skip paid-off debts (those with cardId AND endDate, meaning they're snowball targets)
     if (b.cardId && b.endDate && bal(cb, b.cardId) <= 0) return;
     
