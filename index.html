@@ -630,14 +630,14 @@ function bal(cb, id) {
   return 0;
 }
 
-// ══ KAREN PAYDAY (biweekly anchor from last synced paydate) ══
+// ══ KAREN PAYDAY (weekly anchor from last synced paydate) ══
 function isKarenPayday(year, month, day) {
   const anchor = S.karenLastPayDate;
   if (!anchor) return new Date(year, month, day).getDay() === 4; // fallback: every Thursday
   const anchorMs = new Date(anchor + 'T12:00:00').getTime();
   const thisMs   = new Date(year, month, day).getTime();
   const diff     = Math.round((thisMs - anchorMs) / 86400000);
-  return diff % 14 === 0;
+  return diff % 7 === 0;
 }
 
 // ══ DAILY BILLS ENGINE (Firebase-driven) ══
@@ -1461,7 +1461,7 @@ function renderSnowball(){
   // Income card
   const jonAmt = Math.round(S.jonAvgPay || S.jonLastPay || 1641);
   const karenAmt = Math.round(S.karenAvgPay || S.karenLastPay || 810);
-  const monthlyInc = jonAmt * 2 + karenAmt * 2;
+  const monthlyInc = jonAmt * 2 + Math.round(karenAmt * 4.33);
   const netMo = monthlyInc - grandTotal;
   html+=`<div class="card" style="margin-bottom:8px;">
     <div class="card-title" style="margin-bottom:10px;">Monthly income</div>
@@ -1989,7 +1989,7 @@ window.dumpAll = function() {
     if (b.frequency === 'quarterly') return sum + (b.amt / 3);
     return sum + (b.amt || 0);
   }, 0);
-  const monthlyIncome = (S.karenAvgPay || S.karenLastPay || 810) * 2 + (S.jonLastPay || 1641) * 2;
+  const monthlyIncome = Math.round((S.karenAvgPay || S.karenLastPay || 810) * 4.33) + (S.jonLastPay || 1641) * 2;
   out.push(`  Monthly income: $${Math.round(monthlyIncome).toLocaleString()}`);
   out.push(`  Monthly bills: $${Math.round(monthlyBills).toLocaleString()}`);
   out.push(`  Discretionary cap: $${S.discMonthlyCap || 200}`);
