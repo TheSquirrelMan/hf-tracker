@@ -607,6 +607,7 @@ window.submitModal=function(){
   if(mMode==='bal0725'){S.bal0725=amt;save(S);renderWeek();toast('Savings updated');}
   if(mMode==='karen-pay'){S.karenLastPay=amt;save(S);renderWeek();toast(`Karen pay $${amt} saved`);}
   if(mMode==='karen-avg'){S.karenAvgPay=amt;save(S);renderAll();toast(`Karen avg pay $${amt} saved`);}
+  if(mMode==='jon-avg'){S.jonAvgPay=amt;S.jonLastPay=amt;_cachedRoadmap=null;save(S);renderAll();toast(`Jon avg pay $${amt} saved`);}
   if(mMode==='spend'){addSpend(amt,label);}
   if(mMode.startsWith('card-')){
     const id=mMode.replace('card-','');
@@ -1454,6 +1455,43 @@ function renderSnowball(){
       <div style="font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Total bills</div>
       <div style="font-size:15px;font-weight:700;color:var(--red);">-$${Math.round(grandTotal).toLocaleString()}</div>
       <div style="font-size:10px;color:var(--t3);">/mo</div>
+    </div>
+  </div>`;
+
+  // Income card
+  const jonAmt = Math.round(S.jonAvgPay || S.jonLastPay || 1641);
+  const karenAmt = Math.round(S.karenAvgPay || S.karenLastPay || 810);
+  const monthlyInc = jonAmt * 2 + karenAmt * 2;
+  const netMo = monthlyInc - grandTotal;
+  html+=`<div class="card" style="margin-bottom:8px;">
+    <div class="card-title" style="margin-bottom:10px;">Monthly income</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <div style="flex:1;background:var(--s2);border-radius:var(--rs);padding:10px;">
+        <div style="font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Jon · 7th &amp; 22nd</div>
+        <div style="font-size:16px;font-weight:700;color:var(--grn);">+$${jonAmt.toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--t3);margin-bottom:8px;">per check · ×2/mo</div>
+        <button class="btn btno btnsm" style="margin-bottom:0;" onclick="openModal('jon-avg','Jon avg paycheck')">Edit</button>
+      </div>
+      <div style="flex:1;background:var(--s2);border-radius:var(--rs);padding:10px;">
+        <div style="font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Karen · biweekly</div>
+        <div style="font-size:16px;font-weight:700;color:var(--grn);">+$${karenAmt.toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--t3);margin-bottom:8px;">per check · ×2/mo</div>
+        <button class="btn btno btnsm" style="margin-bottom:0;" onclick="openModal('karen-avg','Karen avg paycheck')">Edit</button>
+      </div>
+    </div>
+    <div style="border-top:0.5px solid var(--br);padding-top:10px;display:flex;flex-direction:column;gap:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:12px;color:var(--t3);">Monthly income</div>
+        <div style="font-size:14px;font-weight:700;color:var(--grn);">+$${monthlyInc.toLocaleString()}/mo</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:12px;color:var(--t3);">Monthly bills</div>
+        <div style="font-size:14px;font-weight:700;color:var(--red);">-$${Math.round(grandTotal).toLocaleString()}/mo</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:6px;border-top:0.5px solid var(--br);">
+        <div style="font-size:12px;font-weight:600;color:var(--tx);">Net surplus</div>
+        <div style="font-size:14px;font-weight:700;color:${netMo>=0?'var(--blu)':'var(--red)'};">${netMo>=0?'+':''} $${Math.round(netMo).toLocaleString()}/mo</div>
+      </div>
     </div>
   </div>`;
 
