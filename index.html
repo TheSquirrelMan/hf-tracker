@@ -1434,8 +1434,28 @@ function renderSnowball(){
   const cb=S.cardBals||{};
   const TARGETS = getSnowballTargets();
 
+  const fixedBillsTotal=(S.userBills||[]).filter(b=>b.endDate).reduce((a,b)=>a+b.amt,0);
+  const recurBillsTotal=(S.userBills||[]).filter(b=>!b.endDate).reduce((a,b)=>a+b.amt,0);
+  const grandTotal=fixedBillsTotal+recurBillsTotal;
   let html=`<div style="font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:2px;">Debt roadmap</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:10px;">All dates calculated from your actual balance</div>`;
+    <div style="font-size:12px;color:var(--t3);margin-bottom:10px;">All dates calculated from your actual balance</div>
+  <div class="card" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;padding:10px 0;margin-bottom:8px;">
+    <div style="text-align:center;padding:4px 8px;border-right:0.5px solid var(--br);">
+      <div style="font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Fixed-term</div>
+      <div style="font-size:15px;font-weight:700;color:var(--red);">-$${Math.round(fixedBillsTotal).toLocaleString()}</div>
+      <div style="font-size:10px;color:var(--t3);">/mo</div>
+    </div>
+    <div style="text-align:center;padding:4px 8px;border-right:0.5px solid var(--br);">
+      <div style="font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Recurring</div>
+      <div style="font-size:15px;font-weight:700;color:var(--red);">-$${Math.round(recurBillsTotal).toLocaleString()}</div>
+      <div style="font-size:10px;color:var(--t3);">/mo</div>
+    </div>
+    <div style="text-align:center;padding:4px 8px;">
+      <div style="font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Total bills</div>
+      <div style="font-size:15px;font-weight:700;color:var(--red);">-$${Math.round(grandTotal).toLocaleString()}</div>
+      <div style="font-size:10px;color:var(--t3);">/mo</div>
+    </div>
+  </div>`;
 
   // Expense phases
   html+=`<div class="card">
@@ -1470,7 +1490,10 @@ function renderSnowball(){
   const fixedBills=(S.userBills||[]).filter(b=>b.endDate);
   html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div class="card-title" style="margin-bottom:0;">Fixed-term bills ${allExpDone?'🚀':''}</div>
+      <div>
+        <div class="card-title" style="margin-bottom:0;">Fixed-term bills ${allExpDone?'🚀':''}</div>
+        <div style="font-size:11px;color:var(--t3);">$${Math.round(fixedBillsTotal).toLocaleString()}/mo</div>
+      </div>
     </div>
     ${!allExpDone?'<div style="font-size:12px;color:var(--amb);margin-bottom:10px;">Snowball starts after all expense phases complete</div>':''}`;
   if(!fixedBills.length){
