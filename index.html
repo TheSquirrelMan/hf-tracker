@@ -1422,6 +1422,20 @@ function renderMonth(){
   document.getElementById('month-content').innerHTML=html;
 }
 
+function toMonthlyAmt(b) {
+  if (b.frequency === 'weekly') return b.amt * 4.33;
+  if (b.frequency === 'quarterly') return b.amt / 3;
+  return b.amt || 0;
+}
+
+window.toggleRoadmapSection = function(key) {
+  let c = {};
+  try { c = JSON.parse(localStorage.getItem('rmCollapsed') || '{}'); } catch {}
+  c[key] = !c[key];
+  localStorage.setItem('rmCollapsed', JSON.stringify(c));
+  renderSnowball();
+};
+
 // ══ RENDER SNOWBALL ══
 function renderSnowball(){
   const roadmapData = safeRender(() => calcRoadmap(), 'Failed to calculate roadmap');
@@ -1434,9 +1448,11 @@ function renderSnowball(){
   const allExpDone=getPhases().every(p=>phaseDone[p.id]);
   const cb=S.cardBals||{};
   const TARGETS = getSnowballTargets();
+  let rmCollapsed = {};
+  try { rmCollapsed = JSON.parse(localStorage.getItem('rmCollapsed') || '{}'); } catch {}
 
-  const fixedBillsTotal=(S.userBills||[]).filter(b=>b.endDate).reduce((a,b)=>a+b.amt,0);
-  const recurBillsTotal=(S.userBills||[]).filter(b=>!b.endDate).reduce((a,b)=>a+b.amt,0);
+  const fixedBillsTotal=(S.userBills||[]).filter(b=>b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0);
+  const recurBillsTotal=(S.userBills||[]).filter(b=>!b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0);
   const grandTotal=fixedBillsTotal+recurBillsTotal;
   let html=`<div style="font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:2px;">Debt roadmap</div>
     <div style="font-size:12px;color:var(--t3);margin-bottom:10px;">All dates calculated from your actual balance</div>
@@ -1497,106 +1513,119 @@ function renderSnowball(){
 
   // Expense phases
   html+=`<div class="card">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rmCollapsed.phases?'0':'10px'};cursor:pointer;" onclick="toggleRoadmapSection('phases')">
     <div class="card-title" style="margin-bottom:0;">Expense phases (reorder with ▲▼)</div>
-    <button class="btn btng btnsm" style="width:auto;padding:4px 10px;font-size:11px;" onclick="addPhase()">+ Add</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="btn btng btnsm" style="width:auto;padding:4px 10px;font-size:11px;" onclick="event.stopPropagation();addPhase()">+ Add</button>
+      <span style="color:var(--t3);font-size:13px;width:12px;text-align:center;">${rmCollapsed.phases?'▶':'▼'}</span>
+    </div>
   </div>`;
-  const phasesList = getPhases();
-  phasesList.forEach((p, index)=>{
-    const done=phaseDone[p.id];
-    const m=roadmap[p.id];
-    const dateLabel=done?'DONE':m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'calculating...';
-    html+=`<div class="ms">
-      <div class="ms-info">
-        <div class="ms-label" style="font-weight:600;${done?'text-decoration:line-through;color:var(--t3);':''}">${p.label}</div>
-        <div class="ms-sub">$${phaseAmt(p.id,p.cost).toLocaleString()} · ${p.isSavings?'transfers to savings':'from #4496'}</div>
-      </div>
-      <div class="ms-right">
-        <div class="reorder-btns">
-          <button class="reorder-btn" onclick="movePhase(${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
-          <button class="reorder-btn" onclick="movePhase(${index}, 1)" ${index === phasesList.length - 1 ? 'disabled' : ''}>▼</button>
+  if (!rmCollapsed.phases) {
+    const phasesList = getPhases();
+    phasesList.forEach((p, index)=>{
+      const done=phaseDone[p.id];
+      const m=roadmap[p.id];
+      const dateLabel=done?'DONE':m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'calculating...';
+      html+=`<div class="ms">
+        <div class="ms-info">
+          <div class="ms-label" style="font-weight:600;${done?'text-decoration:line-through;color:var(--t3);':''}">${p.label}</div>
+          <div class="ms-sub">$${phaseAmt(p.id,p.cost).toLocaleString()} · ${p.isSavings?'transfers to savings':'from #4496'}</div>
         </div>
-        <div class="ms-date" style="color:${done?'var(--grn)':'var(--amb)'};">${dateLabel}</div>
-        ${!done?`<div style="display:flex;gap:6px;"><button class="btn btno btnsm" style="padding:4px 9px;font-size:11px;" onclick="openModal('phase-cost-${p.id}','Edit ${p.label} budget')">✎</button><button class="btn btng btnsm" style="padding:4px 9px;font-size:11px;" onclick="markPhaseDone('${p.id}')">✓</button></div>`:''}
-        <button class="reorder-btn" style="color:var(--red);" onclick="deletePhase('${p.id}')" title="Delete milestone">✕</button>
-      </div>
-    </div>`;
-  });
+        <div class="ms-right">
+          <div class="reorder-btns">
+            <button class="reorder-btn" onclick="movePhase(${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
+            <button class="reorder-btn" onclick="movePhase(${index}, 1)" ${index === phasesList.length - 1 ? 'disabled' : ''}>▼</button>
+          </div>
+          <div class="ms-date" style="color:${done?'var(--grn)':'var(--amb)'};">${dateLabel}</div>
+          ${!done?`<div style="display:flex;gap:6px;"><button class="btn btno btnsm" style="padding:4px 9px;font-size:11px;" onclick="openModal('phase-cost-${p.id}','Edit ${p.label} budget')">✎</button><button class="btn btng btnsm" style="padding:4px 9px;font-size:11px;" onclick="markPhaseDone('${p.id}')">✓</button></div>`:''}
+          <button class="reorder-btn" style="color:var(--red);" onclick="deletePhase('${p.id}')" title="Delete milestone">✕</button>
+        </div>
+      </div>`;
+    });
+  }
   html+=`</div>`;
 
   // Fixed-term bills (from Firebase userBills with endDate)
   const fixedBills=(S.userBills||[]).filter(b=>b.endDate);
   html+=`<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rmCollapsed.fixed?'0':'10px'};cursor:pointer;" onclick="toggleRoadmapSection('fixed')">
       <div>
         <div class="card-title" style="margin-bottom:0;">Fixed-term bills ${allExpDone?'🚀':''}</div>
         <div style="font-size:11px;color:var(--t3);">$${Math.round(fixedBillsTotal).toLocaleString()}/mo</div>
       </div>
-    </div>
-    ${!allExpDone?'<div style="font-size:12px;color:var(--amb);margin-bottom:10px;">Snowball starts after all expense phases complete</div>':''}`;
-  if(!fixedBills.length){
-    html+=`<div style="font-size:13px;color:var(--t3);">No fixed-term bills — set an end date on a bill to show it here</div>`;
-  }
-  fixedBills.forEach((b,i)=>{
-    const target=TARGETS.find(t=>t.id===b.cardId);
-    const curBal=target?bal(cb,target.id):null;
-    const isPaidOff=curBal!==null&&curBal<=0;
-    const m=target?roadmap[target.id+'-done']:null;
-    const payoffLabel=isPaidOff?'PAID OFF':m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):b.endDate;
-    const isActive=allExpDone&&target&&!isPaidOff&&TARGETS.slice(0,TARGETS.findIndex(t=>t.id===b.cardId)).every(prev=>bal(cb,prev.id)<=0);
-    html+=`<div class="ms" style="${isPaidOff?'opacity:0.4;':''}">
-      <div class="ms-info">
-        <div class="ms-label" style="font-weight:600;color:${isPaidOff?'var(--grn)':isActive?'var(--amb)':'var(--tx)'};">${isPaidOff?'✓ ':isActive?'🎯 ':''} ${b.name}</div>
-        <div class="ms-sub">$${b.amt}/mo${b.endDate?' · ends '+b.endDate:''}${curBal!==null&&!isPaidOff?' · $'+Math.round(curBal).toLocaleString()+' remaining':''}</div>
-      </div>
-      <div class="ms-right">
-        <div class="reorder-btns">
-          <button class="reorder-btn" onclick="moveFixedBill('${b.id}',-1)" ${i===0?'disabled':''}>▲</button>
-          <button class="reorder-btn" onclick="moveFixedBill('${b.id}',1)" ${i===fixedBills.length-1?'disabled':''}>▼</button>
-        </div>
-        <div class="ms-date" style="color:${isPaidOff?'var(--grn)':isActive?'var(--amb)':'var(--blu)'};">${payoffLabel}</div>
-        <button class="reorder-btn" onclick="editBillItem('${b.id}')" title="Edit">✎</button>
-      </div>
+      <span style="color:var(--t3);font-size:13px;width:12px;text-align:center;">${rmCollapsed.fixed?'▶':'▼'}</span>
     </div>`;
-  });
+  if (!rmCollapsed.fixed) {
+    if(!allExpDone) html+=`<div style="font-size:12px;color:var(--amb);margin-bottom:10px;">Snowball starts after all expense phases complete</div>`;
+    if(!fixedBills.length){
+      html+=`<div style="font-size:13px;color:var(--t3);">No fixed-term bills — set an end date on a bill to show it here</div>`;
+    }
+    fixedBills.forEach((b,i)=>{
+      const target=TARGETS.find(t=>t.id===b.cardId);
+      const curBal=target?bal(cb,target.id):null;
+      const isPaidOff=curBal!==null&&curBal<=0;
+      const m=target?roadmap[target.id+'-done']:null;
+      const payoffLabel=isPaidOff?'PAID OFF':m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):b.endDate;
+      const isActive=allExpDone&&target&&!isPaidOff&&TARGETS.slice(0,TARGETS.findIndex(t=>t.id===b.cardId)).every(prev=>bal(cb,prev.id)<=0);
+      html+=`<div class="ms" style="${isPaidOff?'opacity:0.4;':''}">
+        <div class="ms-info">
+          <div class="ms-label" style="font-weight:600;color:${isPaidOff?'var(--grn)':isActive?'var(--amb)':'var(--tx)'};">${isPaidOff?'✓ ':isActive?'🎯 ':''} ${b.name}</div>
+          <div class="ms-sub">$${b.amt}/mo${b.endDate?' · ends '+b.endDate:''}${curBal!==null&&!isPaidOff?' · $'+Math.round(curBal).toLocaleString()+' remaining':''}</div>
+        </div>
+        <div class="ms-right">
+          <div class="reorder-btns">
+            <button class="reorder-btn" onclick="moveFixedBill('${b.id}',-1)" ${i===0?'disabled':''}>▲</button>
+            <button class="reorder-btn" onclick="moveFixedBill('${b.id}',1)" ${i===fixedBills.length-1?'disabled':''}>▼</button>
+          </div>
+          <div class="ms-date" style="color:${isPaidOff?'var(--grn)':isActive?'var(--amb)':'var(--blu)'};">${payoffLabel}</div>
+          <button class="reorder-btn" onclick="editBillItem('${b.id}')" title="Edit">✎</button>
+        </div>
+      </div>`;
+    });
+  }
   html+=`</div>`;
 
   // Recurring bills (no endDate)
   const recurBills=(S.userBills||[]).filter(b=>!b.endDate);
-  const recurTotal=recurBills.reduce((a,b)=>a+b.amt,0);
+  const recurTotal=recurBills.reduce((a,b)=>a+toMonthlyAmt(b),0);
   html+=`<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rmCollapsed.recurring?'0':'10px'};cursor:pointer;" onclick="toggleRoadmapSection('recurring')">
       <div>
         <div class="card-title" style="margin-bottom:0;">Recurring bills</div>
         <div style="font-size:11px;color:var(--t3);">$${Math.round(recurTotal).toLocaleString()}/mo</div>
       </div>
-      <button class="btn btng btnsm" style="width:auto;padding:8px 14px;" onclick="addBill()">+ Add</button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn btng btnsm" style="width:auto;padding:8px 14px;" onclick="event.stopPropagation();addBill()">+ Add</button>
+        <span style="color:var(--t3);font-size:13px;width:12px;text-align:center;">${rmCollapsed.recurring?'▶':'▼'}</span>
+      </div>
     </div>`;
-  if(!recurBills.length){
-    html+=`<div style="font-size:13px;color:var(--t3);">No recurring bills</div>`;
+  if (!rmCollapsed.recurring) {
+    if(!recurBills.length){
+      html+=`<div style="font-size:13px;color:var(--t3);">No recurring bills</div>`;
+    }
+    const DOW_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    recurBills.forEach((b,i)=>{
+      const dayLabel=b.frequency==='weekly'?`Every ${DOW_NAMES[b.dow??0]}`:b.frequency==='biweekly'?(Array.isArray(b.day)?b.day.map(d=>`~${d}th`).join(' + '):`~${b.day}th`):`~${b.day}th`;
+      html+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--br);${i===recurBills.length-1?'border-bottom:none;':''}">
+        <div style="flex:1;min-width:0;cursor:pointer;" onclick="editBillItem('${b.id}')">
+          <div style="font-size:13px;font-weight:600;">${b.name}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:1px;">${dayLabel}${b.note?' · '+b.note:''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <div style="font-size:14px;font-weight:700;color:var(--red);">-$${b.amt}</div>
+          <button style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:2px 4px;line-height:1;" onclick="deleteBill('${b.id}')">×</button>
+        </div>
+      </div>`;
+    });
+    html+=`<div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--br);">
+      <div style="font-size:11px;color:var(--t3);margin-bottom:8px;">Monthly discretionary cap — deducted weekly on Sundays</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span style="font-size:13px;color:var(--tx);flex-shrink:0;">Monthly cap</span>
+        <input class="minput" type="number" id="disc-cap" value="${S.discMonthlyCap||200}" style="margin-bottom:0;" inputmode="decimal">
+        <button class="btn btng btnsm" style="width:auto;padding:8px 14px;flex-shrink:0;" onclick="saveDiscSettings()">Save</button>
+      </div>
+    </div>`;
   }
-  const DOW_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  recurBills.forEach((b,i)=>{
-    const dayLabel=b.frequency==='weekly'?`Every ${DOW_NAMES[b.dow??0]}`:b.frequency==='biweekly'?(Array.isArray(b.day)?b.day.map(d=>`~${d}th`).join(' + '):`~${b.day}th`):`~${b.day}th`;
-    html+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--br);${i===recurBills.length-1?'border-bottom:none;':''}">
-      <div style="flex:1;min-width:0;cursor:pointer;" onclick="editBillItem('${b.id}')">
-        <div style="font-size:13px;font-weight:600;">${b.name}</div>
-        <div style="font-size:11px;color:var(--t3);margin-top:1px;">${dayLabel}${b.note?' · '+b.note:''}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-        <div style="font-size:14px;font-weight:700;color:var(--red);">-$${b.amt}</div>
-        <button style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:2px 4px;line-height:1;" onclick="deleteBill('${b.id}')">×</button>
-      </div>
-    </div>`;
-  });
-  html+=`<div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--br);">
-    <div style="font-size:11px;color:var(--t3);margin-bottom:8px;">Monthly discretionary cap — deducted weekly on Sundays</div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <span style="font-size:13px;color:var(--tx);flex-shrink:0;">Monthly cap</span>
-      <input class="minput" type="number" id="disc-cap" value="${S.discMonthlyCap||200}" style="margin-bottom:0;" inputmode="decimal">
-      <button class="btn btng btnsm" style="width:auto;padding:8px 14px;flex-shrink:0;" onclick="saveDiscSettings()">Save</button>
-    </div>
-  </div>`;
   html+=`</div>`;
 
   document.getElementById('snowball-content').innerHTML=html;
