@@ -535,6 +535,92 @@ function formatUsaaDate(usaaDate) {
   return `${parseInt(parts[0])}/${parseInt(parts[1])}/${2000 + parseInt(parts[2])}`;
 }
 
+// ── Seed / restore baseline data to Firebase ──
+// Run this once from the Apps Script editor if Firebase is ever wiped.
+// Does NOT overwrite live balances (bal4496/cardBals), spend logs, or processed IDs.
+function seedDefaultBills() {
+  initFirebasePath();
+
+  const userBills = [
+    // ── Fixed-term debts (cardId = snowball target) ──
+    { id:'bill_amazon_store',   name:'Amazon Store Card',       amt:29,  day:1,  cardId:'amazon',   endDate:'2026-08', keyword:'AMAZON' },
+    { id:'bill_cap3186',        name:'Cap One #3186 (Karen)',    amt:25,  day:11, cardId:'cap3186',  endDate:'2026-10', keyword:'CAPITAL ONE' },
+    { id:'bill_cap4565',        name:'Cap One #4565 (Jon)',      amt:25,  day:21, cardId:'cap4565',  endDate:'2026-12', keyword:'CAPITAL ONE' },
+    { id:'bill_cap5592',        name:'Cap One #5592 (Karen)',    amt:25,  day:21, cardId:'cap5592',  endDate:'2026-12', keyword:'CAPITAL ONE' },
+    { id:'bill_cap7988',        name:'Cap One #7988 (Jon)',      amt:30,  day:21, cardId:'cap7988',  endDate:'2027-01', keyword:'CAPITAL ONE' },
+    { id:'bill_merrick',        name:'Merrick Bank',             amt:35,  day:11, cardId:'merrick',  endDate:'2026-11', keyword:'MERRICK' },
+    { id:'bill_chase',          name:'Chase/Amazon Prime',       amt:26,  day:26, cardId:'chase',    endDate:'2027-04', keyword:'CHASE' },
+    { id:'bill_usaa_amex',      name:'USAA Amex (Karen)',        amt:63,  day:15, cardId:'usaaAmex', endDate:'2027-02', keyword:'USAA' },
+    { id:'bill_kpaypal',        name:"Karen's PayPal Credit",    amt:100, day:13, cardId:'kpaypal',  endDate:'2027-05', keyword:'PAYPAL' },
+    { id:'bill_tn',             name:'TN Unemployment',          amt:153, day:22, cardId:'tn',       endDate:'2027-12', keyword:'TN' },
+    { id:'bill_irs2',           name:'IRS payment #2',           amt:35,  day:16, cardId:'irs',      endDate:'2028-06', keyword:'IRS' },
+    { id:'bill_irs1',           name:'IRS payment #1',           amt:68,  day:15, cardId:'irs',      endDate:'2028-06', keyword:'IRS' },
+    { id:'bill_mazda',          name:'Mazda CX-5',               amt:638, day:9,  cardId:'mazda',    endDate:'2027-04', keyword:'MAZDA' },
+    // ── Fixed-term (no cardId — expire by date) ──
+    { id:'bill_paypal_newegg',  name:'PayPal Newegg',            amt:61,  day:13, endDate:'2027-01', conditionEnd:'2027-01' },
+    { id:'bill_jon_paypal',     name:'Jon PayPal Credit',        amt:22,  day:22, endDate:'2029-10', conditionEnd:'2029-10' },
+    { id:'bill_paypal_chinese', name:'PayPal Chinese vendor',    amt:95,  day:30, endDate:'2027-03', conditionEnd:'2027-03' },
+    { id:'bill_paypal_ebay',    name:'PayPal eBay',              amt:43,  day:4,  endDate:'2027-08', conditionEnd:'2027-08' },
+    // ── Recurring ──
+    { id:'bill_amazon_prime',   name:'Amazon Prime',             amt:15,  day:2  },
+    { id:'bill_real_debrid',    name:'Real-Debrid',              amt:11,  day:2  },
+    { id:'bill_chatgpt',        name:'ChatGPT',                  amt:22,  day:4  },
+    { id:'bill_claude',         name:'Claude.ai',                amt:20,  day:13 },
+    { id:'bill_tmobile',        name:'T-Mobile',                 amt:152, day:15, keyword:'TMOBILE AU' },
+    { id:'bill_att',            name:'AT&T fiber',               amt:166, day:16, keyword:'ATT*BILL PAYMENT' },
+    { id:'bill_spotify',        name:'Spotify',                  amt:22,  day:22 },
+    { id:'bill_state_farm',     name:'State Farm',               amt:190, day:23 },
+    { id:'bill_fresh_market',   name:'Fresh Market',             amt:200, day:0  },
+    { id:'bill_gas',            name:'Gas (monthly est.)',        amt:120, day:1  },
+  ];
+
+  const phases = [
+    { id:'repair-buf',  label:'Repair buffer (savings)', cost:1000, isSavings:true },
+    { id:'jon-tires',   label:"Jon's tires + oil",       cost:1500 },
+    { id:'karen-tires', label:"Karen's tires",           cost:1000 },
+    { id:'dental',      label:'Dental — Jon + Karen',    cost:600  },
+    { id:'glasses',     label:'Glasses — Jon + Karen',   cost:1000 },
+  ];
+
+  // Starting balances as of 2026-05-21 — update cardBals manually after any snowball payments
+  const cardStartBals = {
+    amazon:   235,
+    cap3186:  491,
+    cap4565:  726,
+    cap5592:  731,
+    cap7988:  843,
+    merrick:  926,
+    chase:    951,
+    usaaAmex: 1847,
+    kpaypal:  1958,
+    tn:       3653,
+    irs:      4767,
+    mazda:    20693,
+  };
+
+  const affirmSchedule = [
+    {through:'2026-06',amt:188},
+    {through:'2026-07',amt:152},
+    {through:'2026-09',amt:108},
+    {through:'2026-10',amt: 95},
+    {through:'2027-02',amt: 82},
+    {through:'2028-01',amt: 59},
+  ];
+
+  firebasePut(`${FIREBASE_BASE}/userBills.json`,      userBills);
+  firebasePut(`${FIREBASE_BASE}/phases.json`,         phases);
+  firebasePut(`${FIREBASE_BASE}/phaseDone.json`,      {'repair-buf': true});
+  firebasePut(`${FIREBASE_BASE}/phaseCosts.json`,     {dental: 600});
+  firebasePut(`${FIREBASE_BASE}/cardStartBals.json`,  cardStartBals);
+  firebasePut(`${FIREBASE_BASE}/affirmSchedule.json`, affirmSchedule);
+  firebasePut(`${FIREBASE_BASE}/discMonthlyCap.json`, 250);
+  firebasePut(`${FIREBASE_BASE}/discWeekly.json`,     63);
+  firebasePut(`${FIREBASE_BASE}/karenAvgPay.json`,    787);
+  firebasePut(`${FIREBASE_BASE}/jonAvgPay.json`,      1641);
+
+  Logger.log('✓ seedDefaultBills complete — live balances and logs untouched');
+}
+
 // ── Helpers ──
 function sendEmail(subject, body) {
   GmailApp.sendEmail(NOTIFY_EMAIL, subject, body);
