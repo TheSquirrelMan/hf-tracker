@@ -828,6 +828,14 @@ function calcRoadmap(){
     }
   }
 
+  // Seed today's projected end-of-day balance (after any phase deduction + today's bills)
+  try{
+    S.cardBals=cardBals;
+    const todayBills=getDailyBills(now.getFullYear(),now.getMonth(),now.getDate(),cardBals);
+    const todayExp=todayBills.filter(b=>!b.isIncome).reduce((a,b)=>a+b.amt,0);
+    balLog[todayStr]=Math.round(balance+todayExp);
+  }finally{S.cardBals=origCB;}
+
   // Start simulation from tomorrow
   const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
 
