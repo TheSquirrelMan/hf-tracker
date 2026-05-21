@@ -205,6 +205,7 @@ function syncJonPay() {
       const amount = parseFloat(match[1].replace(/,/g, ""));
 
       firebasePut(`${FIREBASE_BASE}/jonLastPay.json`, amount);
+      firebasePut(`${FIREBASE_BASE}/jonLastPayDate.json`, Utilities.formatDate(today, "America/New_York", "yyyy-MM-dd"));
       const prevAvg = state.jonAvgPay || amount;
       const newAvg = Math.round((prevAvg * 0.7) + (amount * 0.3));
       firebasePut(`${FIREBASE_BASE}/jonAvgPay.json`, newAvg);
