@@ -799,9 +799,8 @@ function calcRoadmap(){
     const yr=d.getFullYear(),mo=d.getMonth(),dy=d.getDate();
     const dateStr=d.toISOString().split('T')[0];
 
-    S.cardBals=cardBals;
-    const dayBills=getDailyBills(yr,mo,dy,cardBals);
-    S.cardBals=origCB;
+    let dayBills;
+    try{S.cardBals=cardBals;dayBills=getDailyBills(yr,mo,dy,cardBals);}finally{S.cardBals=origCB;}
 
     dayBills.forEach(b=>{
       balance+=b.amt;
@@ -825,10 +824,7 @@ function calcRoadmap(){
           let rd=new Date(yr,mo,dy+1);
           const nextJon=new Date(yr,nextJonMo,nextJonDay);
           while(rd<nextJon){
-            S.cardBals=cardBals;
-            getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate(),cardBals)
-              .forEach(b=>{sim+=b.amt;});
-            S.cardBals=origCB;
+            try{S.cardBals=cardBals;getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate(),cardBals).forEach(b=>{sim+=b.amt;});}finally{S.cardBals=origCB;}
             if(sim<0){simOk=false;break;}
             rd.setDate(rd.getDate()+1);
           }
@@ -857,10 +853,7 @@ function calcRoadmap(){
       let rd=new Date(yr,mo,dy+1);
       const nextJon=new Date(yr,nextJonMo,nextJonDay);
       while(rd<nextJon){
-        S.cardBals=cardBals;
-        getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate(),cardBals)
-          .forEach(b=>{if(!b.isIncome&&b.amt<0&&b.label!==target.label)reserve+=Math.abs(b.amt);});
-        S.cardBals=origCB;
+        try{S.cardBals=cardBals;getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate(),cardBals).forEach(b=>{if(!b.isIncome&&b.amt<0&&b.label!==target.label)reserve+=Math.abs(b.amt);});}finally{S.cardBals=origCB;}
         rd.setDate(rd.getDate()+1);
       }
       const available=Math.max(0,balance-reserve);
@@ -1296,11 +1289,12 @@ function renderWeek(){
 
 // ══ RENDER MONTH ══
 let vMonth=now.getMonth(),vYear=now.getFullYear();
+const _minMonthDate=(()=>{const d=new Date(now.getFullYear(),now.getMonth()-12,1);return{y:d.getFullYear(),m:d.getMonth()};})();
 window.changeMonth=function(dir){
   vMonth+=dir;
   if(vMonth>11){vMonth=0;vYear++;}
   if(vMonth<0){vMonth=11;vYear--;}
-  if(vYear<2026||(vYear===2026&&vMonth<3)){vMonth=3;vYear=2026;}
+  if(vYear<_minMonthDate.y||(vYear===_minMonthDate.y&&vMonth<_minMonthDate.m)){vMonth=_minMonthDate.m;vYear=_minMonthDate.y;}
   renderMonth();
 };
 
@@ -1421,7 +1415,7 @@ function renderMonth(){
   const prevM=(vMonth-1+12)%12,prevY=vMonth===0?vYear-1:vYear;
   const nextM=(vMonth+1)%12,nextY=vMonth===11?vYear+1:vYear;
   html+=`<div style="display:flex;gap:8px;margin-top:4px;">
-    <button class="btn btno" style="flex:1;" onclick="changeMonth(-1)" ${vYear===2026&&vMonth===3?'disabled':''}>← ${MN[prevM].substring(0,3)} '${String(prevY).slice(2)}</button>
+    <button class="btn btno" style="flex:1;" onclick="changeMonth(-1)" ${(vYear===_minMonthDate.y&&vMonth===_minMonthDate.m)?'disabled':''}>← ${MN[prevM].substring(0,3)} '${String(prevY).slice(2)}</button>
     <button class="btn btno" style="flex:1;" onclick="changeMonth(1)">${MN[nextM].substring(0,3)} '${String(nextY).slice(2)} →</button>
   </div>`;
 

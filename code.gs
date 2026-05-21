@@ -109,7 +109,7 @@ function syncUSAABalance() {
       Logger.log(`Balance parsed: $${balance} for account ${acctNum}`);
 
       // Write to the correct Firebase key based on account number
-      const fbKey = acctNum === '4496' ? 'bal4496' : acctNum === '0725' ? 'bal0725' : null;
+      const fbKey = acctNum === '4496' ? 'bal4496' : acctNum === '0725' ? 'bal0725' : acctNum === '6764' ? 'bal6764' : null;
       if (!fbKey) { Logger.log(`Unknown account ${acctNum}, skipping.`); continue; }
 
       const res = firebasePut(`${FIREBASE_BASE}/${fbKey}.json`, balance);
@@ -165,7 +165,7 @@ function syncKarenPay() {
       const newKarenAvg = Math.round((prevKarenAvg * 0.7) + (amount * 0.3));
       firebasePut(`${FIREBASE_BASE}/karenAvgPay.json`, newKarenAvg);
       processedIds.push(msgId);
-      firebasePut(`${FIREBASE_BASE}/processedPayIds.json`, processedIds);
+      firebasePut(`${FIREBASE_BASE}/processedPayIds.json`, processedIds.slice(-200));
       labelMessage(msgId, labelId);
       Logger.log(`✓ karenLastPay updated: $${amount}, karenAvgPay: $${newKarenAvg}`);
       const currentBal = firebaseGet(`${FIREBASE_BASE}/bal4496.json`) || 0;
@@ -174,13 +174,10 @@ function syncKarenPay() {
   }
 }
 
-// ── 3. Jon paycheck sync (7th and 22nd) ──
+// ── 3. Jon paycheck sync (7th and 22nd, or any day paycheck arrives early) ──
 function syncJonPay() {
   initFirebasePath();
   const today = new Date();
-  const dayOfMonth = today.getDate();
-  if (dayOfMonth !== 7 && dayOfMonth !== 22) return;
-
   const dateStr = Utilities.formatDate(today, "America/New_York", "yyyy/MM/dd");
   const query = `from:${USAA_SENDER} subject:"Deposit to Your Bank Account" after:${dateStr}`;
   const threads = GmailApp.search(query, 0, 10);
@@ -212,7 +209,7 @@ function syncJonPay() {
       const newAvg = Math.round((prevAvg * 0.7) + (amount * 0.3));
       firebasePut(`${FIREBASE_BASE}/jonAvgPay.json`, newAvg);
       processedIds.push(msgId);
-      firebasePut(`${FIREBASE_BASE}/processedPayIds.json`, processedIds);
+      firebasePut(`${FIREBASE_BASE}/processedPayIds.json`, processedIds.slice(-200));
       labelMessage(msgId, labelId);
       Logger.log(`✓ jonLastPay updated: $${amount}`);
       const currentBal = firebaseGet(`${FIREBASE_BASE}/bal4496.json`) || 0;
@@ -446,7 +443,7 @@ function syncUSAADebits() {
     firebasePut(`${FIREBASE_BASE}/debitLog.json`,        debitLog);
     firebasePut(`${FIREBASE_BASE}/discLog.json`,         discLog);
     firebasePut(`${FIREBASE_BASE}/discSpent.json`,       discSpent);
-    firebasePut(`${FIREBASE_BASE}/processedMsgIds.json`, processedIds);
+    firebasePut(`${FIREBASE_BASE}/processedMsgIds.json`, processedIds.slice(-500));
     Logger.log(`Done. debitLog: ${debitLog.length} entries, ${newPending} pending`);
 
     if (newPending > 0) {
