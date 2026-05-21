@@ -253,6 +253,14 @@ select.minput option{background:var(--s2);}
   </div>
 </div>
 
+<div class="mbg" id="confirm-modal" onclick="closeConfirm()">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <div class="mtitle" id="confirm-msg"></div>
+    <button class="btn btnr" onclick="doConfirm()">Confirm</button>
+    <button class="btn btno" onclick="closeConfirm()">Cancel</button>
+  </div>
+</div>
+
 <nav class="nav" style="display:none;" id="main-nav">
   <button class="nb on" onclick="sw('week',this)">This Week</button>
   <button class="nb" onclick="sw('month',this)">Month Plan</button>
@@ -588,6 +596,16 @@ window.openModal=function(mode,title,showLabel=false,showAcct=false){
   setTimeout(()=>document.getElementById('mi-amt').focus(),140);
 };
 window.closeModal=()=>document.getElementById('mbg').classList.remove('open');
+
+// ══ CONFIRM MODAL ══
+let _confirmCb=null;
+function appConfirm(msg,cb){
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-modal').classList.add('open');
+  _confirmCb=cb;
+}
+window.doConfirm=function(){closeConfirm();if(_confirmCb)_confirmCb();_confirmCb=null;};
+window.closeConfirm=function(){document.getElementById('confirm-modal').classList.remove('open');_confirmCb=null;};
 window.submitModal=function(){
   const amt=parseFloat(document.getElementById('mi-amt').value);
   if(isNaN(amt)||amt<=0){toast('Enter valid amount');return;}
@@ -1700,10 +1718,11 @@ window.deleteBill=function(id){
   const bills=(S.userBills||[]);
   const b=bills.find(x=>x.id===id);
   if(!b)return;
-  if(!confirm(`Delete "${b.name}"?`))return;
-  S.userBills=bills.filter(x=>x.id!==id);
-  _cachedRoadmap = null;
-  save(S);renderSnowball();renderAll();toast('Bill removed');
+  appConfirm(`Delete "${b.name}"?`,()=>{
+    S.userBills=bills.filter(x=>x.id!==id);
+    _cachedRoadmap=null;
+    save(S);renderSnowball();renderAll();toast('Bill removed');
+  });
 };
 
 window.closeBillModal=()=>document.getElementById('bill-modal').classList.remove('open');
@@ -1865,9 +1884,10 @@ window.toggleSpendLog = function() {
   arrow.classList.toggle('open');
 };
 window.resetDisc=function(){
-  if(!confirm('Reset discretionary log for this month?'))return;
-  S.discSpent=0;S.discLog=[];
-  save(S);renderWeek();toast('Reset');
+  appConfirm('Reset discretionary log for this month?',()=>{
+    S.discSpent=0;S.discLog=[];
+    save(S);renderWeek();toast('Reset');
+  });
 };
 
 
@@ -2089,19 +2109,14 @@ window.deletePhase = function(id) {
   const phasesList = getPhases();
   const phase = phasesList.find(p => p.id === id);
   if (!phase) return;
-  
-  if (!confirm(`Delete "${phase.label}"?`)) return;
-  
-  S.phases = phasesList.filter(p => p.id !== id);
-  
-  if (S.phaseDone && S.phaseDone[id]) {
-    delete S.phaseDone[id];
-  }
-  
-  _cachedRoadmap = null;
-  save(S);
-  renderAll();
-  toast('Milestone deleted');
+  appConfirm(`Delete "${phase.label}"?`,()=>{
+    S.phases = phasesList.filter(p => p.id !== id);
+    if (S.phaseDone && S.phaseDone[id]) delete S.phaseDone[id];
+    _cachedRoadmap = null;
+    save(S);
+    renderAll();
+    toast('Milestone deleted');
+  });
 };
 
 window.closePhaseModal = () => document.getElementById('phase-modal').classList.remove('open');

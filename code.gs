@@ -267,6 +267,10 @@ function checkMilestones() {
 // ── Snowball reminder helper ──
 // Reads phases and targets from Firebase state
 function sendSnowballReminder(currentBal, context) {
+  const today = Utilities.formatDate(new Date(), "America/New_York", "yyyy-MM-dd");
+  const lastSent = firebaseGet(`${FIREBASE_BASE}/lastSnowballReminderDate.json`);
+  if (lastSent === today) { Logger.log("Snowball reminder already sent today, skipping."); return; }
+
   const state = firebaseGet(`${FIREBASE_BASE}.json`);
   if (!state) return;
 
@@ -291,6 +295,7 @@ function sendSnowballReminder(currentBal, context) {
         `${context}\n\nCurrent #4496 balance: $${currentBal.toFixed(2)}\n\n` +
         `You are saving for: ${nextPhase.label} ($${nextPhase.cost.toLocaleString()})\n\nDo nothing — leave the money in #4496.`
       );
+      firebasePut(`${FIREBASE_BASE}/lastSnowballReminderDate.json`, today);
     }
     return;
   }
@@ -318,6 +323,7 @@ function sendSnowballReminder(currentBal, context) {
     `ACTION REQUIRED:\nMake a payment of $${Math.round(payAmt).toLocaleString()} right now.\n\n` +
     `Open the app: https://hf-tracker.netlify.app`
   );
+  firebasePut(`${FIREBASE_BASE}/lastSnowballReminderDate.json`, today);
 }
 
 // ── Debit sync ──
