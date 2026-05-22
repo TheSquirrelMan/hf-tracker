@@ -998,9 +998,12 @@ function getMonthEvents(year,month,roadmap,balLog){
   }
 
   // All bills from getDailyBills (Firebase-driven)
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   for(let d=fromDay; d<=dim; d++) {
     getDailyBills(year, month, d, cb).forEach(b => {
       if (b.isIncome) return; // Already handled above
+      // Planned Sunday disc budget: skip past/today — actual disc shown via discLog
+      if (!b.billId && b.label === 'Discretionary' && new Date(year, month, d) <= todayMidnight) return;
       const bill = (S.userBills || []).find(x => x.id === b.billId);
       const note = bill ? (bill.note || '') : '';
       const isDebt = bill && bill.endDate && bill.cardId;
@@ -1171,6 +1174,8 @@ function renderWeek(){
   for(let dd=today;dd<=today+7;dd++){
     const ed=new Date(now.getFullYear(),now.getMonth(),dd);
     getDailyBills(ed.getFullYear(),ed.getMonth(),ed.getDate()).forEach(b=>{
+      // Skip planned Sunday disc for today — actual disc shown via discLog
+      if(!b.billId && b.label==='Discretionary' && dd===today) return;
       addWE(dd,b.label,b.amt,b.isIncome,b.isIncome?'var(--grn)':'var(--t3)','',false,b.billId||null);
     });
   }
