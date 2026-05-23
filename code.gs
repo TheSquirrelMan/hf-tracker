@@ -413,13 +413,8 @@ function syncUSAADebits() {
       debitLog.unshift(entry);
 
       if (result.freshMarket) {
-        // Only log amount over the bill's budget threshold to discLog
-        const overage = Math.round((amt - (result.budgetAmt || 0)) * 100) / 100;
-        if (overage > 0) {
-          discLog.unshift({ amt: overage, date: txDate, label: 'Fresh Market (extra)', cat: 'groceries', auto: true });
-          discSpent += overage;
-        }
-        Logger.log(`Fresh Market: $${amt} total, $${result.budgetAmt} budget, $${Math.max(0,overage)} to discLog`);
+        // discLog overage handled by syncFreshMarket (email parsing) — just record the debit
+        Logger.log(`Fresh Market PayPal $${amt} matched bill_fresh_market — discLog via syncFreshMarket`);
       } else if (result.status === "autoDisc") {
         const entryLabel = result.label || merchant;
         const txParts    = txDate.split("/");
@@ -543,6 +538,81 @@ function formatUsaaDate(usaaDate) {
   const parts = usaaDate.split("/");
   if (parts.length !== 3) return usaaDate;
   return `${parseInt(parts[0])}/${parseInt(parts[1])}/${2000 + parseInt(parts[2])}`;
+}
+
+// ── Sync Fresh Market receipt emails → log overage above bill budget to discLog ──
+function syncFreshMarket() {
+  initFirebasePath();
+  const state      = firebaseGet(`${FIREBASE_BASE}.json`) || {};
+  const userBills  = state.userBills  || [];
+  let   discLog    = state.discLog    || [];
+  let   discSpent  = state.discSpent  || 0;
+  const processedIds = state.processedFreshMarketIds || [];
+
+  const fmBill    = userBills.find(b => b.id === 'bill_fresh_market');
+  const budgetAmt = fmBill ? (fmBill.amt || 0) : 0;
+
+  const since   = new Date(new Date().getTime() - 14 * 24 * 60 * 60 * 1000);
+  const dateStr = Utilities.formatDate(since, "America/New_York", "yyyy/MM/dd");
+  const threads = GmailApp.search(
+    `from:orders@thefreshmarket.com subject:"The Fresh Market order receipt" after:${dateStr}`,
+    0, 10
+  );
+
+  let changed = false;
+
+  for (const thread of threads) {
+    for (const msg of thread.getMessages()) {
+      const msgId = msg.getId();
+      if (processedIds.includes(msgId)) continue;
+
+      const body = msg.getPlainBody() || msg.getBody().replace(/<[^>]+>/g, ' ');
+
+      const totalMatch = body.match(/\bTotal:\s*\$(\d+\.\d{2})/);
+      if (!totalMatch) {
+        Logger.log(`Fresh Market: could not parse total from msg ${msgId}`);
+        processedIds.push(msgId);
+        continue;
+      }
+
+      const total   = parseFloat(totalMatch[1]);
+      const overage = Math.max(0, Math.round((total - budgetAmt) * 100) / 100);
+      const txDate  = Utilities.formatDate(msg.getDate(), "America/New_York", "M/d/yyyy");
+
+      Logger.log(`Fresh Market receipt: total=$${total} budget=$${budgetAmt} overage=$${overage} date=${txDate}`);
+
+      if (overage > 0) {
+        const txParts  = txDate.split('/');
+        const txMillis = new Date(parseInt(txParts[2]), parseInt(txParts[0])-1, parseInt(txParts[1])).getTime();
+        const matchIdx = discLog.findIndex(e => {
+          const ep = (e.date||'').split('/');
+          if (ep.length < 3) return false;
+          const eMillis = new Date(parseInt(ep[2]), parseInt(ep[0])-1, parseInt(ep[1])).getTime();
+          if (Math.abs(txMillis - eMillis) / 86400000 > 2) return false;
+          return (e.label||'').includes('Fresh Market');
+        });
+        if (matchIdx >= 0) {
+          const old = discLog[matchIdx];
+          discSpent = Math.max(0, discSpent - (old.amt||0));
+          discLog[matchIdx] = {...old, amt: overage, date: txDate, auto: true, confirmed: true};
+          discSpent += overage;
+        } else {
+          discLog.unshift({ amt: overage, date: txDate, label: 'Fresh Market (extra)', cat: 'groceries', auto: true });
+          discSpent += overage;
+        }
+        changed = true;
+      }
+
+      processedIds.push(msgId);
+    }
+  }
+
+  if (changed) {
+    firebasePut(`${FIREBASE_BASE}/discLog.json`,  discLog);
+    firebasePut(`${FIREBASE_BASE}/discSpent.json`, discSpent);
+  }
+  firebasePut(`${FIREBASE_BASE}/processedFreshMarketIds.json`, processedIds.slice(-100));
+  Logger.log(`syncFreshMarket done. changed=${changed}`);
 }
 
 // ── One-shot: patch jonLastPayDate after manual sync run ──
