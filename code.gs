@@ -594,10 +594,10 @@ function syncFreshMarket() {
         if (matchIdx >= 0) {
           const old = discLog[matchIdx];
           discSpent = Math.max(0, discSpent - (old.amt||0));
-          discLog[matchIdx] = {...old, amt: overage, date: txDate, auto: true, confirmed: true};
+          discLog[matchIdx] = {...old, amt: overage, date: txDate, cat: 'discretionary', auto: true, confirmed: true};
           discSpent += overage;
         } else {
-          discLog.unshift({ amt: overage, date: txDate, label: 'Fresh Market (extra)', cat: 'groceries', auto: true });
+          discLog.unshift({ amt: overage, date: txDate, label: 'Fresh Market (extra)', cat: 'discretionary', auto: true });
           discSpent += overage;
         }
         changed = true;
