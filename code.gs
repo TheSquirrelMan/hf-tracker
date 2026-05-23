@@ -412,7 +412,15 @@ function syncUSAADebits() {
       if (result.label) entry.label = result.label;
       debitLog.unshift(entry);
 
-      if (result.status === "autoDisc") {
+      if (result.freshMarket) {
+        // Only log amount over the bill's budget threshold to discLog
+        const overage = Math.round((amt - (result.budgetAmt || 0)) * 100) / 100;
+        if (overage > 0) {
+          discLog.unshift({ amt: overage, date: txDate, label: 'Fresh Market (extra)', cat: 'groceries', auto: true });
+          discSpent += overage;
+        }
+        Logger.log(`Fresh Market: $${amt} total, $${result.budgetAmt} budget, $${Math.max(0,overage)} to discLog`);
+      } else if (result.status === "autoDisc") {
         const entryLabel = result.label || merchant;
         const txParts    = txDate.split("/");
         const txMillis   = new Date(parseInt(txParts[2]), parseInt(txParts[0])-1, parseInt(txParts[1])).getTime();
@@ -476,7 +484,8 @@ function matchDebit(merchant, amt, autoDisc, userBills, txDow) {
   // 2. PayPal Fresh Market: $150–$260, arrived Sun/Mon/Tue
   if (merchant.includes("PAYPAL")) {
     if (amt >= 150 && amt <= 260 && txDow >= 0 && txDow <= 2) {
-      return { status: "autoDisc", label: "Fresh Market", cat: "groceries" };
+      const fmBill = userBills.find(b => b.id === 'bill_fresh_market');
+      return { status: "matched", bill: "bill_fresh_market", label: "Fresh Market", cat: "groceries", freshMarket: true, budgetAmt: fmBill ? (fmBill.amt || 0) : 0 };
     }
   }
 
@@ -534,6 +543,14 @@ function formatUsaaDate(usaaDate) {
   const parts = usaaDate.split("/");
   if (parts.length !== 3) return usaaDate;
   return `${parseInt(parts[0])}/${parseInt(parts[1])}/${2000 + parseInt(parts[2])}`;
+}
+
+// ── One-shot: patch jonLastPayDate after manual sync run ──
+function patchJonPayDate() {
+  initFirebasePath();
+  const today = Utilities.formatDate(new Date(), "America/New_York", "yyyy-MM-dd");
+  firebasePut(`${FIREBASE_BASE}/jonLastPayDate.json`, today);
+  Logger.log(`✓ jonLastPayDate set to ${today}`);
 }
 
 // ── Seed / restore baseline data to Firebase ──
