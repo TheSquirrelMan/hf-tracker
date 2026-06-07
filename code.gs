@@ -217,15 +217,14 @@ function syncJonPay() {
       }
 
       const body = msg.getPlainBody();
-      Logger.log(`[JOBSYNC] msgId ${msgId} body first 300 chars: ${body.substring(0, 300).replace(/\n/g, '↵')}`);
       if (!body.toUpperCase().includes("APPLIED BEHAVIOR")) {
-        Logger.log(`[JOBSYNC] SKIP msgId ${msgId} — body missing 'APPLIED BEHAVIOR'`);
+        Logger.log(`[JOBSYNC] SKIP msgId ${msgId} — body missing 'APPLIED BEHAVIOR'. body: ${body.substring(0, 200).replace(/\n/g, '↵')}`);
         continue;
       }
 
       const match = body.match(/Amount:[\s\S]*?\$([0-9,]+\.\d{2})/);
       if (!match) {
-        Logger.log(`[JOBSYNC] SKIP msgId ${msgId} — failed to parse amount from body`);
+        Logger.log(`[JOBSYNC] SKIP msgId ${msgId} — failed to parse amount. body: ${body.substring(0, 200).replace(/\n/g, '↵')}`);
         continue;
       }
       const amount = parseFloat(match[1].replace(/,/g, ""));
