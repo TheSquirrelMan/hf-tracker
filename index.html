@@ -1621,12 +1621,12 @@ function renderSnowball(){
       const curBal=target?bal(cb,target.id):null;
       const isPaidOff=curBal!==null&&curBal<=0;
       const m=target?roadmap[target.id+'-done']:null;
-      const payoffLabel=isPaidOff?'PAID OFF':m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):b.endDate;
+      const payoffLabel=isPaidOff?'PAID OFF':m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):b.cardId?b.endDate:(()=>{const p=b.endDate.split('-');return MN[parseInt(p[1])-1].substring(0,3)+' '+p[0];})();
       const isActive=allExpDone&&target&&!isPaidOff&&TARGETS.slice(0,TARGETS.findIndex(t=>t.id===b.cardId)).every(prev=>bal(cb,prev.id)<=0);
       html+=`<div class="ms" style="${isPaidOff?'opacity:0.4;':''}">
         <div class="ms-info">
           <div class="ms-label" style="font-weight:600;color:${isPaidOff?'var(--grn)':isActive?'var(--amb)':'var(--tx)'};">${isPaidOff?'✓ ':isActive?'🎯 ':''} ${b.name}</div>
-          <div class="ms-sub">$${b.amt}/mo${b.endDate?' · ends '+b.endDate:''}${curBal!==null&&!isPaidOff?' · $'+Math.round(curBal).toLocaleString()+' remaining':''}</div>
+          <div class="ms-sub">$${b.amt}/mo${b.endDate&&!b.cardId?' · ends '+b.endDate:''}${curBal!==null&&!isPaidOff?' · $'+Math.round(curBal).toLocaleString()+' remaining':''}</div>
         </div>
         <div class="ms-right">
           <div class="reorder-btns">
