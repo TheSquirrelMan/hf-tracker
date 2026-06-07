@@ -702,8 +702,8 @@ function getDailyBills(year, month, day, cardBalOverride) {
   userBills.forEach(b => {
     // Check conditionEnd (e.g., "2027-03" — skip if past end date)
     if (b.conditionEnd && key > b.conditionEnd) return;
-    // Bills with day 0 are tracked via dedicated sync functions (e.g. Fresh Market)
-    if (b.day === 0) return;
+    // Bills with day 0 and no frequency are tracked via dedicated sync functions
+    if (b.day === 0 && !b.frequency) return;
     // Self-liquidating bills (endDate set, no cardId) — stop after end month
     if (!b.cardId && b.endDate && key > b.endDate) return;
     // Skip paid-off debts (those with cardId AND endDate, meaning they're snowball targets)
