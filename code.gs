@@ -145,7 +145,7 @@ function syncKarenPay() {
   const labelId = getLabelId(KAREN_PAY_LABEL);
 
   const state = firebaseGet(`${FIREBASE_BASE}.json`) || {};
-  const processedIds = state.processedPayIds || [];
+  const processedIds = state.processedKarenPayIds || [];
 
   for (const thread of threads) {
     for (const msg of thread.getMessages()) {
@@ -167,7 +167,7 @@ function syncKarenPay() {
       const newKarenAvg = Math.round((prevKarenAvg * 0.7) + (amount * 0.3));
       firebasePut(`${FIREBASE_BASE}/karenAvgPay.json`, newKarenAvg);
       processedIds.push(msgId);
-      firebasePut(`${FIREBASE_BASE}/processedPayIds.json`, processedIds.slice(-200));
+      firebasePut(`${FIREBASE_BASE}/processedKarenPayIds.json`, processedIds.slice(-200));
       labelMessage(msgId, labelId);
       Logger.log(`✓ karenLastPay updated: $${amount}, karenAvgPay: $${newKarenAvg}`);
       const currentBal = firebaseGet(`${FIREBASE_BASE}/bal4496.json`) || 0;
@@ -181,9 +181,9 @@ function syncJonPay() {
   initFirebasePath();
   const today = new Date();
 
-  // [JOBSYNC] Search from yesterday so today's emails are included (Gmail after: is exclusive)
-  const yesterday = new Date(today.getTime() - 86400000);
-  const dateStr = Utilities.formatDate(yesterday, "America/New_York", "yyyy/MM/dd");
+  // [JOBSYNC] Search 4 days back so deposits are caught even if a trigger was missed
+  const since = new Date(today.getTime() - 4 * 86400000);
+  const dateStr = Utilities.formatDate(since, "America/New_York", "yyyy/MM/dd");
   Logger.log(`[JOBSYNC] searching deposits after ${dateStr}`);
   const query = `from:${USAA_SENDER} subject:"Deposit to Your Bank Account" after:${dateStr}`;
   const threads = GmailApp.search(query, 0, 10);
@@ -198,13 +198,13 @@ function syncJonPay() {
   const labelId = getLabelId(JON_PAY_LABEL);
 
   const state = firebaseGet(`${FIREBASE_BASE}.json`) || {};
-  const processedIds = state.processedPayIds || [];
+  const processedIds = state.processedJonPayIds || [];
 
   for (const thread of threads) {
     for (const msg of thread.getMessages()) {
       const msgId = msg.getId();
       if (processedIds.includes(msgId)) {
-        Logger.log(`[JOBSYNC] skipping msgId ${msgId} — already in processedPayIds`);
+        Logger.log(`[JOBSYNC] skipping msgId ${msgId} — already in processedJonPayIds`);
         continue;
       }
       const existingLabels = getMessageLabelIds(msgId);
@@ -232,7 +232,7 @@ function syncJonPay() {
       const newAvg = Math.round((prevAvg * 0.7) + (amount * 0.3));
       firebasePut(`${FIREBASE_BASE}/jonAvgPay.json`, newAvg);
       processedIds.push(msgId);
-      firebasePut(`${FIREBASE_BASE}/processedPayIds.json`, processedIds.slice(-200));
+      firebasePut(`${FIREBASE_BASE}/processedJonPayIds.json`, processedIds.slice(-200));
       labelMessage(msgId, labelId);
       Logger.log(`[JOBSYNC] SYNCED msgId ${msgId} — jonLastPay: $${amount}, jonAvgPay: $${newAvg}`);
       const currentBal = firebaseGet(`${FIREBASE_BASE}/bal4496.json`) || 0;
@@ -500,7 +500,7 @@ function matchDebit(merchant, amt, autoDisc, userBills, txDow) {
 
   // 2. PayPal Fresh Market: $150–$260, arrived Sun/Mon/Tue
   if (merchant.includes("PAYPAL")) {
-    if (amt >= 150 && amt <= 260 && txDow >= 0 && txDow <= 2) {
+    if (amt >= 150 && amt <= 350 && txDow >= 0 && txDow <= 2) {
       const fmBill = userBills.find(b => b.id === 'bill_fresh_market');
       return { status: "matched", bill: "bill_fresh_market", label: "Fresh Market", cat: "groceries", freshMarket: true, budgetAmt: fmBill ? (fmBill.amt || 0) : 0 };
     }
