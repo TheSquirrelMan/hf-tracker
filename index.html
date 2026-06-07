@@ -227,6 +227,7 @@ select.minput option{background:var(--s2);}
     <input class="minput" type="text" id="bm-note" placeholder="Note (optional)">
     <input class="minput" type="text" id="bm-keyword" placeholder="Debit keyword e.g. PUBLIX, T-MOBILE (optional)">
     <input class="minput" type="text" id="bm-enddate" placeholder="End date YYYY-MM (optional, for fixed-term)">
+    <input class="minput" type="number" id="bm-balance" placeholder="Current balance ($)" inputmode="decimal" style="display:none;">
     <input class="minput" type="text" id="bm-cardid" placeholder="Card ID for snowball (optional)">
     <button class="btn btng" onclick="saveBillModal()">Save</button>
     <button class="btn btno" onclick="closeBillModal()">Cancel</button>
@@ -706,8 +707,8 @@ function getDailyBills(year, month, day, cardBalOverride) {
     if (b.day === 0 && !b.frequency) return;
     // Self-liquidating bills (endDate set, no cardId) — stop after end month
     if (!b.cardId && b.endDate && key > b.endDate) return;
-    // Skip paid-off debts (those with cardId AND endDate, meaning they're snowball targets)
-    if (b.cardId && b.endDate && bal(cb, b.cardId) <= 0) return;
+    // Skip paid-off snowball targets (cardId with balance at zero)
+    if (b.cardId && bal(cb, b.cardId) <= 0) return;
     
     // Determine if this bill falls on this day
     let matchesDay = false;
@@ -767,11 +768,11 @@ let _roadmapCacheKey = '';
 const phaseAmt=(id,def)=>{if(S.phaseCosts&&S.phaseCosts[id]!==undefined)return S.phaseCosts[id];return def;};
 
 function getSnowballTargets() {
-  // Build targets from userBills that have cardId and endDate (fixed-term debts)
+  // Build snowball targets from userBills that have a cardId
   const seen = new Set();
   const targets = [];
   (S.userBills || []).forEach(b => {
-    if (b.cardId && b.endDate && !seen.has(b.cardId)) {
+    if (b.cardId && !seen.has(b.cardId)) {
       seen.add(b.cardId);
       targets.push({
         id: b.cardId,
@@ -788,7 +789,7 @@ function calcRoadmap(){
   const phasesKey = JSON.stringify(getPhases());
   const phaseDoneKey = JSON.stringify(S.phaseDone || {});
   const cardBalsKey = JSON.stringify(S.cardBals || {});
-  const userBillsKey = JSON.stringify((S.userBills || []).filter(b => b.endDate).map(b => b.id));
+  const userBillsKey = JSON.stringify((S.userBills || []).filter(b => b.cardId || b.endDate).map(b => b.id));
   const cacheKey = `${S.bal4496}-${S.karenLastPay||0}-${S.karenAvgPay||0}-${S.karenLastPayDate||''}-${phasesKey}-${phaseDoneKey}-${cardBalsKey}-${userBillsKey}`;
   
   if (_cachedRoadmap && _roadmapCacheKey === cacheKey) {
@@ -1009,7 +1010,7 @@ function getMonthEvents(year,month,roadmap,balLog){
       if (!b.billId && b.label === 'Discretionary' && new Date(year, month, d) <= todayMidnight) return;
       const bill = (S.userBills || []).find(x => x.id === b.billId);
       const note = bill ? (bill.note || '') : '';
-      const isDebt = bill && bill.endDate && bill.cardId;
+      const isDebt = bill && bill.cardId;
       const color = isDebt ? '#e8836e' : '#a8a69f';
       add(d, b.label, b.amt, color, note, false, false, false, b.billId || null);
     });
@@ -1602,7 +1603,7 @@ function renderSnowball(){
   html+=`</div>`;
 
   // Fixed-term bills (from Firebase userBills with endDate)
-  const fixedBills=(S.userBills||[]).filter(b=>b.endDate);
+  const fixedBills=(S.userBills||[]).filter(b=>b.cardId||b.endDate);
   html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rmCollapsed.fixed?'0':'10px'};cursor:pointer;" onclick="toggleRoadmapSection('fixed')">
       <div>
@@ -1643,7 +1644,7 @@ function renderSnowball(){
   html+=`</div>`;
 
   // Recurring bills (no endDate)
-  const recurBills=(S.userBills||[]).filter(b=>!b.endDate);
+  const recurBills=(S.userBills||[]).filter(b=>!b.cardId&&!b.endDate);
   const recurTotal=recurBills.reduce((a,b)=>a+toMonthlyAmt(b),0);
   html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rmCollapsed.recurring?'0':'10px'};cursor:pointer;" onclick="toggleRoadmapSection('recurring')">
@@ -1702,8 +1703,14 @@ window.editBillItem=function(id){
   document.getElementById('bm-day').value=Array.isArray(b.day)?b.day.join(','):b.day;
   document.getElementById('bm-note').value=b.note||'';
   document.getElementById('bm-keyword').value=b.keyword||b.debitKeyword||'';
-  document.getElementById('bm-enddate').value=b.endDate||'';
+  document.getElementById('bm-enddate').value=b.cardId?'':(b.endDate||'');
   document.getElementById('bm-cardid').value=b.cardId||'';
+  // Hide endDate for credit cards — payoff is projected by snowball, not manual
+  document.getElementById('bm-enddate').parentElement.style.display=b.cardId?'none':'';
+  // Show current balance for credit cards so projections are accurate
+  const balEl = document.getElementById('bm-balance');
+  balEl.style.display = b.cardId ? '' : 'none';
+  balEl.value = b.cardId ? (S.cardBals && S.cardBals[b.cardId] !== undefined ? S.cardBals[b.cardId] : '') : '';
   document.getElementById('bm-title').textContent='Edit bill';
   modal.classList.add('open');
   setTimeout(()=>document.getElementById('bm-name').focus(),140);
@@ -1717,7 +1724,10 @@ window.addBill=function(){
   document.getElementById('bm-day').value='';
   document.getElementById('bm-note').value='';
   document.getElementById('bm-keyword').value='';
+  document.getElementById('bm-enddate').parentElement.style.display='';
   document.getElementById('bm-enddate').value='';
+  document.getElementById('bm-balance').style.display='none';
+  document.getElementById('bm-balance').value='';
   document.getElementById('bm-cardid').value='';
   document.getElementById('bm-title').textContent='Add bill';
   modal.classList.add('open');
@@ -1737,7 +1747,14 @@ window.saveBillModal=function(){
   const bills=(S.userBills||[]);
   const billData={name,amt,day:days.length===1?days[0]:days,note,keyword};
   if(endDate)billData.endDate=endDate;
-  if(cardId)billData.cardId=cardId;
+  if(cardId){
+    billData.cardId=cardId;
+    const balVal=parseFloat(document.getElementById('bm-balance').value);
+    if(!isNaN(balVal)&&balVal>=0){
+      if(!S.cardBals)S.cardBals={};
+      S.cardBals[cardId]=balVal;
+    }
+  }
   if(editingBill){
     const idx=bills.findIndex(b=>b.id===editingBill);
     if(idx>=0)bills[idx]={...bills[idx],...billData};
