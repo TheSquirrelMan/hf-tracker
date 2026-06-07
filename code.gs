@@ -183,11 +183,18 @@ function syncJonPay() {
   const dayOfMonth = today.getDate();
   if (dayOfMonth !== 7 && dayOfMonth !== 22) return;
 
-  const yesterday = new Date(today.getTime() - 86400000);
-  const dateStr = Utilities.formatDate(yesterday, "America/New_York", "yyyy/MM/dd");
+  // [JOBSYNC] Search from day after previous payday so early deposits are caught
+  const sinceDay = dayOfMonth === 7 ? 3 : 20;
+  const since = new Date(today.getFullYear(), today.getMonth(), sinceDay);
+  const dateStr = Utilities.formatDate(since, "America/New_York", "yyyy/MM/dd");
+  Logger.log(`[JOBSYNC] searching deposits after ${dateStr}`);
   const query = `from:${USAA_SENDER} subject:"Deposit to Your Bank Account" after:${dateStr}`;
   const threads = GmailApp.search(query, 0, 10);
-  if (!threads.length) return;
+  if (!threads.length) {
+    Logger.log("[JOBSYNC] no deposit threads found");
+    return;
+  }
+  Logger.log(`[JOBSYNC] deposit threads found: ${threads.length}`);
 
   let label = GmailApp.getUserLabelByName(JON_PAY_LABEL);
   if (!label) label = GmailApp.createLabel(JON_PAY_LABEL);
@@ -199,15 +206,28 @@ function syncJonPay() {
   for (const thread of threads) {
     for (const msg of thread.getMessages()) {
       const msgId = msg.getId();
-      if (processedIds.includes(msgId)) continue;
+      if (processedIds.includes(msgId)) {
+        Logger.log(`[JOBSYNC] skipping msgId ${msgId} — already in processedPayIds`);
+        continue;
+      }
       const existingLabels = getMessageLabelIds(msgId);
-      if (existingLabels.includes(labelId)) continue;
+      if (existingLabels.includes(labelId)) {
+        Logger.log(`[JOBSYNC] skipping msgId ${msgId} — already labeled usaa-jon-pay-synced`);
+        continue;
+      }
 
       const body = msg.getPlainBody();
-      if (!body.toUpperCase().includes("APPLIED BEHAVIOR")) continue;
+      Logger.log(`[JOBSYNC] msgId ${msgId} body first 300 chars: ${body.substring(0, 300).replace(/\n/g, '↵')}`);
+      if (!body.toUpperCase().includes("APPLIED BEHAVIOR")) {
+        Logger.log(`[JOBSYNC] SKIP msgId ${msgId} — body missing 'APPLIED BEHAVIOR'`);
+        continue;
+      }
 
       const match = body.match(/Amount:[\s\S]*?\$([0-9,]+\.\d{2})/);
-      if (!match) continue;
+      if (!match) {
+        Logger.log(`[JOBSYNC] SKIP msgId ${msgId} — failed to parse amount from body`);
+        continue;
+      }
       const amount = parseFloat(match[1].replace(/,/g, ""));
 
       firebasePut(`${FIREBASE_BASE}/jonLastPay.json`, amount);
@@ -217,7 +237,7 @@ function syncJonPay() {
       processedIds.push(msgId);
       firebasePut(`${FIREBASE_BASE}/processedPayIds.json`, processedIds);
       labelMessage(msgId, labelId);
-      Logger.log(`✓ jonLastPay updated: $${amount}`);
+      Logger.log(`[JOBSYNC] SYNCED msgId ${msgId} — jonLastPay: $${amount}, jonAvgPay: $${newAvg}`);
       const currentBal = firebaseGet(`${FIREBASE_BASE}/bal4496.json`) || 0;
       sendSnowballReminder(currentBal, `Jon's pay of $${amount.toFixed(2)} just landed`);
     }
