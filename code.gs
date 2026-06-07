@@ -78,7 +78,8 @@ function getMessageLabelIds(msgId) {
 function syncUSAABalance() {
   initFirebasePath();
   const today = new Date();
-  const dateStr = Utilities.formatDate(today, "America/New_York", "yyyy/MM/dd");
+  const yesterday = new Date(today.getTime() - 86400000);
+  const dateStr = Utilities.formatDate(yesterday, "America/New_York", "yyyy/MM/dd");
   const query = `from:${USAA_SENDER} subject:"Available Balance for Your Account" after:${dateStr}`;
   const threads = GmailApp.search(query, 0, 10);
   if (!threads.length) { Logger.log("No balance email found today."); return; }
@@ -133,7 +134,8 @@ function syncUSAABalance() {
 function syncKarenPay() {
   initFirebasePath();
   const today = new Date();
-  const dateStr = Utilities.formatDate(today, "America/New_York", "yyyy/MM/dd");
+  const yesterday = new Date(today.getTime() - 86400000);
+  const dateStr = Utilities.formatDate(yesterday, "America/New_York", "yyyy/MM/dd");
   const query = `from:${USAA_SENDER} subject:"Deposit to Your Bank Account" after:${dateStr}`;
   const threads = GmailApp.search(query, 0, 10);
   if (!threads.length) return;
@@ -181,7 +183,8 @@ function syncJonPay() {
   const dayOfMonth = today.getDate();
   if (dayOfMonth !== 7 && dayOfMonth !== 22) return;
 
-  const dateStr = Utilities.formatDate(today, "America/New_York", "yyyy/MM/dd");
+  const yesterday = new Date(today.getTime() - 86400000);
+  const dateStr = Utilities.formatDate(yesterday, "America/New_York", "yyyy/MM/dd");
   const query = `from:${USAA_SENDER} subject:"Deposit to Your Bank Account" after:${dateStr}`;
   const threads = GmailApp.search(query, 0, 10);
   if (!threads.length) return;
