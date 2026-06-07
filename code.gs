@@ -110,7 +110,7 @@ function syncUSAABalance() {
       Logger.log(`Balance parsed: $${balance} for account ${acctNum}`);
 
       // Write to the correct Firebase key based on account number
-      const fbKey = acctNum === '4496' ? 'bal4496' : acctNum === '0725' ? 'bal0725' : null;
+      const fbKey = acctNum === '4496' ? 'bal4496' : acctNum === '0725' ? 'bal0725' : acctNum === '6764' ? 'bal6764' : null;
       if (!fbKey) { Logger.log(`Unknown account ${acctNum}, skipping.`); continue; }
 
       const res = firebasePut(`${FIREBASE_BASE}/${fbKey}.json`, balance);
@@ -167,7 +167,7 @@ function syncKarenPay() {
       const newKarenAvg = Math.round((prevKarenAvg * 0.7) + (amount * 0.3));
       firebasePut(`${FIREBASE_BASE}/karenAvgPay.json`, newKarenAvg);
       processedIds.push(msgId);
-      firebasePut(`${FIREBASE_BASE}/processedPayIds.json`, processedIds);
+      firebasePut(`${FIREBASE_BASE}/processedPayIds.json`, processedIds.slice(-200));
       labelMessage(msgId, labelId);
       Logger.log(`✓ karenLastPay updated: $${amount}, karenAvgPay: $${newKarenAvg}`);
       const currentBal = firebaseGet(`${FIREBASE_BASE}/bal4496.json`) || 0;
@@ -176,17 +176,14 @@ function syncKarenPay() {
   }
 }
 
-// ── 3. Jon paycheck sync (7th and 22nd) ──
+// ── 3. Jon paycheck sync (runs daily) ──
 function syncJonPay() {
   initFirebasePath();
   const today = new Date();
-  const dayOfMonth = today.getDate();
-  if (dayOfMonth !== 7 && dayOfMonth !== 22) return;
 
-  // [JOBSYNC] Search from day after previous payday so early deposits are caught
-  const sinceDay = dayOfMonth === 7 ? 3 : 20;
-  const since = new Date(today.getFullYear(), today.getMonth(), sinceDay);
-  const dateStr = Utilities.formatDate(since, "America/New_York", "yyyy/MM/dd");
+  // [JOBSYNC] Search from yesterday so today's emails are included (Gmail after: is exclusive)
+  const yesterday = new Date(today.getTime() - 86400000);
+  const dateStr = Utilities.formatDate(yesterday, "America/New_York", "yyyy/MM/dd");
   Logger.log(`[JOBSYNC] searching deposits after ${dateStr}`);
   const query = `from:${USAA_SENDER} subject:"Deposit to Your Bank Account" after:${dateStr}`;
   const threads = GmailApp.search(query, 0, 10);
@@ -230,11 +227,12 @@ function syncJonPay() {
       const amount = parseFloat(match[1].replace(/,/g, ""));
 
       firebasePut(`${FIREBASE_BASE}/jonLastPay.json`, amount);
+      firebasePut(`${FIREBASE_BASE}/jonLastPayDate.json`, Utilities.formatDate(today, "America/New_York", "yyyy-MM-dd"));
       const prevAvg = state.jonAvgPay || amount;
       const newAvg = Math.round((prevAvg * 0.7) + (amount * 0.3));
       firebasePut(`${FIREBASE_BASE}/jonAvgPay.json`, newAvg);
       processedIds.push(msgId);
-      firebasePut(`${FIREBASE_BASE}/processedPayIds.json`, processedIds);
+      firebasePut(`${FIREBASE_BASE}/processedPayIds.json`, processedIds.slice(-200));
       labelMessage(msgId, labelId);
       Logger.log(`[JOBSYNC] SYNCED msgId ${msgId} — jonLastPay: $${amount}, jonAvgPay: $${newAvg}`);
       const currentBal = firebaseGet(`${FIREBASE_BASE}/bal4496.json`) || 0;
@@ -292,6 +290,10 @@ function checkMilestones() {
 // ── Snowball reminder helper ──
 // Reads phases and targets from Firebase state
 function sendSnowballReminder(currentBal, context) {
+  const today = Utilities.formatDate(new Date(), "America/New_York", "yyyy-MM-dd");
+  const lastSent = firebaseGet(`${FIREBASE_BASE}/lastSnowballReminderDate.json`);
+  if (lastSent === today) { Logger.log("Snowball reminder already sent today, skipping."); return; }
+
   const state = firebaseGet(`${FIREBASE_BASE}.json`);
   if (!state) return;
 
@@ -316,6 +318,7 @@ function sendSnowballReminder(currentBal, context) {
         `${context}\n\nCurrent #4496 balance: $${currentBal.toFixed(2)}\n\n` +
         `You are saving for: ${nextPhase.label} ($${nextPhase.cost.toLocaleString()})\n\nDo nothing — leave the money in #4496.`
       );
+      firebasePut(`${FIREBASE_BASE}/lastSnowballReminderDate.json`, today);
     }
     return;
   }
@@ -343,6 +346,7 @@ function sendSnowballReminder(currentBal, context) {
     `ACTION REQUIRED:\nMake a payment of $${Math.round(payAmt).toLocaleString()} right now.\n\n` +
     `Open the app: https://hf-tracker.netlify.app`
   );
+  firebasePut(`${FIREBASE_BASE}/lastSnowballReminderDate.json`, today);
 }
 
 // ── Debit sync ──
@@ -430,7 +434,10 @@ function syncUSAADebits() {
       if (result.label) entry.label = result.label;
       debitLog.unshift(entry);
 
-      if (result.status === "autoDisc") {
+      if (result.freshMarket) {
+        // discLog overage handled by syncFreshMarket (email parsing) — just record the debit
+        Logger.log(`Fresh Market PayPal $${amt} matched bill_fresh_market — discLog via syncFreshMarket`);
+      } else if (result.status === "autoDisc") {
         const entryLabel = result.label || merchant;
         const txParts    = txDate.split("/");
         const txMillis   = new Date(parseInt(txParts[2]), parseInt(txParts[0])-1, parseInt(txParts[1])).getTime();
@@ -468,7 +475,7 @@ function syncUSAADebits() {
     firebasePut(`${FIREBASE_BASE}/debitLog.json`,        debitLog);
     firebasePut(`${FIREBASE_BASE}/discLog.json`,         discLog);
     firebasePut(`${FIREBASE_BASE}/discSpent.json`,       discSpent);
-    firebasePut(`${FIREBASE_BASE}/processedMsgIds.json`, processedIds);
+    firebasePut(`${FIREBASE_BASE}/processedMsgIds.json`, processedIds.slice(-500));
     Logger.log(`Done. debitLog: ${debitLog.length} entries, ${newPending} pending`);
 
     if (newPending > 0) {
@@ -494,7 +501,8 @@ function matchDebit(merchant, amt, autoDisc, userBills, txDow) {
   // 2. PayPal Fresh Market: $150–$260, arrived Sun/Mon/Tue
   if (merchant.includes("PAYPAL")) {
     if (amt >= 150 && amt <= 260 && txDow >= 0 && txDow <= 2) {
-      return { status: "autoDisc", label: "Fresh Market", cat: "groceries" };
+      const fmBill = userBills.find(b => b.id === 'bill_fresh_market');
+      return { status: "matched", bill: "bill_fresh_market", label: "Fresh Market", cat: "groceries", freshMarket: true, budgetAmt: fmBill ? (fmBill.amt || 0) : 0 };
     }
   }
 
@@ -552,6 +560,175 @@ function formatUsaaDate(usaaDate) {
   const parts = usaaDate.split("/");
   if (parts.length !== 3) return usaaDate;
   return `${parseInt(parts[0])}/${parseInt(parts[1])}/${2000 + parseInt(parts[2])}`;
+}
+
+// ── Sync Fresh Market receipt emails → log overage above bill budget to discLog ──
+function syncFreshMarket() {
+  initFirebasePath();
+  const state      = firebaseGet(`${FIREBASE_BASE}.json`) || {};
+  const userBills  = state.userBills  || [];
+  let   discLog    = state.discLog    || [];
+  let   discSpent  = state.discSpent  || 0;
+  const processedIds = state.processedFreshMarketIds || [];
+
+  const fmBill    = userBills.find(b => b.id === 'bill_fresh_market');
+  const budgetAmt = fmBill ? (fmBill.amt || 0) : 0;
+
+  const since   = new Date(new Date().getTime() - 14 * 24 * 60 * 60 * 1000);
+  const dateStr = Utilities.formatDate(since, "America/New_York", "yyyy/MM/dd");
+  const threads = GmailApp.search(
+    `from:orders@thefreshmarket.com subject:"The Fresh Market order receipt" after:${dateStr}`,
+    0, 10
+  );
+
+  let changed = false;
+
+  for (const thread of threads) {
+    for (const msg of thread.getMessages()) {
+      const msgId = msg.getId();
+      if (processedIds.includes(msgId)) continue;
+
+      const body = msg.getPlainBody() || msg.getBody().replace(/<[^>]+>/g, ' ');
+
+      const totalMatch = body.match(/\bTotal:\s*\$(\d+\.\d{2})/);
+      if (!totalMatch) {
+        Logger.log(`Fresh Market: could not parse total from msg ${msgId}`);
+        processedIds.push(msgId);
+        continue;
+      }
+
+      const total   = parseFloat(totalMatch[1]);
+      const overage = Math.max(0, Math.round((total - budgetAmt) * 100) / 100);
+      const txDate  = Utilities.formatDate(msg.getDate(), "America/New_York", "M/d/yyyy");
+
+      Logger.log(`Fresh Market receipt: total=$${total} budget=$${budgetAmt} overage=$${overage} date=${txDate}`);
+
+      if (overage > 0) {
+        const txParts  = txDate.split('/');
+        const txMillis = new Date(parseInt(txParts[2]), parseInt(txParts[0])-1, parseInt(txParts[1])).getTime();
+        const matchIdx = discLog.findIndex(e => {
+          const ep = (e.date||'').split('/');
+          if (ep.length < 3) return false;
+          const eMillis = new Date(parseInt(ep[2]), parseInt(ep[0])-1, parseInt(ep[1])).getTime();
+          if (Math.abs(txMillis - eMillis) / 86400000 > 2) return false;
+          return (e.label||'').includes('Fresh Market');
+        });
+        if (matchIdx >= 0) {
+          const old = discLog[matchIdx];
+          discSpent = Math.max(0, discSpent - (old.amt||0));
+          discLog[matchIdx] = {...old, amt: overage, date: txDate, cat: 'discretionary', auto: true, confirmed: true};
+          discSpent += overage;
+        } else {
+          discLog.unshift({ amt: overage, date: txDate, label: 'Fresh Market (extra)', cat: 'discretionary', auto: true });
+          discSpent += overage;
+        }
+        changed = true;
+      }
+
+      processedIds.push(msgId);
+    }
+  }
+
+  if (changed) {
+    firebasePut(`${FIREBASE_BASE}/discLog.json`,  discLog);
+    firebasePut(`${FIREBASE_BASE}/discSpent.json`, discSpent);
+  }
+  firebasePut(`${FIREBASE_BASE}/processedFreshMarketIds.json`, processedIds.slice(-100));
+  Logger.log(`syncFreshMarket done. changed=${changed}`);
+}
+
+// ── One-shot: patch jonLastPayDate after manual sync run ──
+function patchJonPayDate() {
+  initFirebasePath();
+  const today = Utilities.formatDate(new Date(), "America/New_York", "yyyy-MM-dd");
+  firebasePut(`${FIREBASE_BASE}/jonLastPayDate.json`, today);
+  Logger.log(`✓ jonLastPayDate set to ${today}`);
+}
+
+// ── Seed / restore baseline data to Firebase ──
+// Run this once from the Apps Script editor if Firebase is ever wiped.
+// Does NOT overwrite live balances (bal4496/cardBals), spend logs, or processed IDs.
+function seedDefaultBills() {
+  initFirebasePath();
+
+  const userBills = [
+    // ── Fixed-term debts (cardId = snowball target) ──
+    { id:'bill_amazon_store',   name:'Amazon Store Card',       amt:29,  day:1,  cardId:'amazon',   endDate:'2026-08', keyword:'AMAZON' },
+    { id:'bill_cap3186',        name:'Cap One #3186 (Karen)',    amt:25,  day:11, cardId:'cap3186',  endDate:'2026-10', keyword:'CAPITAL ONE' },
+    { id:'bill_cap4565',        name:'Cap One #4565 (Jon)',      amt:25,  day:21, cardId:'cap4565',  endDate:'2026-12', keyword:'CAPITAL ONE' },
+    { id:'bill_cap5592',        name:'Cap One #5592 (Karen)',    amt:25,  day:21, cardId:'cap5592',  endDate:'2026-12', keyword:'CAPITAL ONE' },
+    { id:'bill_cap7988',        name:'Cap One #7988 (Jon)',      amt:30,  day:21, cardId:'cap7988',  endDate:'2027-01', keyword:'CAPITAL ONE' },
+    { id:'bill_merrick',        name:'Merrick Bank',             amt:35,  day:11, cardId:'merrick',  endDate:'2026-11', keyword:'MERRICK' },
+    { id:'bill_chase',          name:'Chase/Amazon Prime',       amt:26,  day:26, cardId:'chase',    endDate:'2027-04', keyword:'CHASE' },
+    { id:'bill_usaa_amex',      name:'USAA Amex (Karen)',        amt:63,  day:15, cardId:'usaaAmex', endDate:'2027-02', keyword:'USAA' },
+    { id:'bill_kpaypal',        name:"Karen's PayPal Credit",    amt:100, day:13, cardId:'kpaypal',  endDate:'2027-05', keyword:'PAYPAL' },
+    { id:'bill_tn',             name:'TN Unemployment',          amt:153, day:22, cardId:'tn',       endDate:'2027-12', keyword:'TN' },
+    { id:'bill_irs2',           name:'IRS payment #2',           amt:35,  day:16, cardId:'irs',      endDate:'2028-06', keyword:'IRS' },
+    { id:'bill_irs1',           name:'IRS payment #1',           amt:68,  day:15, cardId:'irs',      endDate:'2028-06', keyword:'IRS' },
+    { id:'bill_mazda',          name:'Mazda CX-5',               amt:638, day:9,  cardId:'mazda',    endDate:'2027-04', keyword:'MAZDA' },
+    // ── Fixed-term (no cardId — expire by date) ──
+    { id:'bill_paypal_newegg',  name:'PayPal Newegg',            amt:61,  day:13, endDate:'2027-01', conditionEnd:'2027-01' },
+    { id:'bill_jon_paypal',     name:'Jon PayPal Credit',        amt:22,  day:22, endDate:'2029-10', conditionEnd:'2029-10' },
+    { id:'bill_paypal_chinese', name:'PayPal Chinese vendor',    amt:95,  day:30, endDate:'2027-03', conditionEnd:'2027-03' },
+    { id:'bill_paypal_ebay',    name:'PayPal eBay',              amt:43,  day:4,  endDate:'2027-08', conditionEnd:'2027-08' },
+    // ── Recurring ──
+    { id:'bill_amazon_prime',   name:'Amazon Prime',             amt:15,  day:2  },
+    { id:'bill_real_debrid',    name:'Real-Debrid',              amt:11,  day:2  },
+    { id:'bill_chatgpt',        name:'ChatGPT',                  amt:22,  day:4  },
+    { id:'bill_claude',         name:'Claude.ai',                amt:20,  day:13 },
+    { id:'bill_tmobile',        name:'T-Mobile',                 amt:152, day:15, keyword:'TMOBILE AU' },
+    { id:'bill_att',            name:'AT&T fiber',               amt:166, day:16, keyword:'ATT*BILL PAYMENT' },
+    { id:'bill_spotify',        name:'Spotify',                  amt:22,  day:22 },
+    { id:'bill_state_farm',     name:'State Farm',               amt:190, day:23 },
+    { id:'bill_fresh_market',   name:'Fresh Market',             amt:200, day:0  },
+    { id:'bill_gas',            name:'Gas (monthly est.)',        amt:120, day:1  },
+  ];
+
+  const phases = [
+    { id:'repair-buf',  label:'Repair buffer (savings)', cost:1000, isSavings:true },
+    { id:'jon-tires',   label:"Jon's tires + oil",       cost:1500 },
+    { id:'karen-tires', label:"Karen's tires",           cost:1000 },
+    { id:'dental',      label:'Dental — Jon + Karen',    cost:600  },
+    { id:'glasses',     label:'Glasses — Jon + Karen',   cost:1000 },
+  ];
+
+  // Starting balances as of 2026-05-21 — update cardBals manually after any snowball payments
+  const cardStartBals = {
+    amazon:   235,
+    cap3186:  491,
+    cap4565:  726,
+    cap5592:  731,
+    cap7988:  843,
+    merrick:  926,
+    chase:    951,
+    usaaAmex: 1847,
+    kpaypal:  1958,
+    tn:       3653,
+    irs:      4767,
+    mazda:    20693,
+  };
+
+  const affirmSchedule = [
+    {through:'2026-06',amt:188},
+    {through:'2026-07',amt:152},
+    {through:'2026-09',amt:108},
+    {through:'2026-10',amt: 95},
+    {through:'2027-02',amt: 82},
+    {through:'2028-01',amt: 59},
+  ];
+
+  firebasePut(`${FIREBASE_BASE}/userBills.json`,      userBills);
+  firebasePut(`${FIREBASE_BASE}/phases.json`,         phases);
+  firebasePut(`${FIREBASE_BASE}/phaseDone.json`,      {'repair-buf': true});
+  firebasePut(`${FIREBASE_BASE}/phaseCosts.json`,     {dental: 600});
+  firebasePut(`${FIREBASE_BASE}/cardStartBals.json`,  cardStartBals);
+  firebasePut(`${FIREBASE_BASE}/affirmSchedule.json`, affirmSchedule);
+  firebasePut(`${FIREBASE_BASE}/discMonthlyCap.json`, 250);
+  firebasePut(`${FIREBASE_BASE}/discWeekly.json`,     63);
+  firebasePut(`${FIREBASE_BASE}/karenAvgPay.json`,    787);
+  firebasePut(`${FIREBASE_BASE}/jonAvgPay.json`,      1641);
+
+  Logger.log('✓ seedDefaultBills complete — live balances and logs untouched');
 }
 
 // ── Helpers ──

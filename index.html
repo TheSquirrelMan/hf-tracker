@@ -253,6 +253,14 @@ select.minput option{background:var(--s2);}
   </div>
 </div>
 
+<div class="mbg" id="confirm-modal" onclick="closeConfirm()">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <div class="mtitle" id="confirm-msg"></div>
+    <button class="btn btnr" onclick="doConfirm()">Confirm</button>
+    <button class="btn btno" onclick="closeConfirm()">Cancel</button>
+  </div>
+</div>
+
 <nav class="nav" style="display:none;" id="main-nav">
   <button class="nb on" onclick="sw('week',this)">This Week</button>
   <button class="nb" onclick="sw('month',this)">Month Plan</button>
@@ -366,8 +374,8 @@ function defaultState(){
     bal4496:0,bal6764:19,bal0725:654,
     karenLastPay:810,karenAvgPay:810,
     karenLastPayDate:'',
-    jonLastPay:1641,
-    jonAvgPay:1641,
+    jonLastPay:1641,jonAvgPay:1641,
+    jonLastPayDate:'',
     discSpent:0,discLog:[],
     discWeekly:50,
     discMonthlyCap:200,
@@ -460,6 +468,7 @@ async function loadFB(){
       if(remote.userBills) S.userBills = remote.userBills;
       if(remote.cardStartBals) S.cardStartBals = remote.cardStartBals;
       if(remote.karenLastPayDate) S.karenLastPayDate = remote.karenLastPayDate;
+      if(remote.jonLastPayDate) S.jonLastPayDate = remote.jonLastPayDate;
       if(remote.affirmSchedule) S.affirmSchedule = remote.affirmSchedule;
     } else {
       S = {...defaultState(), ...remote};
@@ -588,6 +597,16 @@ window.openModal=function(mode,title,showLabel=false,showAcct=false){
   setTimeout(()=>document.getElementById('mi-amt').focus(),140);
 };
 window.closeModal=()=>document.getElementById('mbg').classList.remove('open');
+
+// ══ CONFIRM MODAL ══
+let _confirmCb=null;
+function appConfirm(msg,cb){
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-modal').classList.add('open');
+  _confirmCb=cb;
+}
+window.doConfirm=function(){closeConfirm();if(_confirmCb)_confirmCb();_confirmCb=null;};
+window.closeConfirm=function(){document.getElementById('confirm-modal').classList.remove('open');_confirmCb=null;};
 window.submitModal=function(){
   const amt=parseFloat(document.getElementById('mi-amt').value);
   if(isNaN(amt)||amt<=0){toast('Enter valid amount');return;}
@@ -630,6 +649,19 @@ function bal(cb, id) {
   return 0;
 }
 
+// ══ JON PAYDAY — suppress scheduled 7/22 if paycheck already arrived early ══
+function jonPaidThisPeriod(year, month, schedDay) {
+  const lpd = S.jonLastPayDate;
+  if (!lpd) return false;
+  const lp = new Date(lpd + 'T12:00:00');
+  const ly = lp.getFullYear(), lm = lp.getMonth(), ld = lp.getDate();
+  if (schedDay === 7) {
+    const pm = month === 0 ? 11 : month - 1, py = month === 0 ? year - 1 : year;
+    return (ly === py && lm === pm && ld >= 23) || (ly === year && lm === month && ld < 7);
+  }
+  return ly === year && lm === month && ld >= 8 && ld < 22;
+}
+
 // ══ KAREN PAYDAY (weekly anchor from last synced paydate) ══
 function isKarenPayday(year, month, day) {
   const anchor = S.karenLastPayDate;
@@ -656,7 +688,11 @@ function getDailyBills(year, month, day, cardBalOverride) {
   let currentJon = isFuture ? (S.jonAvgPay || S.jonLastPay || 1641) : (S.jonLastPay || 1641);
   if (isFuture) { currentKaren = Math.floor(currentKaren); currentJon = Math.floor(currentJon); }
 
-  if (day === 7 || day === 22) bills.push({ label: 'Jon paycheck', amt: currentJon, isIncome: true });
+  if (day === 7 && !jonPaidThisPeriod(year,month,7)) bills.push({ label: 'Jon paycheck', amt: currentJon, isIncome: true });
+  if (day === 22 && !jonPaidThisPeriod(year,month,22)) bills.push({ label: 'Jon paycheck', amt: currentJon, isIncome: true });
+  // Show on actual paydate if it landed off-schedule
+  const _jlpd=S.jonLastPayDate;
+  if(_jlpd){const _jlp=new Date(_jlpd+'T12:00:00');if(_jlp.getFullYear()===year&&_jlp.getMonth()===month&&_jlp.getDate()===day&&day!==7&&day!==22)bills.push({label:'Jon paycheck',amt:currentJon,isIncome:true});}
   if (isKarenPayday(year, month, day)) bills.push({ label: 'Karen paycheck', amt: currentKaren, isIncome: true });
 
   // Process all userBills from Firebase
@@ -792,6 +828,16 @@ function calcRoadmap(){
     }
   }
 
+  // Apply today's bills to balance so tomorrow's simulation starts correctly,
+  // and seed today's projected end-of-day into balLog for the month plan display.
+  try{
+    S.cardBals=cardBals;
+    const todayBills=getDailyBills(now.getFullYear(),now.getMonth(),now.getDate(),cardBals);
+    const todayExp=todayBills.filter(b=>!b.isIncome).reduce((a,b)=>a+b.amt,0);
+    balance+=todayExp;
+    balLog[todayStr]=Math.round(balance);
+  }finally{S.cardBals=origCB;}
+
   // Start simulation from tomorrow
   const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
 
@@ -799,9 +845,8 @@ function calcRoadmap(){
     const yr=d.getFullYear(),mo=d.getMonth(),dy=d.getDate();
     const dateStr=d.toISOString().split('T')[0];
 
-    S.cardBals=cardBals;
-    const dayBills=getDailyBills(yr,mo,dy,cardBals);
-    S.cardBals=origCB;
+    let dayBills;
+    try{S.cardBals=cardBals;dayBills=getDailyBills(yr,mo,dy,cardBals);}finally{S.cardBals=origCB;}
 
     dayBills.forEach(b=>{
       balance+=b.amt;
@@ -825,10 +870,7 @@ function calcRoadmap(){
           let rd=new Date(yr,mo,dy+1);
           const nextJon=new Date(yr,nextJonMo,nextJonDay);
           while(rd<nextJon){
-            S.cardBals=cardBals;
-            getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate(),cardBals)
-              .forEach(b=>{sim+=b.amt;});
-            S.cardBals=origCB;
+            try{S.cardBals=cardBals;getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate(),cardBals).forEach(b=>{sim+=b.amt;});}finally{S.cardBals=origCB;}
             if(sim<0){simOk=false;break;}
             rd.setDate(rd.getDate()+1);
           }
@@ -857,10 +899,7 @@ function calcRoadmap(){
       let rd=new Date(yr,mo,dy+1);
       const nextJon=new Date(yr,nextJonMo,nextJonDay);
       while(rd<nextJon){
-        S.cardBals=cardBals;
-        getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate(),cardBals)
-          .forEach(b=>{if(!b.isIncome&&b.amt<0&&b.label!==target.label)reserve+=Math.abs(b.amt);});
-        S.cardBals=origCB;
+        try{S.cardBals=cardBals;getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate(),cardBals).forEach(b=>{if(!b.isIncome&&b.amt<0&&b.label!==target.label)reserve+=Math.abs(b.amt);});}finally{S.cardBals=origCB;}
         rd.setDate(rd.getDate()+1);
       }
       const available=Math.max(0,balance-reserve);
@@ -940,14 +979,16 @@ function getMonthEvents(year,month,roadmap,balLog){
   const pcNote = getSmartNote(month, year);
 
   // Paychecks
-  if(7>=fromDay) {
-    let amt = checkFuture(7) ? (S.jonAvgPay || S.jonLastPay || 1641) : (S.jonLastPay || 1641);
-    add(7, 'Jon paycheck', amt, '#7aad4e', pcNote, true);
+  if(7>=fromDay && !jonPaidThisPeriod(year,month,7)){
+    let amt=checkFuture(7)?(S.jonAvgPay||S.jonLastPay||1641):(S.jonLastPay||1641);
+    add(7,'Jon paycheck',amt,'#7aad4e',pcNote,true);
   }
-  if(22>=fromDay) {
-    let amt = checkFuture(22) ? (S.jonAvgPay || S.jonLastPay || 1641) : (S.jonLastPay || 1641);
-    add(22, 'Jon paycheck', amt, '#7aad4e', pcNote, true);
+  if(22>=fromDay && !jonPaidThisPeriod(year,month,22)){
+    let amt=checkFuture(22)?(S.jonAvgPay||S.jonLastPay||1641):(S.jonLastPay||1641);
+    add(22,'Jon paycheck',amt,'#7aad4e',pcNote,true);
   }
+  // Show on actual paydate if it arrived off-schedule this month
+  {const _jlpd=S.jonLastPayDate;if(_jlpd){const _jlp=new Date(_jlpd+'T12:00:00');if(_jlp.getFullYear()===year&&_jlp.getMonth()===month){const _jd=_jlp.getDate();if(_jd!==7&&_jd!==22&&_jd>=fromDay&&(jonPaidThisPeriod(year,month,7)||jonPaidThisPeriod(year,month,22))){add(_jd,'Jon paycheck',S.jonLastPay||1641,'#7aad4e',pcNote,true);}}}}
 
   for(let d=fromDay; d<=dim; d++) {
     if(isKarenPayday(year,month,d)) {
@@ -957,9 +998,12 @@ function getMonthEvents(year,month,roadmap,balLog){
   }
 
   // All bills from getDailyBills (Firebase-driven)
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   for(let d=fromDay; d<=dim; d++) {
     getDailyBills(year, month, d, cb).forEach(b => {
       if (b.isIncome) return; // Already handled above
+      // Planned Sunday disc budget: skip past/today — actual disc shown via discLog
+      if (!b.billId && b.label === 'Discretionary' && new Date(year, month, d) <= todayMidnight) return;
       const bill = (S.userBills || []).find(x => x.id === b.billId);
       const note = bill ? (bill.note || '') : '';
       const isDebt = bill && bill.endDate && bill.cardId;
@@ -1130,6 +1174,8 @@ function renderWeek(){
   for(let dd=today;dd<=today+7;dd++){
     const ed=new Date(now.getFullYear(),now.getMonth(),dd);
     getDailyBills(ed.getFullYear(),ed.getMonth(),ed.getDate()).forEach(b=>{
+      // Skip planned Sunday disc for today — actual disc shown via discLog
+      if(!b.billId && b.label==='Discretionary' && dd===today) return;
       addWE(dd,b.label,b.amt,b.isIncome,b.isIncome?'var(--grn)':'var(--t3)','',false,b.billId||null);
     });
   }
@@ -1296,11 +1342,12 @@ function renderWeek(){
 
 // ══ RENDER MONTH ══
 let vMonth=now.getMonth(),vYear=now.getFullYear();
+const _minMonthDate=(()=>{const d=new Date(now.getFullYear(),now.getMonth()-12,1);return{y:d.getFullYear(),m:d.getMonth()};})();
 window.changeMonth=function(dir){
   vMonth+=dir;
   if(vMonth>11){vMonth=0;vYear++;}
   if(vMonth<0){vMonth=11;vYear--;}
-  if(vYear<2026||(vYear===2026&&vMonth<3)){vMonth=3;vYear=2026;}
+  if(vYear<_minMonthDate.y||(vYear===_minMonthDate.y&&vMonth<_minMonthDate.m)){vMonth=_minMonthDate.m;vYear=_minMonthDate.y;}
   renderMonth();
 };
 
@@ -1421,7 +1468,7 @@ function renderMonth(){
   const prevM=(vMonth-1+12)%12,prevY=vMonth===0?vYear-1:vYear;
   const nextM=(vMonth+1)%12,nextY=vMonth===11?vYear+1:vYear;
   html+=`<div style="display:flex;gap:8px;margin-top:4px;">
-    <button class="btn btno" style="flex:1;" onclick="changeMonth(-1)" ${vYear===2026&&vMonth===3?'disabled':''}>← ${MN[prevM].substring(0,3)} '${String(prevY).slice(2)}</button>
+    <button class="btn btno" style="flex:1;" onclick="changeMonth(-1)" ${(vYear===_minMonthDate.y&&vMonth===_minMonthDate.m)?'disabled':''}>← ${MN[prevM].substring(0,3)} '${String(prevY).slice(2)}</button>
     <button class="btn btno" style="flex:1;" onclick="changeMonth(1)">${MN[nextM].substring(0,3)} '${String(nextY).slice(2)} →</button>
   </div>`;
 
@@ -1707,10 +1754,11 @@ window.deleteBill=function(id){
   const bills=(S.userBills||[]);
   const b=bills.find(x=>x.id===id);
   if(!b)return;
-  if(!confirm(`Delete "${b.name}"?`))return;
-  S.userBills=bills.filter(x=>x.id!==id);
-  _cachedRoadmap = null;
-  save(S);renderSnowball();renderAll();toast('Bill removed');
+  appConfirm(`Delete "${b.name}"?`,()=>{
+    S.userBills=bills.filter(x=>x.id!==id);
+    _cachedRoadmap=null;
+    save(S);renderSnowball();renderAll();toast('Bill removed');
+  });
 };
 
 window.closeBillModal=()=>document.getElementById('bill-modal').classList.remove('open');
@@ -1872,9 +1920,10 @@ window.toggleSpendLog = function() {
   arrow.classList.toggle('open');
 };
 window.resetDisc=function(){
-  if(!confirm('Reset discretionary log for this month?'))return;
-  S.discSpent=0;S.discLog=[];
-  save(S);renderWeek();toast('Reset');
+  appConfirm('Reset discretionary log for this month?',()=>{
+    S.discSpent=0;S.discLog=[];
+    save(S);renderWeek();toast('Reset');
+  });
 };
 
 
@@ -2127,19 +2176,14 @@ window.deletePhase = function(id) {
   const phasesList = getPhases();
   const phase = phasesList.find(p => p.id === id);
   if (!phase) return;
-  
-  if (!confirm(`Delete "${phase.label}"?`)) return;
-  
-  S.phases = phasesList.filter(p => p.id !== id);
-  
-  if (S.phaseDone && S.phaseDone[id]) {
-    delete S.phaseDone[id];
-  }
-  
-  _cachedRoadmap = null;
-  save(S);
-  renderAll();
-  toast('Milestone deleted');
+  appConfirm(`Delete "${phase.label}"?`,()=>{
+    S.phases = phasesList.filter(p => p.id !== id);
+    if (S.phaseDone && S.phaseDone[id]) delete S.phaseDone[id];
+    _cachedRoadmap = null;
+    save(S);
+    renderAll();
+    toast('Milestone deleted');
+  });
 };
 
 window.closePhaseModal = () => document.getElementById('phase-modal').classList.remove('open');
