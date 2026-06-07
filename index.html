@@ -1706,7 +1706,7 @@ window.editBillItem=function(id){
   document.getElementById('bm-enddate').value=b.cardId?'':(b.endDate||'');
   document.getElementById('bm-cardid').value=b.cardId||'';
   // Hide endDate for credit cards — payoff is projected by snowball, not manual
-  document.getElementById('bm-enddate').parentElement.style.display=b.cardId?'none':'';
+  document.getElementById('bm-enddate').style.display=b.cardId?'none':'';
   // Show current balance for credit cards so projections are accurate
   const balEl = document.getElementById('bm-balance');
   balEl.style.display = b.cardId ? '' : 'none';
@@ -1724,7 +1724,7 @@ window.addBill=function(){
   document.getElementById('bm-day').value='';
   document.getElementById('bm-note').value='';
   document.getElementById('bm-keyword').value='';
-  document.getElementById('bm-enddate').parentElement.style.display='';
+  document.getElementById('bm-enddate').style.display='';
   document.getElementById('bm-enddate').value='';
   document.getElementById('bm-balance').style.display='none';
   document.getElementById('bm-balance').value='';
