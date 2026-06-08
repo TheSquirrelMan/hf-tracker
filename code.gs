@@ -369,6 +369,8 @@ function syncUSAADebits() {
   let   discLog    = state.discLog     || [];
   let   discSpent  = state.discSpent   || 0;
   const userBills  = state.userBills   || [];
+  let   cardBals   = state.cardBals    || {};
+  const cardStartBals = state.cardStartBals || {};
   let   changed    = false;
   let   newPending = 0;
 
@@ -462,7 +464,19 @@ function syncUSAADebits() {
         }
       }
 
-      if (result.status === "pending") newPending++;
+      // Auto-update card balance when a payment is matched to a credit card
+      if (result.status === 'matched' && result.bill) {
+        const bill = userBills.find(b => b.id === result.bill);
+        if (bill && bill.cardId) {
+          const start = cardStartBals[bill.cardId] || 0;
+          const prev = cardBals[bill.cardId] !== undefined ? cardBals[bill.cardId] : start;
+          const next = Math.max(0, prev - amt);
+          cardBals[bill.cardId] = next;
+          Logger.log(`cardBals[${bill.cardId}]: $${prev} → $${next}`);
+        }
+      }
+
+      if (result.status === "pending") newPending++;  
       processedIds.push(msgId);
       labelMessage(msgId, labelId);
       changed = true;
@@ -475,6 +489,7 @@ function syncUSAADebits() {
     firebasePut(`${FIREBASE_BASE}/debitLog.json`,        debitLog);
     firebasePut(`${FIREBASE_BASE}/discLog.json`,         discLog);
     firebasePut(`${FIREBASE_BASE}/discSpent.json`,       discSpent);
+    firebasePut(`${FIREBASE_BASE}/cardBals.json`,        cardBals);
     firebasePut(`${FIREBASE_BASE}/processedMsgIds.json`, processedIds.slice(-500));
     Logger.log(`Done. debitLog: ${debitLog.length} entries, ${newPending} pending`);
 
