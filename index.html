@@ -1651,6 +1651,7 @@ function renderSnowball(){
       <div>
         <div class="card-title" style="margin-bottom:0;">Recurring bills</div>
         <div style="font-size:11px;color:var(--t3);">$${Math.round(recurTotal).toLocaleString()}/mo</div>
+        <div style="font-size:10px;color:var(--t4);margin-top:2px;">Set an end date or Card ID to move a bill to fixed-term</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <button class="btn btng btnsm" style="width:auto;padding:8px 14px;" onclick="event.stopPropagation();addBill()">+ Add</button>
@@ -1710,7 +1711,7 @@ window.editBillItem=function(id){
   // Show current balance for credit cards so projections are accurate
   const balEl = document.getElementById('bm-balance');
   balEl.style.display = b.cardId ? '' : 'none';
-  balEl.value = b.cardId ? (S.cardBals && S.cardBals[b.cardId] !== undefined ? S.cardBals[b.cardId] : '') : '';
+  balEl.value = b.cardId ? bal(S.cardBals || {}, b.cardId) : '';
   document.getElementById('bm-title').textContent='Edit bill';
   modal.classList.add('open');
   setTimeout(()=>document.getElementById('bm-name').focus(),140);
