@@ -431,6 +431,7 @@ async function loadFB(){
   try{
     const snap=await get(STATE);
     S=snap.exists()?{...defaultState(),...snap.val()}:defaultState();
+    if(S.debitLog)S.debitLog=S.debitLog.filter(d=>d!=null);
     if(S.mKey!==mKey)S=resetMonthly(S);
     if(!S.phases || S.phases.length === 0) {
       S.phases = JSON.parse(JSON.stringify(DEFAULT_PHASES));
@@ -472,8 +473,10 @@ async function loadFB(){
       if(remote.karenLastPayDate) S.karenLastPayDate = remote.karenLastPayDate;
       if(remote.jonLastPayDate) S.jonLastPayDate = remote.jonLastPayDate;
       if(remote.affirmSchedule) S.affirmSchedule = remote.affirmSchedule;
+      if(remote.debitLog) S.debitLog = remote.debitLog.filter(d => d != null);
     } else {
       S = {...defaultState(), ...remote};
+      if(S.debitLog)S.debitLog=S.debitLog.filter(d=>d!=null);
       if (S.mKey !== mKey) S = resetMonthly(S);
       if(!S.phases || S.phases.length === 0) {
         S.phases = JSON.parse(JSON.stringify(DEFAULT_PHASES));
@@ -1087,11 +1090,11 @@ function safeRender(renderFn, fallbackText = 'Error loading data') {
 // ══ DEBIT HELPERS ══
 function getPostedEntry(billId,label){
   const log=S.debitLog||[];
-  if(billId){const m=log.find(d=>d.status==='matched'&&d.bill===billId);if(m)return m;}
+  if(billId){const m=log.find(d=>d&&d.status==='matched'&&d.bill===billId);if(m)return m;}
   if(label){
     const bills=(S.userBills||[]);
     const bill=bills.find(b=>b.name&&b.name.toLowerCase()===label.toLowerCase());
-    if(bill){const m=log.find(d=>d.status==='matched'&&d.bill===bill.id);if(m)return m;}
+    if(bill){const m=log.find(d=>d&&d.status==='matched'&&d.bill===bill.id);if(m)return m;}
   }
   return null;
 }
@@ -1141,7 +1144,7 @@ function renderWeek(){
   const nextMsText=nextMilestone
     ?`${nextMilestone.label}${nextMilestone.cost?' ($'+nextMilestone.cost.toLocaleString()+')':''} · ${fmtDate(nextMilestone.date)} (${daysUntil(nextMilestone.date)}d)`
     :'All debts paid off 🎉';
-  const pendingDebits=(S.debitLog||[]).filter(d=>d.status==='pending');
+  const pendingDebits=(S.debitLog||[]).filter(d=>d&&d.status==='pending');
   const pendingCount=pendingDebits.length;
   html+=`<div class="card" style="border-color:var(--am);background:var(--abg);margin-bottom:8px;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
@@ -1792,8 +1795,8 @@ window.openDebitModal=function(){
 window.closeDebitModal=()=>document.getElementById('debit-modal').classList.remove('open');
 
 function renderDebitModal(){
-  const pending=(S.debitLog||[]).filter(d=>d.status==='pending');
-  const matched=(S.debitLog||[]).filter(d=>d.status==='matched'||d.status==='autoDisc').slice(0,10);
+  const pending=(S.debitLog||[]).filter(d=>d&&d.status==='pending');
+  const matched=(S.debitLog||[]).filter(d=>d&&(d.status==='matched'||d.status==='autoDisc')).slice(0,10);
   const bills=(S.userBills||[]);
   let html='';
 

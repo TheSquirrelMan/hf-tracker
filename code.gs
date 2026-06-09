@@ -365,7 +365,7 @@ function syncUSAADebits() {
 
   const state      = firebaseGet(`${FIREBASE_BASE}.json`) || {};
   let   autoDisc   = state.autoDisc    || DEFAULT_AUTO_DISC;
-  let   debitLog   = state.debitLog    || [];
+  let   debitLog   = (state.debitLog    || []).filter(d => d != null);
   let   discLog    = state.discLog     || [];
   let   discSpent  = state.discSpent   || 0;
   const userBills  = state.userBills   || [];
