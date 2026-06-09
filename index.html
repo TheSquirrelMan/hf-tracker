@@ -432,7 +432,10 @@ async function loadFB(){
     const snap=await get(STATE);
     S=snap.exists()?{...defaultState(),...snap.val()}:defaultState();
     if(S.debitLog)S.debitLog=S.debitLog.filter(d=>d!=null);
-    if(S.mKey!==mKey)S=resetMonthly(S);
+    if(S.mKey!==mKey){
+      S=resetMonthly(S);
+      set(STATE, S); setSS('ok'); // persist the reset
+    }
     if(!S.phases || S.phases.length === 0) {
       S.phases = JSON.parse(JSON.stringify(DEFAULT_PHASES));
     }
@@ -474,10 +477,11 @@ async function loadFB(){
       if(remote.jonLastPayDate) S.jonLastPayDate = remote.jonLastPayDate;
       if(remote.affirmSchedule) S.affirmSchedule = remote.affirmSchedule;
       if(remote.debitLog) S.debitLog = remote.debitLog.filter(d => d != null);
+      if(S.mKey!==mKey){S=resetMonthly(S);set(STATE,S);setSS('ok');}
     } else {
       S = {...defaultState(), ...remote};
       if(S.debitLog)S.debitLog=S.debitLog.filter(d=>d!=null);
-      if (S.mKey !== mKey) S = resetMonthly(S);
+      if (S.mKey !== mKey) { S = resetMonthly(S); set(STATE, S); setSS('ok'); }
       if(!S.phases || S.phases.length === 0) {
         S.phases = JSON.parse(JSON.stringify(DEFAULT_PHASES));
       }
