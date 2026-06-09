@@ -741,16 +741,19 @@ function getDailyBills(year, month, day, cardBalOverride) {
   if (dow === 0) {
     const weeklyAmt = S.discWeekly || 50;
     const monthlyCap = S.discMonthlyCap || 200;
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    const isLastSunday = (day + 7) > lastDay;
-    let spent = 0;
+    const actualSpent = S.discSpent || 0;
+    let plannedSpent = 0;
     for (let i = 1; i < day; i++) {
-      if (new Date(year, month, i).getDay() === 0) spent += weeklyAmt;
+      if (new Date(year, month, i).getDay() === 0) plannedSpent += weeklyAmt;
     }
-    if (spent < monthlyCap) {
+    const totalSpent = actualSpent + plannedSpent;
+    if (totalSpent < monthlyCap) {
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const isLastSunday = (day + 7) > lastDay;
+      const remaining = monthlyCap - totalSpent;
       bills.push({
         label: 'Discretionary',
-        amt: isLastSunday ? -(monthlyCap - spent) : -Math.min(weeklyAmt, monthlyCap - spent),
+        amt: isLastSunday ? -remaining : -Math.min(weeklyAmt, remaining),
         isIncome: false
       });
     }
