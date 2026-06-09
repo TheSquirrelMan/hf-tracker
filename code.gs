@@ -660,6 +660,18 @@ function patchJonPayDate() {
   Logger.log(`✓ jonLastPayDate set to ${today}`);
 }
 
+// ── One-shot: fix Mazda keyword to prevent false debit matches ──
+function tightenMazdaKeyword() {
+  initFirebasePath();
+  const state = firebaseGet(`${FIREBASE_BASE}/userBills.json`) || [];
+  const idx = state.findIndex(b => b.id === 'bill_mazda');
+  if (idx >= 0) {
+    state[idx].keyword = 'MAZDA FINANCIAL WEB';
+    firebasePut(`${FIREBASE_BASE}/userBills.json`, state);
+    Logger.log('✓ Mazda keyword updated to MAZDA FINANCIAL WEB');
+  }
+}
+
 // ── Seed / restore baseline data to Firebase ──
 // Run this once from the Apps Script editor if Firebase is ever wiped.
 // Does NOT overwrite live balances (bal4496/cardBals), spend logs, or processed IDs.
