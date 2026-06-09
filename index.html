@@ -379,6 +379,7 @@ function defaultState(){
     jonLastPay:1641,jonAvgPay:1641,
     jonLastPayDate:'',
     discSpent:0,discLog:[],
+    discLogArchive:{},
     discWeekly:50,
     discMonthlyCap:200,
     weeks:[],
@@ -403,6 +404,11 @@ function defaultState(){
 }
 
 function resetMonthly(s){
+  // Archive old month's discretionary log before clearing
+  if(s.discLog&&s.discLog.length>0){
+    if(!s.discLogArchive)s.discLogArchive={};
+    s.discLogArchive[s.mKey]=s.discLog;
+  }
   s.mKey=mKey;s.discSpent=0;s.discLog=[];
   s.billChecks={};
   return s;
