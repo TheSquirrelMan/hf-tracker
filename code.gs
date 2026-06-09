@@ -660,16 +660,44 @@ function patchJonPayDate() {
   Logger.log(`✓ jonLastPayDate set to ${today}`);
 }
 
-// ── One-shot: fix Mazda keyword to prevent false debit matches ──
-function tightenMazdaKeyword() {
+// ── One-shot: tighten Mazda keyword + purge phantom debit matches + restore cardBals ──
+function cleanMazdaPhantoms() {
   initFirebasePath();
-  const state = firebaseGet(`${FIREBASE_BASE}/userBills.json`) || [];
-  const idx = state.findIndex(b => b.id === 'bill_mazda');
-  if (idx >= 0) {
-    state[idx].keyword = 'MAZDA FINANCIAL WEB';
-    firebasePut(`${FIREBASE_BASE}/userBills.json`, state);
+
+  // 1. Tighten the keyword on the live bill
+  const bills = firebaseGet(`${FIREBASE_BASE}/userBills.json`) || [];
+  const bIdx = bills.findIndex(b => b.id === 'bill_mazda');
+  if (bIdx >= 0) {
+    bills[bIdx].keyword = 'MAZDA FINANCIAL WEB';
+    firebasePut(`${FIREBASE_BASE}/userBills.json`, bills);
     Logger.log('✓ Mazda keyword updated to MAZDA FINANCIAL WEB');
   }
+
+  // 2. Purge phantom debitLog entries (any mazda match whose amount isn't $638)
+  const state = firebaseGet(`${FIREBASE_BASE}.json`) || {};
+  let debitLog = (state.debitLog || []).filter(d => d != null);
+  let cardBals = state.cardBals || {};
+  const startBals = state.cardStartBals || {};
+  let phantomTotal = 0;
+  debitLog = debitLog.filter(d => {
+    if (d.bill === 'bill_mazda' && d.amt !== 638) {
+      phantomTotal += d.amt;
+      Logger.log(`Removing phantom: $${d.amt} on ${d.date}`);
+      return false;
+    }
+    return true;
+  });
+  firebasePut(`${FIREBASE_BASE}/debitLog.json`, debitLog);
+
+  // 3. Restore phantom amounts to cardBals['mazda']
+  if (phantomTotal > 0) {
+    const start = startBals.mazda || 0;
+    const prev = cardBals.mazda !== undefined ? cardBals.mazda : start;
+    cardBals.mazda = prev + phantomTotal;
+    firebasePut(`${FIREBASE_BASE}/cardBals.json`, cardBals);
+    Logger.log(`✓ cardBals[mazda] restored: $${prev} → $${cardBals.mazda} (+$${phantomTotal})`);
+  }
+  Logger.log('✓ cleanMazdaPhantoms complete');
 }
 
 // ── Seed / restore baseline data to Firebase ──
