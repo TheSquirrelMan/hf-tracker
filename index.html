@@ -1377,12 +1377,16 @@ function renderMonth(){
 
   const totalIn=evts.filter(e=>e.isIncome&&e.day>=startDay).reduce((a,e)=>a+(e.amt||0),0);
   const totalOut=evts.filter(e=>!e.isIncome&&e.day>=startDay&&e.amt<0).reduce((a,e)=>a+Math.abs(e.amt),0);
-  const net=totalIn-totalOut;
+  // For current month, today's balance already reflects today's activity — exclude from overview
+  const todayIn=isCurMonth?evts.filter(e=>e.isIncome&&e.day===now.getDate()).reduce((a,e)=>a+(e.amt||0),0):0;
+  const todayOut=isCurMonth?evts.filter(e=>!e.isIncome&&e.day===now.getDate()&&e.amt<0&&!e.feat).reduce((a,e)=>a+Math.abs(e.amt),0):0;
+  const adjIn=totalIn-todayIn,adjOut=totalOut-todayOut;
+  const net=adjIn-adjOut;
 
   let html=`<div class="card">
     <div class="card-title">Month overview</div>
-    <div class="row"><div class="rl"><div class="rlabel">Income</div></div><div class="rval" style="color:var(--grn);">+$${Math.round(totalIn).toLocaleString()}</div></div>
-    <div class="row"><div class="rl"><div class="rlabel">Bills + spending</div></div><div class="rval" style="color:var(--red);">-$${Math.round(totalOut).toLocaleString()}</div></div>
+    <div class="row"><div class="rl"><div class="rlabel">Income</div></div><div class="rval" style="color:var(--grn);">+$${Math.round(adjIn).toLocaleString()}</div></div>
+    <div class="row"><div class="rl"><div class="rlabel">Bills + spending</div></div><div class="rval" style="color:var(--red);">-$${Math.round(adjOut).toLocaleString()}</div></div>
     <div class="row"><div class="rl"><div class="rlabel">Starting #4496</div></div><div class="rval" style="color:var(--blu);">$${Math.round(startBal).toLocaleString()}</div></div>
     <div class="row"><div class="rl"><div class="rlabel" style="font-weight:700;">Net</div></div><div class="rval" style="color:${net>=0?'var(--grn)':'var(--red)'};">${net>=0?'+':'-'}$${Math.round(Math.abs(net)).toLocaleString()}</div></div>
   </div>`;
