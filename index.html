@@ -1245,7 +1245,7 @@ function renderWeek(){
           <div class="evcontent">
             <div class="evtitle" style="${e.feat?`color:${e.color};font-weight:700;`:''}">${e.label}</div>
             ${e.note?`<div class="evsub">${e.note}</div>`:''}
-            ${(()=>{const pm=getPostedEntry(e.billId,e.label);return pm?`<div style="font-size:10px;color:var(--grn);margin-top:1px;">✓ Posted $$${pm.amt} · ${pm.date}</div>`:''})()}
+            ${(()=>{const pm=getPostedEntry(e.billId,e.label);return pm?`<div style="font-size:10px;color:var(--grn);margin-top:1px;">✓ Posted ${pm.amt} · ${pm.date}</div>`:''})()}
           </div>
           ${as?`<div class="evamt" style="color:${ac};${e.feat?'font-weight:700;':''}">${as}</div>`:''}
         </div>`;
@@ -1424,7 +1424,7 @@ function renderMonth(){
           <div class="evcontent">
             <div class="evtitle" style="font-size:13px;${e.feat?`color:${e.isFinal?'var(--pur)':e.color};`:''}">${e.title}</div>
             ${e.note?`<div class="evsub">${e.note}</div>`:''}
-            ${(()=>{const pm=getPostedEntry(e.billId,e.label);return pm?`<div style="font-size:10px;color:var(--grn);margin-top:1px;">✓ Posted $$${pm.amt} · ${pm.date}</div>`:''})()}
+            ${(()=>{const pm=getPostedEntry(e.billId,e.label);return pm?`<div style="font-size:10px;color:var(--grn);margin-top:1px;">✓ Posted ${pm.amt} · ${pm.date}</div>`:''})()}
           </div>
           ${as?`<div class="evamt" style="color:${ac};${e.feat?'font-weight:700;':''}">${as}</div>`:''}
         </div>`;
