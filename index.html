@@ -1233,10 +1233,8 @@ function renderWeek(){
       if(firstDay){
         firstDay=false;
         if(isToday){
-          const incomeToday=weekEvtsByDay[day].filter(e=>e.isIncome).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
-          dayNet-=incomeToday;
-          const discToday=weekEvtsByDay[day].filter(e=>e.note&&e.note.startsWith('Logged')).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
-          dayNet-=discToday;
+          // Balance already reflects today's activity — don't double-count
+          dayNet=0;
         }
       }
       runBal+=dayNet;
