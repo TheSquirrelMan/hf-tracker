@@ -103,10 +103,10 @@ function syncUSAABalance() {
       const acctNum = acctMatch[1];
       Logger.log(`Found account: ${acctNum}`);
 
-      // Parse available balance
-      const balMatch = body.match(/Available balance:\s*\n?\s*\$([0-9,]+\.\d{2})/);
-      if (!balMatch) { Logger.log("Could not parse balance."); continue; }
-      const balance = parseFloat(balMatch[1].replace(/,/g, ""));
+       // Parse available balance
+       const balMatch = body.match(/Available balance:\s*\n?\s*(-?\$[0-9,]+\.\d{2})/);
+       if (!balMatch) { Logger.log("Could not parse balance."); continue; }
+       const balance = parseFloat(balMatch[1].replace(/[$,]/g, ""));
       Logger.log(`Balance parsed: $${balance} for account ${acctNum}`);
 
       // Write to the correct Firebase key based on account number
