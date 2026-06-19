@@ -1,0 +1,16 @@
+- generic [ref=e2]:
+  - generic [ref=e3]: 💰
+  - generic [ref=e4]: HF Tracker
+  - generic [ref=e5]: Enter PIN to continue
+  - generic [ref=e11]:
+    - generic [ref=e12] [cursor=pointer]: "1"
+    - generic [ref=e13] [cursor=pointer]: "2"
+    - generic [ref=e14] [cursor=pointer]: "3"
+    - generic [ref=e15] [cursor=pointer]: "4"
+    - generic [ref=e16] [cursor=pointer]: "5"
+    - generic [ref=e17] [cursor=pointer]: "6"
+    - generic [ref=e18] [cursor=pointer]: "7"
+    - generic [ref=e19] [cursor=pointer]: "8"
+    - generic [ref=e20] [cursor=pointer]: "9"
+    - generic [ref=e21] [cursor=pointer]: "0"
+    - generic [ref=e22] [cursor=pointer]: ⌫

@@ -254,6 +254,16 @@ function checkMilestones() {
   let   updated   = false;
   const today     = Utilities.formatDate(new Date(), "America/New_York", "yyyy-MM-dd");
 
+  // Don't notify about paid-off cards until expense phases are complete
+  const phases     = state.phases     || [];
+  const phaseDone  = state.phaseDone  || {};
+  const allPhasesDone = phases.every(p => phaseDone[p.id]);
+
+  if (!allPhasesDone) {
+    Logger.log("checkMilestones: expense phases not complete, skipping paid-off notifications");
+    return;
+  }
+
   // Build targets from userBills that have a cardId (debt bills)
   // Each unique cardId represents a debt that can be paid off
   const seen = new Set();
@@ -700,6 +710,29 @@ function cleanMazdaPhantoms() {
   Logger.log('✓ cleanMazdaPhantoms complete');
 }
 
+// ── One-shot: fix Amazon card keyword + restore balance ──
+function fixAmazonData() {
+  initFirebasePath();
+  const state = firebaseGet(`${FIREBASE_BASE}.json`) || {};
+
+  // 1. Update the bill keyword from 'AMAZON' → 'AMZ_STORECRD'
+  const bills = state.userBills || [];
+  const bIdx = bills.findIndex(b => b.id === 'bill_amazon_store');
+  if (bIdx >= 0) {
+    bills[bIdx].keyword = 'AMZ_STORECRD';
+    firebasePut(`${FIREBASE_BASE}/userBills.json`, bills);
+    Logger.log('✓ Amazon Store Card keyword updated to AMZ_STORECRD');
+  }
+
+  // 2. Restore card balance to starting balance ($235)
+  let cardBals = state.cardBals || {};
+  cardBals.amazon = 235;
+  firebasePut(`${FIREBASE_BASE}/cardBals.json`, cardBals);
+  Logger.log('✓ cardBals[amazon] restored to $235');
+
+  Logger.log('✓ fixAmazonData complete — run once');
+}
+
 // ── Seed / restore baseline data to Firebase ──
 // Run this once from the Apps Script editor if Firebase is ever wiped.
 // Does NOT overwrite live balances (bal4496/cardBals), spend logs, or processed IDs.
@@ -708,7 +741,7 @@ function seedDefaultBills() {
 
   const userBills = [
     // ── Fixed-term debts (cardId = snowball target) ──
-    { id:'bill_amazon_store',   name:'Amazon Store Card',       amt:29,  day:1,  cardId:'amazon',   endDate:'2026-08', keyword:'AMAZON' },
+    { id:'bill_amazon_store',   name:'Amazon Store Card',       amt:29,  day:1,  cardId:'amazon',   endDate:'2026-08', keyword:'AMZ_STORECRD' },
     { id:'bill_cap3186',        name:'Cap One #3186 (Karen)',    amt:25,  day:11, cardId:'cap3186',  endDate:'2026-10', keyword:'CAPITAL ONE' },
     { id:'bill_cap4565',        name:'Cap One #4565 (Jon)',      amt:25,  day:21, cardId:'cap4565',  endDate:'2026-12', keyword:'CAPITAL ONE' },
     { id:'bill_cap5592',        name:'Cap One #5592 (Karen)',    amt:25,  day:21, cardId:'cap5592',  endDate:'2026-12', keyword:'CAPITAL ONE' },

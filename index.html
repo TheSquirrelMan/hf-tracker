@@ -1060,7 +1060,7 @@ function getMonthEvents(year,month,roadmap,balLog){
       const prevDate=new Date(year,month,dd-1).toISOString().split('T')[0];
       const prevBal=balLog[prevDate],todayBal=balLog[eventDate];
       if(prevBal===undefined||todayBal===undefined)continue;
-      const dayNet=getDailyBills(year,month,dd).reduce((a,b)=>a+b.amt,0);
+      const dayNet=getDailyBills(year,month,dd,cb).reduce((a,b)=>a+b.amt,0);
       const payAmt=Math.round(prevBal+dayNet-todayBal);
       if(payAmt<=5)continue;
       const isFinal=roadmap[activeTarget.id+'-done']?.date===eventDate;
