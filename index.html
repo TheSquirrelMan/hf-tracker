@@ -1618,11 +1618,13 @@ function renderSnowball(){
 
   // Fixed-term bills (from Firebase userBills with endDate)
   const fixedBills=(S.userBills||[]).filter(b=>b.cardId||b.endDate);
+  const totalOwed = TARGETS.reduce((sum, t) => sum + bal(cb, t.id), 0);
   html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rmCollapsed.fixed?'0':'10px'};cursor:pointer;" onclick="toggleRoadmapSection('fixed')">
       <div>
         <div class="card-title" style="margin-bottom:0;">Fixed-term bills ${allExpDone?'🚀':''}</div>
         <div style="font-size:11px;color:var(--t3);">$${Math.round(fixedBillsTotal).toLocaleString()}/mo</div>
+        <div style="font-size:11px;color:var(--red);font-weight:600;">$${Math.round(totalOwed).toLocaleString()} total remaining</div>
       </div>
       <span style="color:var(--t3);font-size:13px;width:12px;text-align:center;">${rmCollapsed.fixed?'▶':'▼'}</span>
     </div>`;
