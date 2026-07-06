@@ -257,7 +257,7 @@ function checkMilestones() {
   // Don't notify about paid-off cards until expense phases are complete
   const phases     = state.phases     || [];
   const phaseDone  = state.phaseDone  || {};
-  const allPhasesDone = phases.every(p => phaseDone[p.id]);
+  const allPhasesDone = phases.length > 0 && phases.every(p => phaseDone[p.id]);
 
   if (!allPhasesDone) {
     Logger.log("checkMilestones: expense phases not complete, skipping paid-off notifications");
@@ -318,7 +318,7 @@ function sendSnowballReminder(currentBal, context) {
     cost: phaseCosts[p.id] !== undefined ? phaseCosts[p.id] : p.cost
   }));
 
-  const allPhasesDone = phasesWithCosts.every(p => phaseDone[p.id]);
+  const allPhasesDone = phasesWithCosts.length > 0 && phasesWithCosts.every(p => phaseDone[p.id]);
 
   if (!allPhasesDone) {
     const nextPhase = phasesWithCosts.find(p => !phaseDone[p.id]);
@@ -415,7 +415,10 @@ function syncUSAADebits() {
       const txDate    = dateMatch
         ? formatUsaaDate(dateMatch[1])
         : Utilities.formatDate(new Date(), "America/New_York", "M/d/yyyy");
-      const txDow = msg.getDate().getDay();
+      // Compute day-of-week explicitly in America/New_York, not the script's project
+      // timezone, so a debit near midnight ET isn't attributed to the wrong day
+      const DOW_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const txDow = DOW_NAMES.indexOf(Utilities.formatDate(msg.getDate(), "America/New_York", "EEEE"));
 
       Logger.log(`Parsed: ${merchant} | $${amt} | ${txDate} | DOW:${txDow}`);
 
@@ -549,7 +552,7 @@ function matchDebit(merchant, amt, autoDisc, userBills, txDow) {
 
   // 4. Capital One — multiple bills share the merchant name, disambiguate by amount
   if (merchant.includes("CAPITAL ONE")) {
-    const capOneBills = userBills.filter(b => b.keyword && b.keyword.includes("CAPITAL ONE"));
+    const capOneBills = userBills.filter(b => (b.keyword || b.debitKeyword || "").includes("CAPITAL ONE"));
     if (capOneBills.length) {
       const sorted = capOneBills
         .map(b => ({ ...b, diff: Math.abs(amt - b.amt) }))
