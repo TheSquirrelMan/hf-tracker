@@ -2024,7 +2024,7 @@ window.dumpAll = function() {
   bills.forEach((b, i) => {
     const type = b.endDate ? 'FIXED' : 'RECURRING';
     const dayStr = Array.isArray(b.day) ? b.day.join(',') : b.day;
-    out.push(`  ${i+1}. [${type}] ${b.name}: $${b.amt} | day ${dayStr} | cardId: ${b.cardId || 'none'} | endDate: ${b.endDate || 'none'} | conditionEnd: ${b.conditionEnd || 'none'} | keyword: ${b.keyword || b.debitKeyword || 'none'}`);
+    out.push(`  ${i+1}. [${type}] ${b.name}: $${b.amt} | day ${dayStr} | freq: ${b.frequency || 'monthly'} | cardId: ${b.cardId || 'none'} | endDate: ${b.endDate || 'none'} | conditionEnd: ${b.conditionEnd || 'none'} | keyword: ${b.keyword || b.debitKeyword || 'none'} | monthly: $${Math.round(toMonthlyAmt(b))}`);
   });
   out.push('');
   
@@ -2131,14 +2131,26 @@ window.dumpAll = function() {
   
   // ══ SUMMARY ══
   out.push('── Summary ──');
-  const monthlyBills = bills.reduce((sum, b) => sum + toMonthlyAmt(b), 0);
+  const fixedBillsSum = bills.filter(b => b.cardId || b.endDate).reduce((sum, b) => sum + toMonthlyAmt(b), 0);
+  const recurBillsSum = bills.filter(b => !b.cardId && !b.endDate).reduce((sum, b) => sum + toMonthlyAmt(b), 0);
+  const monthlyBills = fixedBillsSum + recurBillsSum;
   const monthlyIncome = Math.round((S.karenAvgPay || S.karenLastPay || 810) * 4.33) + (S.jonLastPay || 1641) * 2;
   const dumpAffirmMo = getAffirmAmt(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`);
+  const dumpDiscCap = S.discMonthlyCap || 200;
   out.push(`  Monthly income: $${Math.round(monthlyIncome).toLocaleString()}`);
-  out.push(`  Monthly bills: $${Math.round(monthlyBills).toLocaleString()}`);
-  out.push(`  Discretionary cap: $${S.discMonthlyCap || 200}`);
+  out.push(`  Fixed-term bills: $${Math.round(fixedBillsSum).toLocaleString()}/mo`);
+  out.push(`  Recurring bills: $${Math.round(recurBillsSum).toLocaleString()}/mo`);
+  out.push(`  Total bills (raw): $${Math.round(monthlyBills).toLocaleString()}/mo`);
+  out.push(`  Discretionary cap: $${dumpDiscCap}`);
   out.push(`  Affirm cluster: $${dumpAffirmMo}`);
-  out.push(`  Net surplus: $${Math.round(monthlyIncome - monthlyBills - (S.discMonthlyCap || 200) - dumpAffirmMo).toLocaleString()}`);
+  out.push(`  ─────────────────────`);
+  out.push(`  Roadmap total: $${Math.round(monthlyBills + dumpDiscCap + dumpAffirmMo).toLocaleString()}/mo (bills + disc + affirm)`);
+  out.push(`  Net surplus: $${Math.round(monthlyIncome - monthlyBills - dumpDiscCap - dumpAffirmMo).toLocaleString()}`);
+  const weeklyBills = bills.filter(b => b.frequency === 'weekly');
+  if (weeklyBills.length > 0) {
+    out.push(`  ⚠ Weekly-frequency bills (amt × 4.33):`);
+    weeklyBills.forEach(b => out.push(`    - ${b.name}: $${b.amt}/wk → $${Math.round(b.amt * 4.33)}/mo`));
+  }
   out.push(`  Total debt: $${targets.reduce((s, t) => s + bal(S.cardBals || {}, t.id), 0).toLocaleString()}`);
   out.push(`  Debt-free date: ${data.milestones['debt-free'] ? data.milestones['debt-free'].date : 'unknown'}`);
   out.push('');
