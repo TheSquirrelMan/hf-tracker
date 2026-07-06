@@ -1524,9 +1524,9 @@ function renderSnowball(){
 
   const curKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const affirmMo=getAffirmAmt(curKey);
-  const fixedBillsTotal=(S.userBills||[]).filter(b=>b.cardId||b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0);
+  const fixedBillsTotal=(S.userBills||[]).filter(b=>b.cardId||b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0)+affirmMo;
   const discMo=S.discMonthlyCap||200;
-  const recurBillsTotal=(S.userBills||[]).filter(b=>!b.cardId&&!b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0)+discMo+affirmMo;
+  const recurBillsTotal=(S.userBills||[]).filter(b=>!b.cardId&&!b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0)+discMo;
   const grandTotal=fixedBillsTotal+recurBillsTotal;
   let html=`<div style="font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:2px;">Debt roadmap</div>
     <div style="font-size:12px;color:var(--t3);margin-bottom:10px;">All dates calculated from your actual balance</div>
@@ -1534,7 +1534,7 @@ function renderSnowball(){
     <div style="text-align:center;padding:4px 8px;border-right:0.5px solid var(--br);">
       <div style="font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Fixed-term</div>
       <div style="font-size:15px;font-weight:700;color:var(--red);">-$${Math.round(fixedBillsTotal).toLocaleString()}</div>
-      <div style="font-size:10px;color:var(--t3);">/mo</div>
+      <div style="font-size:10px;color:var(--t3);">/mo${affirmMo>0?' · incl. Affirm':''}</div>
     </div>
     <div style="text-align:center;padding:4px 8px;border-right:0.5px solid var(--br);">
       <div style="font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Recurring</div>
@@ -1659,18 +1659,33 @@ function renderSnowball(){
         </div>
       </div>`;
     });
+    if(affirmMo>0){
+      const schedule=S.affirmSchedule&&S.affirmSchedule.length?S.affirmSchedule:[{through:'2026-06',amt:188},{through:'2026-07',amt:152},{through:'2026-09',amt:108},{through:'2026-10',amt:95},{through:'2027-02',amt:82},{through:'2028-01',amt:59}];
+      const lastThrough=schedule[schedule.length-1].through;
+      const [ly,lm]=lastThrough.split('-').map(Number);
+      const affirmEndLabel='ends '+MN[lm-1].substring(0,3)+' '+ly;
+      html+=`<div class="ms">
+        <div class="ms-info">
+          <div class="ms-label" style="font-weight:600;">Affirm cluster</div>
+          <div class="ms-sub">$${affirmMo}/mo · steps down · ${affirmEndLabel}</div>
+        </div>
+        <div class="ms-right">
+          <div class="ms-date" style="color:var(--blu);">${affirmEndLabel.replace('ends ','')}</div>
+        </div>
+      </div>`;
+    }
   }
   html+=`</div>`;
 
   // Recurring bills (no endDate)
   const recurBills=(S.userBills||[]).filter(b=>!b.cardId&&!b.endDate);
-  const recurTotal=recurBills.reduce((a,b)=>a+toMonthlyAmt(b),0)+discMo+affirmMo;
+  const recurTotal=recurBills.reduce((a,b)=>a+toMonthlyAmt(b),0)+discMo;
   html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rmCollapsed.recurring?'0':'10px'};cursor:pointer;" onclick="toggleRoadmapSection('recurring')">
       <div>
         <div class="card-title" style="margin-bottom:0;">Recurring bills</div>
         <div style="font-size:11px;color:var(--t3);">$${Math.round(recurTotal).toLocaleString()}/mo</div>
-        <div style="font-size:10px;color:var(--t4);margin-top:2px;">Set an end date or Card ID to move a bill to fixed-term · incl. disc. cap${affirmMo>0?' + Affirm':''} in total</div>
+        <div style="font-size:10px;color:var(--t4);margin-top:2px;">Set an end date or Card ID to move a bill to fixed-term · incl. disc. cap in total</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <button class="btn btng btnsm" style="width:auto;padding:8px 14px;" onclick="event.stopPropagation();addBill()">+ Add</button>
@@ -1695,15 +1710,6 @@ function renderSnowball(){
         </div>
       </div>`;
     });
-    if(affirmMo>0){
-      html+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:0.5px dashed var(--br);">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;">Affirm cluster</div>
-          <div style="font-size:11px;color:var(--t3);margin-top:1px;">Day 13 · steps down automatically — edit S.affirmSchedule in Firebase</div>
-        </div>
-        <div style="font-size:14px;font-weight:700;color:var(--red);flex-shrink:0;">-$${affirmMo}</div>
-      </div>`;
-    }
     html+=`<div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--br);">
       <div style="font-size:11px;color:var(--t3);margin-bottom:8px;">Monthly discretionary cap — deducted weekly on Sundays · included in monthly totals above</div>
       <div style="display:flex;gap:8px;align-items:center;">
