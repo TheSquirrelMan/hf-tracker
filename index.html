@@ -1522,9 +1522,11 @@ function renderSnowball(){
   let rmCollapsed = {};
   try { rmCollapsed = JSON.parse(localStorage.getItem('rmCollapsed') || '{}'); } catch {}
 
-  const fixedBillsTotal=(S.userBills||[]).filter(b=>b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0);
+  const curKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const affirmMo=getAffirmAmt(curKey);
+  const fixedBillsTotal=(S.userBills||[]).filter(b=>b.cardId||b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0);
   const discMo=S.discMonthlyCap||200;
-  const recurBillsTotal=(S.userBills||[]).filter(b=>!b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0)+discMo;
+  const recurBillsTotal=(S.userBills||[]).filter(b=>!b.cardId&&!b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0)+discMo+affirmMo;
   const grandTotal=fixedBillsTotal+recurBillsTotal;
   let html=`<div style="font-size:18px;font-weight:700;letter-spacing:-.3px;margin-bottom:2px;">Debt roadmap</div>
     <div style="font-size:12px;color:var(--t3);margin-bottom:10px;">All dates calculated from your actual balance</div>
@@ -1662,13 +1664,13 @@ function renderSnowball(){
 
   // Recurring bills (no endDate)
   const recurBills=(S.userBills||[]).filter(b=>!b.cardId&&!b.endDate);
-  const recurTotal=recurBills.reduce((a,b)=>a+toMonthlyAmt(b),0)+(S.discMonthlyCap||200);
+  const recurTotal=recurBills.reduce((a,b)=>a+toMonthlyAmt(b),0)+discMo+affirmMo;
   html+=`<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${rmCollapsed.recurring?'0':'10px'};cursor:pointer;" onclick="toggleRoadmapSection('recurring')">
       <div>
         <div class="card-title" style="margin-bottom:0;">Recurring bills</div>
         <div style="font-size:11px;color:var(--t3);">$${Math.round(recurTotal).toLocaleString()}/mo</div>
-        <div style="font-size:10px;color:var(--t4);margin-top:2px;">Set an end date or Card ID to move a bill to fixed-term · incl. disc. cap in total</div>
+        <div style="font-size:10px;color:var(--t4);margin-top:2px;">Set an end date or Card ID to move a bill to fixed-term · incl. disc. cap${affirmMo>0?' + Affirm':''} in total</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <button class="btn btng btnsm" style="width:auto;padding:8px 14px;" onclick="event.stopPropagation();addBill()">+ Add</button>
@@ -1693,6 +1695,15 @@ function renderSnowball(){
         </div>
       </div>`;
     });
+    if(affirmMo>0){
+      html+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:0.5px dashed var(--br);">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;">Affirm cluster</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:1px;">Day 13 · steps down automatically — edit S.affirmSchedule in Firebase</div>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:var(--red);flex-shrink:0;">-$${affirmMo}</div>
+      </div>`;
+    }
     html+=`<div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--br);">
       <div style="font-size:11px;color:var(--t3);margin-bottom:8px;">Monthly discretionary cap — deducted weekly on Sundays · included in monthly totals above</div>
       <div style="display:flex;gap:8px;align-items:center;">
@@ -2113,10 +2124,12 @@ window.dumpAll = function() {
     return sum + (b.amt || 0);
   }, 0);
   const monthlyIncome = Math.round((S.karenAvgPay || S.karenLastPay || 810) * 4.33) + (S.jonLastPay || 1641) * 2;
+  const dumpAffirmMo = getAffirmAmt(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`);
   out.push(`  Monthly income: $${Math.round(monthlyIncome).toLocaleString()}`);
   out.push(`  Monthly bills: $${Math.round(monthlyBills).toLocaleString()}`);
   out.push(`  Discretionary cap: $${S.discMonthlyCap || 200}`);
-  out.push(`  Net surplus: $${Math.round(monthlyIncome - monthlyBills - (S.discMonthlyCap || 200)).toLocaleString()}`);
+  out.push(`  Affirm cluster: $${dumpAffirmMo}`);
+  out.push(`  Net surplus: $${Math.round(monthlyIncome - monthlyBills - (S.discMonthlyCap || 200) - dumpAffirmMo).toLocaleString()}`);
   out.push(`  Total debt: $${targets.reduce((s, t) => s + bal(S.cardBals || {}, t.id), 0).toLocaleString()}`);
   out.push(`  Debt-free date: ${data.milestones['debt-free'] ? data.milestones['debt-free'].date : 'unknown'}`);
   out.push('');
