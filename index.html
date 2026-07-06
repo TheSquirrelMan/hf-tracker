@@ -308,7 +308,7 @@ select.minput option{background:var(--s2);}
 
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import{getDatabase,ref,onValue,set,get}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import{getDatabase,ref,onValue,set,get,runTransaction}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 // ══ FIREBASE ══
 const FB=initializeApp({apiKey:"AIzaSyDsd7Pr0AEQ3j6n-bKXv7n06vYf9Hvew7Y",authDomain:"hf-tracker-81e76.firebaseapp.com",databaseURL:"https://hf-tracker-81e76-default-rtdb.firebaseio.com",projectId:"hf-tracker-81e76",storageBucket:"hf-tracker-81e76.firebasestorage.app",messagingSenderId:"810272700127",appId:"1:810272700127:web:f72c67e2a9d839a8049b6a"});
@@ -324,8 +324,10 @@ const configPromise = get(ref(db, 'app_config')).then(snap => {
 }).catch(() => {});
 const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const now=new Date();
-const mKey=`${now.getFullYear()}-${now.getMonth()}`;
+// Mutable: refreshed periodically by refreshNow() below so a tab left open
+// across midnight/month-end doesn't keep operating on a stale "today"
+let now=new Date();
+let mKey=`${now.getFullYear()}-${now.getMonth()}`;
 
 // ══ DEFAULT EXPENSE PHASES (seeded to Firebase if empty) ══
 // Kept in sync with seedDefaultBills() in code.gs — same ids/order/costs
@@ -346,22 +348,18 @@ function getPhases() {
   return (S && S.phases && S.phases.length > 0) ? S.phases : DEFAULT_PHASES;
 }
 
-// ══ AFFIRM SCHEDULE (steps down as plans expire — edit S.affirmSchedule in Firebase) ══
+// ══ AFFIRM SCHEDULE (steps down as plans expire) ══
+// Single source of truth is S.affirmSchedule — set by defaultState() below (client
+// default before first sync) and seedDefaultBills() in code.gs (seeds Firebase).
+// No hardcoded fallback here: if the schedule is ever empty, Affirm is simply
+// treated as fully phased out (returns 0) rather than duplicating the data.
 function getAffirmAmt(key) {
   const schedule = S && S.affirmSchedule;
   if (schedule && schedule.length) {
     for (const step of schedule) {
       if (key <= step.through) return step.amt;
     }
-    return 0;
   }
-  // Hardcoded fallback until affirmSchedule is seeded to Firebase
-  if (key <= '2026-06') return 188;
-  if (key <= '2026-07') return 152;
-  if (key <= '2026-09') return 108;
-  if (key <= '2026-10') return 95;
-  if (key <= '2027-02') return 82;
-  if (key <= '2028-01') return 59;
   return 0;
 }
 
@@ -380,15 +378,11 @@ function defaultState(){
     jonLastPay:1641,jonAvgPay:1641,
     jonLastPayDate:'',
     discSpent:0,discLog:[],
-    discLogArchive:{},
     discWeekly:50,
     discMonthlyCap:200,
-    weeks:[],
-    billChecks:{},
     phaseDone:{},
     phases: JSON.parse(JSON.stringify(DEFAULT_PHASES)),
     cardBals:{},
-    snowballLog:[],
     confirmed:{},
     notified:{},
     userBills: JSON.parse(JSON.stringify(DEFAULT_USER_BILLS)),
@@ -405,15 +399,45 @@ function defaultState(){
 }
 
 function resetMonthly(s){
-  // Archive old month's discretionary log before clearing
-  if(s.discLog&&s.discLog.length>0){
-    if(!s.discLogArchive)s.discLogArchive={};
-    s.discLogArchive[s.mKey]=s.discLog;
-  }
   s.mKey=mKey;s.discSpent=0;s.discLog=[];
-  s.billChecks={};
   return s;
 }
+
+// Race-safe month rollover: uses a Firebase transaction so that if multiple
+// tabs/devices detect the rollover around the same time, only one reset is
+// applied atomically instead of a plain last-write-wins set() clobbering it.
+async function reconcileMonth(){
+  if(!STATE) return;
+  try{
+    const result=await runTransaction(STATE, current=>{
+      if(!current) return undefined; // nothing there yet — normal load path handles first-time init
+      if(current.mKey===mKey) return undefined; // already reconciled by another writer, no-op
+      return resetMonthly({...defaultState(), ...current});
+    });
+    if(result.committed && result.snapshot.exists()){
+      S={...defaultState(), ...S, ...result.snapshot.val()};
+      setSS('ok');
+    }
+  }catch(e){
+    console.warn('reconcileMonth failed', e);
+  }
+}
+
+// Recompute "today" periodically so a tab/PWA left open across midnight or a
+// month boundary doesn't keep every date-relative calculation (today
+// highlighting, month rollover, payday checks, roadmap simulation start
+// point) pinned to whatever date the page happened to load on.
+async function refreshNow(){
+  const n=new Date();
+  const newMKey=`${n.getFullYear()}-${n.getMonth()}`;
+  const dayChanged = n.getFullYear()!==now.getFullYear() || n.getMonth()!==now.getMonth() || n.getDate()!==now.getDate();
+  now=n; mKey=newMKey;
+  if(!appReady || !S) return;
+  if(dayChanged){ _cachedRoadmap=null; _roadmapCacheKey=''; }
+  if(S.mKey!==mKey){ await reconcileMonth(); }
+  if(dayChanged){ renderAll(); }
+}
+setInterval(()=>{refreshNow().catch(e=>console.warn('refreshNow failed',e));}, 60000);
 
 // ══ SYNC ══
 function setSS(status){
@@ -440,8 +464,7 @@ async function loadFB(){
     S=snap.exists()?{...defaultState(),...snap.val()}:defaultState();
     if(S.debitLog)S.debitLog=S.debitLog.filter(d=>d!=null);
     if(S.mKey!==mKey){
-      S=resetMonthly(S);
-      set(STATE, S); setSS('ok'); // persist the reset
+      await reconcileMonth();
     }
     if(!S.phases || S.phases.length === 0) {
       S.phases = JSON.parse(JSON.stringify(DEFAULT_PHASES));
@@ -484,11 +507,11 @@ async function loadFB(){
       if(remote.jonLastPayDate) S.jonLastPayDate = remote.jonLastPayDate;
       if(remote.affirmSchedule) S.affirmSchedule = remote.affirmSchedule;
       if(remote.debitLog) S.debitLog = remote.debitLog.filter(d => d != null);
-      if(S.mKey!==mKey){S=resetMonthly(S);set(STATE,S);setSS('ok');}
+      if(S.mKey!==mKey){reconcileMonth();}
     } else {
       S = {...defaultState(), ...remote};
       if(S.debitLog)S.debitLog=S.debitLog.filter(d=>d!=null);
-      if (S.mKey !== mKey) { S = resetMonthly(S); set(STATE, S); setSS('ok'); }
+      if (S.mKey !== mKey) { reconcileMonth(); }
       if(!S.phases || S.phases.length === 0) {
         S.phases = JSON.parse(JSON.stringify(DEFAULT_PHASES));
       }
@@ -949,24 +972,6 @@ function calcRoadmap(){
   _cachedRoadmap = result;
   _roadmapCacheKey = cacheKey;
   return result;
-}
-
-// ══ SURPLUS CALCULATOR ══
-function calcSurplus(){
-  const today=now.getDate();
-  const npcDay=today<7?7:today<22?22:7;
-  const npcMo=today>=22?(now.getMonth()+1>11?0:now.getMonth()+1):now.getMonth();
-  const isSame=npcMo===now.getMonth();
-  const endDay=isSame?npcDay:32;
-  const bills=[];
-  for(let d=today+1;d<endDay;d++){
-    getDailyBills(now.getFullYear(),now.getMonth(),d).forEach(b=>{
-      if(!b.isIncome&&b.amt<0)bills.push({...b,day:d});
-    });
-  }
-  const totalDue=bills.reduce((a,b)=>a+Math.abs(b.amt),0);
-  const safe=Math.max(0,S.bal4496-totalDue-300);
-  return{bills,totalDue,safe,npcLabel:`${MN[npcMo].substring(0,3)} ${npcDay}`};
 }
 
 // ══ MONTH EVENTS ══
@@ -1668,9 +1673,8 @@ function renderSnowball(){
         </div>
       </div>`;
     });
-    if(affirmMo>0){
-      const schedule=S.affirmSchedule&&S.affirmSchedule.length?S.affirmSchedule:[{through:'2026-06',amt:188},{through:'2026-07',amt:152},{through:'2026-09',amt:108},{through:'2026-10',amt:95},{through:'2027-02',amt:82},{through:'2028-01',amt:59}];
-      const lastThrough=schedule[schedule.length-1].through;
+    if(affirmMo>0 && S.affirmSchedule && S.affirmSchedule.length){
+      const lastThrough=S.affirmSchedule[S.affirmSchedule.length-1].through;
       const [ly,lm]=lastThrough.split('-').map(Number);
       const affirmEndLabel='ends '+MN[lm-1].substring(0,3)+' '+ly;
       html+=`<div class="ms">
@@ -1836,7 +1840,7 @@ window.closeDebitModal=()=>document.getElementById('debit-modal').classList.remo
 
 function renderDebitModal(){
   const pending=(S.debitLog||[]).filter(d=>d&&d.status==='pending');
-  const matched=(S.debitLog||[]).filter(d=>d&&(d.status==='matched'||d.status==='autoDisc')).slice(0,10);
+  const matched=(S.debitLog||[]).filter(d=>d&&(d.status==='matched'||d.status==='discretionary')).slice(0,10);
   const bills=(S.userBills||[]);
   let html='';
 
@@ -1856,7 +1860,6 @@ function renderDebitModal(){
         <div style="display:flex;flex-direction:column;gap:6px;">
           <div style="display:flex;gap:6px;">
             <button class="btn btno btnsm" style="flex:1;font-size:11px;" onclick="resolveDebit(${idx},'disc')">Discretionary</button>
-            <button class="btn btna btnsm" style="flex:1;font-size:11px;" onclick="resolveDebit(${idx},'autoDisc')">Always disc.</button>
           </div>
           <div style="display:flex;gap:6px;align-items:center;">
             <select id="link-bill-${idx}" style="flex:1;background:var(--s2);border:1px solid var(--br);color:var(--tx);border-radius:6px;padding:6px 8px;font-size:12px;">
@@ -1878,8 +1881,8 @@ function renderDebitModal(){
   if(matched.length){
     html+=`<div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin:12px 0 8px;">Recent auto-matched</div>`;
     matched.forEach(d=>{
-      const icon=d.status==='autoDisc'?'⚡':'✓';
-      const label=d.status==='autoDisc'?'Auto disc.':(bills.find(b=>b.id===d.bill)||{}).name||d.bill;
+      const icon=d.status==='discretionary'?'💰':'✓';
+      const label=d.status==='discretionary'?'Discretionary':(bills.find(b=>b.id===d.bill)||{}).name||d.bill;
       html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--br);">
         <div>
           <div style="font-size:12px;font-weight:600;">${icon} ${d.merchant}</div>
@@ -1924,13 +1927,8 @@ window.resolveDebit=function(idx,action){
   if(!d)return;
 
   if(action==='disc'){
-    d.status='autoDisc';
+    d.status='discretionary';
     mergeOrAddDiscLog(parseFloat(d.amt), d.date, d.merchant, 'discretionary');
-  } else if(action==='autoDisc'){
-    d.status='autoDisc';
-    mergeOrAddDiscLog(parseFloat(d.amt), d.date, d.merchant, 'discretionary');
-    S.autoDisc=S.autoDisc||[];
-    if(!S.autoDisc.includes(d.merchant))S.autoDisc.push(d.merchant);
   } else if(action==='link'){
     const sel=document.getElementById('link-bill-'+idx);
     if(!sel||!sel.value){toast('Pick a bill first');return;}

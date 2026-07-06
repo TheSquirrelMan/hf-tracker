@@ -12,23 +12,6 @@ const KAREN_PAY_LABEL = "usaa-karen-pay-synced";
 const JON_PAY_LABEL   = "usaa-jon-pay-synced";
 const DEBIT_LABEL     = "usaa-debit-synced";
 
-// ── Default autoDisc keywords (pre-populated on first run if not in Firebase) ──
-const DEFAULT_AUTO_DISC = [
-  "PUBLIX",
-  "STARBUCKS",
-  "POLLOTROP",
-  "MCDONALD",
-  "WENDYS",
-  "DRAGON TEA",
-  "LONGHORN",
-  "AMC ",
-  "DD *DOORDASH",
-  "CHICK-FIL-A",
-  "CHIPOTLE",
-  "FIVE GUYS",
-  "TACO BELL",
-];
-
 function initFirebasePath() {
   const dataSecret = PropertiesService.getScriptProperties().getProperty('DATA_SECRET');
   if (!dataSecret) throw new Error('DATA_SECRET not set in Script Properties');
@@ -374,20 +357,12 @@ function syncUSAADebits() {
   const labelId = getLabelId(DEBIT_LABEL);
 
   const state      = firebaseGet(`${FIREBASE_BASE}.json`) || {};
-  let   autoDisc   = state.autoDisc    || DEFAULT_AUTO_DISC;
   let   debitLog   = (state.debitLog    || []).filter(d => d != null);
-  let   discLog    = state.discLog     || [];
-  let   discSpent  = state.discSpent   || 0;
   const userBills  = state.userBills   || [];
   let   cardBals   = state.cardBals    || {};
   const cardStartBals = state.cardStartBals || {};
   let   changed    = false;
   let   newPending = 0;
-
-  if (!state.autoDisc) {
-    firebasePut(`${FIREBASE_BASE}/autoDisc.json`, DEFAULT_AUTO_DISC);
-    Logger.log("Seeded default autoDisc keywords to Firebase");
-  }
 
   const processedIds = state.processedMsgIds || [];
 
@@ -441,7 +416,7 @@ function syncUSAADebits() {
         continue;
       }
 
-      const result = matchDebit(merchant, amt, autoDisc, userBills, txDow);
+      const result = matchDebit(merchant, amt, userBills, txDow);
       Logger.log(`Match: ${result.status}${result.bill ? " → " + result.bill : ""}`);
 
       const entry = { merchant, amt, date: txDate, ts: new Date().getTime(), status: result.status };
@@ -452,29 +427,6 @@ function syncUSAADebits() {
       if (result.freshMarket) {
         // discLog overage handled by syncFreshMarket (email parsing) — just record the debit
         Logger.log(`Fresh Market PayPal $${amt} matched bill_fresh_market — discLog via syncFreshMarket`);
-      } else if (result.status === "autoDisc") {
-        const entryLabel = result.label || merchant;
-        const txParts    = txDate.split("/");
-        const txMillis   = new Date(parseInt(txParts[2]), parseInt(txParts[0])-1, parseInt(txParts[1])).getTime();
-        const matchIdx   = discLog.findIndex(e => {
-          if (e.auto) return false;
-          const ep = (e.date||'').split('/');
-          if (ep.length < 3) return false;
-          const eMillis = new Date(parseInt(ep[2]),parseInt(ep[0])-1,parseInt(ep[1])).getTime();
-          if (Math.abs(txMillis-eMillis)/86400000 > 2) return false;
-          const el = (e.label||'').toUpperCase();
-          const ml = entryLabel.toUpperCase();
-          return el.includes(ml.split(' ')[0]) || ml.includes(el.split(' ')[0]);
-        });
-        if (matchIdx >= 0) {
-          const old = discLog[matchIdx];
-          discSpent = Math.max(0, discSpent - (old.amt||0));
-          discLog[matchIdx] = {...old, amt, date: txDate, auto: true, confirmed: true};
-          discSpent += amt;
-        } else {
-          discLog.unshift({ amt, date: txDate, label: entryLabel, cat: result.cat||'discretionary', auto: true });
-          if (!result.cat || result.cat === 'discretionary') discSpent += amt;
-        }
       }
 
       // Auto-update card balance when a payment is matched to a credit card
@@ -500,8 +452,6 @@ function syncUSAADebits() {
     const cutoff = new Date().getTime() - 90 * 24 * 60 * 60 * 1000;
     debitLog = debitLog.filter(d => !d.ts || d.ts > cutoff);
     firebasePut(`${FIREBASE_BASE}/debitLog.json`,        debitLog);
-    firebasePut(`${FIREBASE_BASE}/discLog.json`,         discLog);
-    firebasePut(`${FIREBASE_BASE}/discSpent.json`,       discSpent);
     firebasePut(`${FIREBASE_BASE}/cardBals.json`,        cardBals);
     firebasePut(`${FIREBASE_BASE}/processedMsgIds.json`, processedIds.slice(-500));
     Logger.log(`Done. debitLog: ${debitLog.length} entries, ${newPending} pending`);
@@ -517,16 +467,9 @@ function syncUSAADebits() {
 
 // ── Smart match logic ──
 // Reads userBills from Firebase for keyword matching — no hardcoded bill lists
-function matchDebit(merchant, amt, autoDisc, userBills, txDow) {
+function matchDebit(merchant, amt, userBills, txDow) {
 
-  // 1. AutoDisc keyword list
-  for (const kw of autoDisc) {
-    if (merchant.includes(kw.toUpperCase().trim())) {
-      return { status: "autoDisc", label: merchant, cat: "discretionary" };
-    }
-  }
-
-  // 2. PayPal Fresh Market: $150–$260, arrived Sun/Mon/Tue
+  // 1. PayPal Fresh Market: $150–$260, arrived Sun/Mon/Tue
   if (merchant.includes("PAYPAL")) {
     if (amt >= 150 && amt <= 350 && txDow >= 0 && txDow <= 2) {
       const fmBill = userBills.find(b => b.id === 'bill_fresh_market');
@@ -534,7 +477,7 @@ function matchDebit(merchant, amt, autoDisc, userBills, txDow) {
     }
   }
 
-  // 3. Match against userBills keywords from Firebase
+  // 2. Match against userBills keywords from Firebase
   const billsWithKeywords = userBills.filter(b => b.keyword || b.debitKeyword);
 
   for (const bill of billsWithKeywords) {
@@ -550,7 +493,7 @@ function matchDebit(merchant, amt, autoDisc, userBills, txDow) {
     }
   }
 
-  // 4. Capital One — multiple bills share the merchant name, disambiguate by amount
+  // 3. Capital One — multiple bills share the merchant name, disambiguate by amount
   if (merchant.includes("CAPITAL ONE")) {
     const capOneBills = userBills.filter(b => (b.keyword || b.debitKeyword || "").includes("CAPITAL ONE"));
     if (capOneBills.length) {
@@ -564,7 +507,7 @@ function matchDebit(merchant, amt, autoDisc, userBills, txDow) {
     return { status: "pending" };
   }
 
-  // 5. Affirm prefix match (suffix changes each payment)
+  // 4. Affirm prefix match (suffix changes each payment)
   if (merchant.startsWith("AFFIRM")) {
     // Find closest Affirm bill by amount
     const affirmBills = userBills.filter(b => b.id.startsWith('affirm'));
@@ -579,7 +522,7 @@ function matchDebit(merchant, amt, autoDisc, userBills, txDow) {
     return { status: "matched", bill: "affirm", label: "Affirm (unmatched plan)" };
   }
 
-  // 6. No match
+  // 5. No match — falls to the Debit Inbox for manual categorization
   return { status: "pending" };
 }
 
@@ -799,6 +742,10 @@ function seedDefaultBills() {
     mazda:    20693,
   };
 
+  // Kept in sync with defaultState()'s affirmSchedule in index.html — this seeds
+  // Firebase (the real running source of truth from then on); index.html's copy
+  // is only the client's pre-first-sync default. getAffirmAmt() has no hardcoded
+  // fallback of its own, so these two are the only two copies.
   const affirmSchedule = [
     {through:'2026-06',amt:188},
     {through:'2026-07',amt:152},
