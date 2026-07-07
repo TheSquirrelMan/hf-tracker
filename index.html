@@ -2350,6 +2350,7 @@ window.confirmAction=function(id){
 window.getDailyBills=getDailyBills;
 window.calcRoadmap=()=>calcRoadmap();
 window.getS=()=>S;
+Object.defineProperty(window,'_S',{get:()=>S});
 window.getPhases=()=>getPhases();
 window.getSnowballTargets=()=>getSnowballTargets();
 window.resetPhases=()=>{
