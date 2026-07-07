@@ -507,12 +507,8 @@ async function loadFB(){
       S.karenLastPay = remote.karenLastPay;
       S.jonLastPay = remote.jonLastPay;
       S.jonAvgPay = remote.jonAvgPay;
-      if(remote.phases) S.phases = remote.phases;
-      if(remote.userBills) S.userBills = remote.userBills;
-      if(remote.cardStartBals) S.cardStartBals = remote.cardStartBals;
       if(remote.karenLastPayDate) S.karenLastPayDate = remote.karenLastPayDate;
       if(remote.jonLastPayDate) S.jonLastPayDate = remote.jonLastPayDate;
-      if(remote.affirmSchedule) S.affirmSchedule = remote.affirmSchedule;
       if(remote.debitLog) S.debitLog = remote.debitLog.filter(d => d != null);
       if(S.mKey!==mKey){reconcileMonth();}
     } else {
