@@ -226,6 +226,11 @@ select.minput option{background:var(--s2);}
     <input class="minput" type="text" id="bm-day" placeholder="Due day e.g. 15 or 4,18 for biweekly" inputmode="numeric">
     <input class="minput" type="text" id="bm-note" placeholder="Note (optional)">
     <input class="minput" type="text" id="bm-keyword" placeholder="Debit keyword e.g. PUBLIX, T-MOBILE (optional)">
+    <select class="minput" id="bm-freq" style="appearance:auto;">
+      <option value="">Monthly</option>
+      <option value="weekly">Weekly</option>
+      <option value="quarterly">Quarterly</option>
+    </select>
     <input class="minput" type="text" id="bm-enddate" placeholder="End date YYYY-MM (optional, for fixed-term)">
     <input class="minput" type="number" id="bm-balance" placeholder="Current balance ($)" inputmode="decimal" style="display:none;">
     <input class="minput" type="text" id="bm-cardid" placeholder="Card ID for snowball (optional)">
@@ -1751,6 +1756,7 @@ window.editBillItem=function(id){
   document.getElementById('bm-day').value=Array.isArray(b.day)?b.day.join(','):b.day;
   document.getElementById('bm-note').value=b.note||'';
   document.getElementById('bm-keyword').value=b.keyword||b.debitKeyword||'';
+  document.getElementById('bm-freq').value=b.frequency||'';
   document.getElementById('bm-enddate').value=b.cardId?'':(b.endDate||'');
   document.getElementById('bm-cardid').value=b.cardId||'';
   // Hide endDate for credit cards — payoff is projected by snowball, not manual
@@ -1772,6 +1778,7 @@ window.addBill=function(){
   document.getElementById('bm-day').value='';
   document.getElementById('bm-note').value='';
   document.getElementById('bm-keyword').value='';
+  document.getElementById('bm-freq').value='';
   document.getElementById('bm-enddate').style.display='';
   document.getElementById('bm-enddate').value='';
   document.getElementById('bm-balance').style.display='none';
@@ -1788,12 +1795,14 @@ window.saveBillModal=function(){
   const dayRaw=document.getElementById('bm-day').value.trim();
   const note=document.getElementById('bm-note').value.trim();
   const keyword=document.getElementById('bm-keyword').value.trim().toUpperCase();
+  const freq=document.getElementById('bm-freq').value;
   const endDate=document.getElementById('bm-enddate').value.trim();
   const cardId=document.getElementById('bm-cardid').value.trim();
-  const days=dayRaw.split(',').map(d=>parseInt(d.trim())).filter(d=>!isNaN(d)&&d>=1&&d<=31);
+  const days=dayRaw.split(',').map(d=>parseInt(d.trim())).filter(d=>!isNaN(d)&&d>=0&&d<=31);
   if(!name||isNaN(amt)||!days.length){toast('Fill in all required fields');return;}
   const bills=(S.userBills||[]);
   const billData={name,amt,day:days.length===1?days[0]:days,note,keyword};
+  if(freq)billData.frequency=freq;
   if(endDate)billData.endDate=endDate;
   if(cardId){
     billData.cardId=cardId;
@@ -1805,7 +1814,10 @@ window.saveBillModal=function(){
   }
   if(editingBill){
     const idx=bills.findIndex(b=>b.id===editingBill);
-    if(idx>=0)bills[idx]={...bills[idx],...billData};
+    if(idx>=0){
+      bills[idx]={...bills[idx],...billData};
+      if(!freq){delete bills[idx].frequency;delete bills[idx].dow;}
+    }
   } else {
     bills.push({id:'bill_'+Date.now(),...billData});
   }
