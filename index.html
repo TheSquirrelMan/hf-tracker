@@ -257,6 +257,7 @@ select.minput option{background:var(--s2);}
       <input type="checkbox" id="pm-savings"> Transfer to savings
     </label>
     <button class="btn btng" onclick="savePhaseModal()">Save</button>
+    <button class="btn btnr" id="pm-delete-btn" style="display:none;" onclick="deletePhaseModal()">Delete</button>
     <button class="btn btno" onclick="closePhaseModal()">Cancel</button>
   </div>
 </div>
@@ -2195,6 +2196,7 @@ window.addPhase = function() {
   document.getElementById('pm-label').value = '';
   document.getElementById('pm-cost').value = '';
   document.getElementById('pm-savings').checked = false;
+  document.getElementById('pm-delete-btn').style.display = 'none';
   modal.classList.add('open');
   setTimeout(() => document.getElementById('pm-label').focus(), 140);
 };
@@ -2209,6 +2211,7 @@ window.editPhase = function(id) {
   document.getElementById('pm-label').value = phase.label;
   document.getElementById('pm-cost').value = phaseAmt(id, phase.cost);
   document.getElementById('pm-savings').checked = phase.isSavings || false;
+  document.getElementById('pm-delete-btn').style.display = '';
   modal.classList.add('open');
   setTimeout(() => document.getElementById('pm-label').focus(), 140);
 };
@@ -2272,6 +2275,12 @@ window.deletePhase = function(id) {
 };
 
 window.closePhaseModal = () => document.getElementById('phase-modal').classList.remove('open');
+
+window.deletePhaseModal = function() {
+  if (!editingPhaseId) return;
+  closePhaseModal();
+  deletePhase(editingPhaseId);
+};
 
 window.movePhase = function(index, direction) {
   const phasesList = [...getPhases()];
