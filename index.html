@@ -161,9 +161,15 @@ select.minput option{background:var(--s2);}
 .mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .mnavtitle{font-size:17px;font-weight:700;letter-spacing:-.3px;}
 .mnavbtn{background:var(--s2);border:0.5px solid var(--br);border-radius:var(--rs);padding:7px 12px;font-size:13px;color:var(--tx);cursor:pointer;}
+body.readonly .btn.btng,body.readonly .btn.btnr,body.readonly .reorder-btn{pointer-events:none;opacity:0.15;}
+.ro-banner{display:none;text-align:center;padding:6px 10px;background:var(--amb);color:#000;font-size:12px;font-weight:600;position:sticky;top:0;z-index:10;}
+body.readonly .ro-banner{display:block;}
+.ro-switch{color:inherit;text-decoration:underline;cursor:pointer;margin-left:8px;}
 </style>
 </head>
 <body>
+
+<div class="ro-banner">👁️ Read-only mode — <span class="ro-switch" onclick="switchToAdmin()">Switch to admin</span></div>
 
 <div class="overlay" id="pin-screen">
   <div class="pin-logo">💰</div>
@@ -324,8 +330,10 @@ let SECRET = '';
 let STATE = null;
 
 const PKEY='hft_auth';
+const RPKEY='hft_readonly';
 
 let configCache = null;
+let _readOnly = false;
 const configPromise = get(ref(db, 'app_config')).then(snap => {
   configCache = snap.val();
 }).catch(() => {});
@@ -456,6 +464,7 @@ function setSS(status){
 }
 
 function save(s){
+  if(_readOnly){toast('Read-only mode — no changes saved');return;}
   S=s;setSS('pend');
   if(saveTimer)clearTimeout(saveTimer);
   saveTimer=setTimeout(async()=>{
@@ -537,6 +546,8 @@ async function checkAuth() {
   if (sessionStorage.getItem(PKEY) === 'ok') {
     try {
       const config = configCache || (await get(ref(db, 'app_config'))).val();
+      _readOnly = sessionStorage.getItem(RPKEY) === '1';
+      if(_readOnly) document.body.classList.add('readonly');
       SECRET = config.dataSecret;
       STATE = ref(db, `hft/${SECRET}/state`);
       document.getElementById('pin-screen').classList.add('hidden');
@@ -566,6 +577,12 @@ window.pinDel = () => {
   updatePinDots(false);
 };
 
+window.switchToAdmin = () => {
+  sessionStorage.removeItem(PKEY);
+  sessionStorage.removeItem(RPKEY);
+  location.reload();
+};
+
 function updatePinDots(err = false) {
   for (let i = 0; i < 4; i++) {
     const d = document.getElementById('pd' + i);
@@ -583,10 +600,22 @@ async function checkPin() {
     const hashedInput = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
     if (hashedInput === config.pinHash) {
+      _readOnly = false;
+      sessionStorage.setItem(RPKEY, '');
       SECRET = config.dataSecret;
       STATE = ref(db, `hft/${SECRET}/state`);
       sessionStorage.setItem(PKEY, 'ok');
       document.getElementById('pin-screen').classList.add('hidden');
+      document.body.classList.remove('readonly');
+      loadFB();
+    } else if (config.pinReadOnlyHash && hashedInput === config.pinReadOnlyHash) {
+      _readOnly = true;
+      sessionStorage.setItem(RPKEY, '1');
+      SECRET = config.dataSecret;
+      STATE = ref(db, `hft/${SECRET}/state`);
+      sessionStorage.setItem(PKEY, 'ok');
+      document.getElementById('pin-screen').classList.add('hidden');
+      document.body.classList.add('readonly');
       loadFB();
     } else {
       updatePinDots(true);
