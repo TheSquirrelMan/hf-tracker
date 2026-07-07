@@ -2264,7 +2264,9 @@ window.deletePhase = function(id) {
     S.phases = phasesList.filter(p => p.id !== id);
     if (S.phaseDone && S.phaseDone[id]) delete S.phaseDone[id];
     _cachedRoadmap = null;
-    save(S);
+    if(saveTimer)clearTimeout(saveTimer);
+    setSS('pend');
+    saveTimer=setTimeout(async()=>{try{await set(STATE,S);setSS('ok');}catch(e){console.warn('save fail',e);setSS('err');}},10);
     renderAll();
     toast('Milestone deleted');
   });
