@@ -229,6 +229,7 @@ select.minput option{background:var(--s2);}
     <select class="minput" id="bm-freq" style="appearance:auto;">
       <option value="">Monthly</option>
       <option value="weekly">Weekly</option>
+      <option value="biweekly">Biweekly (2x/month)</option>
       <option value="quarterly">Quarterly</option>
     </select>
     <input class="minput" type="text" id="bm-enddate" placeholder="End date YYYY-MM (optional, for fixed-term)">
@@ -1756,7 +1757,7 @@ window.editBillItem=function(id){
   document.getElementById('bm-day').value=Array.isArray(b.day)?b.day.join(','):b.day;
   document.getElementById('bm-note').value=b.note||'';
   document.getElementById('bm-keyword').value=b.keyword||b.debitKeyword||'';
-  document.getElementById('bm-freq').value=b.frequency||'';
+  document.getElementById('bm-freq').value=b.frequency||(Array.isArray(b.day)?'biweekly':'');
   document.getElementById('bm-enddate').value=b.cardId?'':(b.endDate||'');
   document.getElementById('bm-cardid').value=b.cardId||'';
   // Hide endDate for credit cards — payoff is projected by snowball, not manual
