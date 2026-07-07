@@ -697,8 +697,8 @@ function seedDefaultBills() {
     { id:'bill_usaa_amex',      name:'USAA Amex (Karen)',        amt:63,  day:15, cardId:'usaaAmex', endDate:'2027-02', keyword:'USAA' },
     { id:'bill_kpaypal',        name:"Karen's PayPal Credit",    amt:100, day:13, cardId:'kpaypal',  endDate:'2027-05', keyword:'PAYPAL' },
     { id:'bill_tn',             name:'TN Unemployment',          amt:153, day:22, cardId:'tn',       endDate:'2027-12', keyword:'TN' },
-    { id:'bill_irs2',           name:'IRS payment #2',           amt:35,  day:16, cardId:'irs',      endDate:'2028-06', keyword:'IRS' },
-    { id:'bill_irs1',           name:'IRS payment #1',           amt:68,  day:15, cardId:'irs',      endDate:'2028-06', keyword:'IRS' },
+    { id:'bill_irs2',           name:'IRS payment #2',           amt:35,  day:16, cardId:'irs2',      endDate:'2028-06', keyword:'IRS' },
+    { id:'bill_irs1',           name:'IRS payment #1',           amt:68,  day:15, cardId:'irs1',      endDate:'2028-06', keyword:'IRS' },
     { id:'bill_mazda',          name:'Mazda CX-5',               amt:638, day:9,  cardId:'mazda',    endDate:'2027-04', keyword:'MAZDA FINANCIAL WEB' },
     // ── Fixed-term (no cardId — expire by date) ──
     { id:'bill_paypal_newegg',  name:'PayPal Newegg',            amt:61,  day:13, endDate:'2027-01', conditionEnd:'2027-01' },
@@ -738,7 +738,8 @@ function seedDefaultBills() {
     usaaAmex: 1847,
     kpaypal:  1958,
     tn:       3653,
-    irs:      4767,
+    irs1:     3147,
+    irs2:     1620,
     mazda:    20693,
   };
 
