@@ -647,7 +647,7 @@ function appConfirm(msg,cb){
   document.getElementById('confirm-modal').classList.add('open');
   _confirmCb=cb;
 }
-window.doConfirm=function(){closeConfirm();if(_confirmCb)_confirmCb();_confirmCb=null;};
+window.doConfirm=function(){const cb=_confirmCb;closeConfirm();if(cb)cb();};
 window.closeConfirm=function(){document.getElementById('confirm-modal').classList.remove('open');_confirmCb=null;};
 window.submitModal=function(){
   const amt=parseFloat(document.getElementById('mi-amt').value);
@@ -2261,16 +2261,13 @@ window.deletePhase = function(id) {
   const phase = phasesList.find(p => p.id === id);
   if (!phase) return;
   appConfirm(`Delete "${phase.label}"?`,()=>{
-    console.log('deletePhase callback running for',id,'phasesList length',phasesList.length);
     S.phases = phasesList.filter(p => p.id !== id);
-    console.log('S.phases after filter, length',S.phases.length,'includes',S.phases.map(p=>p.label).join(', '));
     if (S.phaseDone && S.phaseDone[id]) delete S.phaseDone[id];
     _cachedRoadmap = null;
     if(saveTimer)clearTimeout(saveTimer);
     setSS('pend');
     saveTimer=setTimeout(async()=>{try{await set(STATE,S);setSS('ok');}catch(e){console.warn('save fail',e);setSS('err');}},10);
     renderAll();
-    console.log('renderAll done, S.phases length',S.phases.length);
     toast('Milestone deleted');
   });
 };
