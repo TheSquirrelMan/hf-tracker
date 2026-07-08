@@ -414,6 +414,9 @@ function defaultState(){
 }
 
 function resetMonthly(s){
+  const oldKey=s.mKey;
+  if(!s.discLogArchive)s.discLogArchive={};
+  s.discLogArchive[oldKey]=s.discLog||[];
   s.mKey=mKey;s.discSpent=0;s.discLog=[];
   return s;
 }
@@ -524,6 +527,7 @@ async function loadFB(){
       if(remote.discLog) S.discLog = remote.discLog;
       if(remote.discMonthlyCap !== undefined) S.discMonthlyCap = remote.discMonthlyCap;
       if(remote.discWeekly !== undefined) S.discWeekly = remote.discWeekly;
+      if(remote.discLogArchive) S.discLogArchive = remote.discLogArchive;
       if(remote.phaseDone) S.phaseDone = remote.phaseDone;
       if(remote.confirmed) S.confirmed = remote.confirmed;
       S.mKey = remote.mKey;
@@ -1941,6 +1945,7 @@ function mergeOrAddDiscLog(amt, date, label, cat) {
   S.discLog = S.discLog || [];
   const txParts  = date.split('/');
   const txMillis = new Date(parseInt(txParts[2]), parseInt(txParts[0])-1, parseInt(txParts[1])).getTime();
+  const isCurrentMonth = txParts.length===3 && `${txParts[2]}-${parseInt(txParts[0])-1}` === mKey;
   const matchIdx = S.discLog.findIndex(e => {
     if(e.auto || e.confirmed) return false;
     const ep = (e.date||'').split('/');
@@ -1953,12 +1958,12 @@ function mergeOrAddDiscLog(amt, date, label, cat) {
   });
   if(matchIdx >= 0){
     const old = S.discLog[matchIdx];
-    S.discSpent = Math.max(0, (S.discSpent||0) - (old.amt||0));
+    if(isCurrentMonth) S.discSpent = Math.max(0, (S.discSpent||0) - (old.amt||0));
     S.discLog[matchIdx] = {...old, amt, date, auto:true, confirmed:true};
-    S.discSpent = (S.discSpent||0) + amt;
+    if(isCurrentMonth) S.discSpent = (S.discSpent||0) + amt;
   } else {
     S.discLog.unshift({amt, date, label, cat: cat||'discretionary', auto:true});
-    if(!cat || cat==='discretionary') S.discSpent = (S.discSpent||0) + amt;
+    if(isCurrentMonth && (!cat || cat==='discretionary')) S.discSpent = (S.discSpent||0) + amt;
   }
 }
 
