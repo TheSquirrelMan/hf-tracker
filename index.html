@@ -1287,8 +1287,13 @@ function renderWeek(){
       if(firstDay){
         firstDay=false;
         if(isToday){
-          // Balance already reflects today's activity — don't double-count
-          dayNet=0;
+          const debits=S.debitLog||[];
+          const todayStr=new Date().toLocaleDateString();
+          const postedToday=new Set(debits.filter(d=>d&&d.status==='matched'&&d.date===todayStr).map(d=>d.bill));
+          dayNet=(weekEvtsByDay[day]||[]).reduce((a,e)=>{
+            if(e.billId&&postedToday.has(e.billId))return a; // already in bank balance
+            return a+(typeof e.amt==='number'?e.amt:0);
+          },0);
         }
       }
       runBal+=dayNet;
