@@ -1230,7 +1230,7 @@ function renderWeek(){
             const ms=roadmap[m.key];
             const d=ms?new Date(ms.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...';
             return `<span style="font-size:10px;white-space:nowrap;"><span style="color:var(--t3);">${m.label}</span> <span style="font-weight:600;color:${m.color};">${d}</span></span>`;
-          }).join(' · ');
+          }).join('<span style="color:var(--br);margin:0 2px;">|</span>');
         })()}</div>
       </div>
       ${pendingCount>0?`<button onclick="openDebitModal()" style="background:var(--red);border:none;color:#fff;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">&#128179; ${pendingCount} pending</button>`:''}
