@@ -1165,7 +1165,7 @@ function renderWeek(){
 
   const today=now.getDate();
   const todayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(today).padStart(2,'0')}`;
-  const {milestones:roadmap}=calcRoadmap();
+  const {milestones:roadmap,balLog}=calcRoadmap();
   const phaseDone=S.phaseDone||{};
   const nextP=getPhases().find(p=>!phaseDone[p.id]);
   const allPhasesDone=getPhases().every(p=>phaseDone[p.id]);
@@ -1276,26 +1276,15 @@ function renderWeek(){
   const wdays=Object.keys(weekEvtsByDay).map(Number).sort((a,b)=>a-b);
   if(wdays.length){
     html+=`<div class="card"><div class="card-title">Next 7 days</div><div class="evlist">`;
-    let runBal=S.bal4496;
-    let firstDay=true;
+    const yest=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
+    const yKey=`${yest.getFullYear()}-${String(yest.getMonth()+1).padStart(2,'0')}-${String(yest.getDate()).padStart(2,'0')}`;
+    let runBal=balLog[yKey]!==undefined?balLog[yKey]:S.bal4496;
     wdays.forEach(day=>{
       const isToday=day===today;
       const ed=new Date(now.getFullYear(),now.getMonth(),day);
       const dow=DN[ed.getDay()];
       html+=`<div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:${day===wdays[0]?'0':'8px'} 0 3px;text-transform:uppercase;letter-spacing:.06em;">${isToday?'TODAY · ':''}${dow} ${ed.getDate()}</div>`;
       let dayNet=weekEvtsByDay[day].reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
-      if(firstDay){
-        firstDay=false;
-        if(isToday){
-          const debits=S.debitLog||[];
-          const todayStr=new Date().toLocaleDateString();
-          const postedToday=new Set(debits.filter(d=>d&&d.status==='matched'&&d.date===todayStr).map(d=>d.bill));
-          dayNet=(weekEvtsByDay[day]||[]).reduce((a,e)=>{
-            if(e.billId&&postedToday.has(e.billId))return a; // already in bank balance
-            return a+(typeof e.amt==='number'?e.amt:0);
-          },0);
-        }
-      }
       runBal+=dayNet;
       weekEvtsByDay[day].forEach(e=>{
         const ac=e.isIncome?'var(--grn)':e.amt<0?'var(--red)':e.color||'var(--t2)';
