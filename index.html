@@ -1215,9 +1215,23 @@ function renderWeek(){
   const pendingCount=pendingDebits.length;
   html+=`<div class="card" style="border-color:var(--am);background:var(--abg);margin-bottom:8px;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-      <div>
+      <div style="min-width:0;">
         <div style="font-size:13px;font-weight:700;color:var(--amb);">${MN[now.getMonth()]} ${today}, ${now.getFullYear()} · ${DN[now.getDay()]}</div>
         <div style="font-size:11px;color:var(--t2);margin-top:2px;">Next: ${nextMsText}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:6px;">${(()=>{
+          const msItems=[
+            {label:'All CCs',     key:'chase-done', color:'var(--grn)'},
+            {label:'TN',          key:'tn-done',    color:'var(--grn)'},
+            {label:'Debt free',   key:'irs1-done',  color:'var(--pur)'},
+            {label:'Mazda',       key:'mazda-done', color:'var(--blu)'},
+            {label:'All free 🎉', key:'debt-free',  color:'var(--pur)'},
+          ];
+          return msItems.map(m=>{
+            const ms=roadmap[m.key];
+            const d=ms?new Date(ms.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...';
+            return `<span style="font-size:10px;white-space:nowrap;"><span style="color:var(--t3);">${m.label}</span> <span style="font-weight:600;color:${m.color};">${d}</span></span>`;
+          }).join(' · ');
+        })()}</div>
       </div>
       ${pendingCount>0?`<button onclick="openDebitModal()" style="background:var(--red);border:none;color:#fff;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">&#128179; ${pendingCount} pending</button>`:''}
     </div>
@@ -1370,25 +1384,6 @@ function renderWeek(){
     });
     html+=`</div></div>`;
   }
-
-  // Key milestones
-  const msItems=[
-    {label:'All CCs paid off',     key:'chase-done', color:'var(--grn)'},
-    {label:'TN Unemployment',       key:'tn-done',    color:'var(--grn)'},
-    {label:'Consumer debt free 🏁', key:'irs1-done',   color:'var(--pur)'},
-    {label:'Mazda paid off',        key:'mazda-done', color:'var(--blu)'},
-    {label:'Totally debt free 🎉',  key:'debt-free',  color:'var(--pur)'},
-  ];
-  html+=`<div class="card"><div class="card-title">Key milestones</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">`;
-  msItems.forEach(m=>{
-    const ms=roadmap[m.key];
-    const dateText=ms?new Date(ms.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'...';
-    html+=`<div style="background:var(--s2);border-radius:var(--rs);padding:8px 10px;border:0.5px solid var(--br);">
-      <div style="font-size:10px;color:var(--t3);margin-bottom:2px;">${m.label}</div>
-      <div style="font-size:13px;font-weight:700;color:${m.color};">${dateText}</div>
-    </div>`;
-  });
-  html+=`</div></div>`;
 
   document.getElementById('week-content').innerHTML=html;
 }
