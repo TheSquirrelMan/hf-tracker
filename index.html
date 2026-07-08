@@ -519,6 +519,14 @@ async function loadFB(){
       if(remote.karenLastPayDate) S.karenLastPayDate = remote.karenLastPayDate;
       if(remote.jonLastPayDate) S.jonLastPayDate = remote.jonLastPayDate;
       if(remote.debitLog) S.debitLog = remote.debitLog.filter(d => d != null);
+      // Synced from Apps Script / month rollover — safe to always accept from remote
+      if(remote.discSpent !== undefined) S.discSpent = remote.discSpent;
+      if(remote.discLog) S.discLog = remote.discLog;
+      if(remote.discMonthlyCap !== undefined) S.discMonthlyCap = remote.discMonthlyCap;
+      if(remote.discWeekly !== undefined) S.discWeekly = remote.discWeekly;
+      if(remote.phaseDone) S.phaseDone = remote.phaseDone;
+      if(remote.confirmed) S.confirmed = remote.confirmed;
+      S.mKey = remote.mKey;
       if(S.mKey!==mKey){reconcileMonth();}
     } else {
       S = {...defaultState(), ...remote};
