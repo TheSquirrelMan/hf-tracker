@@ -2106,6 +2106,7 @@ window.dumpAll = function() {
     
     const totalIn = evts.filter(e => e.isIncome && e.day >= startDay).reduce((a, e) => a + (e.amt || 0), 0);
     const totalOut = evts.filter(e => !e.isIncome && e.day >= startDay && e.amt < 0).reduce((a, e) => a + Math.abs(e.amt), 0);
+    const discDed = evts.filter(e => e.label === 'Discretionary' && e.day >= startDay).reduce((a, e) => a + Math.abs(e.amt), 0);
     
     // Get starting balance from balLog
     let startBal = null;
@@ -2120,6 +2121,7 @@ window.dumpAll = function() {
     out.push(`  Starting balance: $${startBal.toLocaleString()}`);
     out.push(`  Income: +$${Math.round(totalIn).toLocaleString()}`);
     out.push(`  Bills + spending: -$${Math.round(totalOut).toLocaleString()}`);
+    out.push(`  Discretionary: -$${Math.round(discDed).toLocaleString()} / $${(S.discMonthlyCap||200).toLocaleString()} cap`);
     out.push(`  Net: ${totalIn - totalOut >= 0 ? '+' : '-'}$${Math.round(Math.abs(totalIn - totalOut)).toLocaleString()}`);
     
     // Show key events by week
