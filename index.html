@@ -1276,16 +1276,16 @@ function renderWeek(){
   const wdays=Object.keys(weekEvtsByDay).map(Number).sort((a,b)=>a-b);
   if(wdays.length){
     html+=`<div class="card"><div class="card-title">Next 7 days</div><div class="evlist">`;
-    const yest=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1);
-    const yKey=`${yest.getFullYear()}-${String(yest.getMonth()+1).padStart(2,'0')}-${String(yest.getDate()).padStart(2,'0')}`;
-    let runBal=balLog[yKey]!==undefined?balLog[yKey]:S.bal4496;
+    let runBal=balLog[todayKey]!==undefined?balLog[todayKey]:S.bal4496;
     wdays.forEach(day=>{
       const isToday=day===today;
       const ed=new Date(now.getFullYear(),now.getMonth(),day);
       const dow=DN[ed.getDay()];
+      const dayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       html+=`<div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:${day===wdays[0]?'0':'8px'} 0 3px;text-transform:uppercase;letter-spacing:.06em;">${isToday?'TODAY · ':''}${dow} ${ed.getDate()}</div>`;
       let dayNet=weekEvtsByDay[day].reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
-      runBal+=dayNet;
+      // Use roadmap balLog when available (matches Month Plan), accumulate otherwise
+      if(balLog[dayKey]!==undefined){runBal=balLog[dayKey];}else{runBal+=dayNet;}
       weekEvtsByDay[day].forEach(e=>{
         const ac=e.isIncome?'var(--grn)':e.amt<0?'var(--red)':e.color||'var(--t2)';
         const as=e.amt!==0?(e.amt>0?`+$${Math.round(e.amt).toLocaleString()}`:`-$${Math.round(Math.abs(e.amt)).toLocaleString()}`):'';
