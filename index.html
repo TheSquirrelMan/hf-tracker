@@ -824,7 +824,8 @@ function getDailyBills(year, month, day, cardBalOverride) {
   if (dow === 0) {
     const weeklyAmt = S.discWeekly || 50;
     const monthlyCap = S.discMonthlyCap || 200;
-    const actualSpent = S.discSpent || 0;
+    const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+    const actualSpent = isCurrentMonth ? (S.discSpent || 0) : 0;
     let plannedSpent = 0;
     for (let i = 1; i < day; i++) {
       if (new Date(year, month, i).getDay() === 0) plannedSpent += weeklyAmt;
