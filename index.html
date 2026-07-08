@@ -1370,19 +1370,6 @@ function renderWeek(){
     html+=`</div></div>`;
   }
 
-  // Karen pay
-  const karenAvg = S.karenAvgPay || S.karenLastPay || 810;
-  html+=`<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div class="card-title" style="margin-bottom:2px;">Karen's pay</div>
-        <div style="font-size:13px;font-weight:700;color:var(--amb);">Average: $${Math.round(karenAvg).toLocaleString()} · Last: $${Math.round(S.karenLastPay||810).toLocaleString()}</div>
-        <div style="font-size:11px;color:var(--t3);">Updates projections · tap to adjust average</div>
-      </div>
-      <button class="btn btna btnsm" style="width:auto;padding:8px 14px;" onclick="openModal('karen-avg','Karen\\'s average pay')">Update</button>
-    </div>
-  </div>`;
-
   // Key milestones
   const msItems=[
     {label:'All CCs paid off',     key:'chase-done', color:'var(--grn)'},
@@ -1617,6 +1604,7 @@ function renderSnowball(){
       <div style="flex:1;background:var(--s2);border-radius:var(--rs);padding:10px;">
         <div style="font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Karen · weekly</div>
         <div style="font-size:16px;font-weight:700;color:var(--grn);">+$${karenAmt.toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--t2);margin-top:1px;">Avg: $${karenAmt.toLocaleString()} · Last: $${Math.round(S.karenLastPay||810).toLocaleString()}</div>
         <div style="font-size:10px;color:var(--t3);margin-bottom:8px;">per check · ×4.33/mo</div>
         <button class="btn btno btnsm" style="margin-bottom:0;" onclick="openModal('karen-avg','Karen avg paycheck')">Edit</button>
       </div>
