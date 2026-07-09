@@ -1141,7 +1141,7 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
       total+=amt;
     });
     if(total>0){
-      add(d,`→ ${labels.join(', ')} savings`,-total,'#9b82e8','sinking fund · transfers to savings',false,false);
+      add(d,`→ ${labels.join(', ')} savings`,-total,'#9b82e8','sinking fund · transfers to savings',false,true);
     }
   }
 
@@ -1362,7 +1362,7 @@ function renderWeek(){
       total+=amt;
     });
     if(total>0){
-      addWE(dd,`→ ${labels.join(', ')} savings`,-total,false,'#9b82e8','sinking fund · transfers to savings',false);
+      addWE(dd,`→ ${labels.join(', ')} savings`,-total,false,'#9b82e8','sinking fund · transfers to savings',true);
     }
   });
   const todayLocale=new Date().toLocaleDateString();
