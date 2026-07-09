@@ -2107,7 +2107,7 @@ window.dumpAll = function() {
     const done = (S.phaseDone || {})[p.id];
     const cost = (S.phaseCosts && S.phaseCosts[p.id]) || p.cost;
     const m = data.milestones[p.id];
-    out.push(`  ${i+1}. ${p.label}: $${cost} | ${done ? '✓ DONE' : m ? m.date : 'calculating...'}`);
+    out.push(`  ${i+1}. ${p.label}: $${cost}${p.monthlySave?' · 💰 $'+p.monthlySave+'/mo':''} | ${done ? '✓ DONE' : m ? m.date : 'calculating...'}`);
   });
   out.push('');
   
@@ -2188,6 +2188,15 @@ window.dumpAll = function() {
     out.push(`  Bills + spending: -$${Math.round(totalOut).toLocaleString()}`);
     out.push(`  Discretionary: -$${Math.round(discDed).toLocaleString()} / $${(S.discMonthlyCap||200).toLocaleString()} cap`);
     out.push(`  Net: ${totalIn - totalOut >= 0 ? '+' : '-'}$${Math.round(Math.abs(totalIn - totalOut)).toLocaleString()}`);
+    
+    // Sinking fund summary for this month
+    const monthKey=`${year}-${String(month+1).padStart(2,'0')}`;
+    const sfPhase=getPhases().find(p=>p.monthlySave&&!(S.phaseDone||{})[p.id]&&(!data.milestones[p.id]||data.milestones[p.id].date>=monthKey));
+    if(sfPhase){
+      const doneDate=data.milestones[sfPhase.id]?.date;
+      const doneLabel=doneDate&&doneDate.substring(0,7)===monthKey?` · completed ${doneDate}`:'';
+      out.push(`  💰 Sinking: $${sfPhase.monthlySave}/mo → ${sfPhase.label} ($${phaseAmt(sfPhase.id,sfPhase.cost).toLocaleString()})${doneLabel}`);
+    }
     
     // Show key events by week
     const byDay = {};
