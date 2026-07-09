@@ -1131,6 +1131,7 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
     const daySink=sl[dk];
     if(!daySink)continue;
     const labels=[];
+    const notes=[];
     let total=0;
     Object.keys(daySink).forEach(pid=>{
       const amt=daySink[pid];
@@ -1138,10 +1139,12 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
       const phase=getPhases().find(p=>p.id===pid);
       if(!phase)return;
       labels.push(phase.label);
+      const ref=phase.monthlySave?`$${phase.monthlySave}/mo`:phase.percentOfPay?`${phase.percentOfPay}% of pay`:'';
+      notes.push(ref+' · '+phase.label);
       total+=amt;
     });
     if(total>0){
-      add(d,`→ ${labels.join(', ')} savings`,-total,'#9b82e8','sinking fund · transfers to savings',false,true);
+      add(d,`→ ${labels.join(', ')} savings`,-total,'#9b82e8',notes.join(' · '),false,true);
     }
   }
 
@@ -1352,6 +1355,7 @@ function renderWeek(){
     if(sp.getMonth()!==now.getMonth()||sp.getFullYear()!==now.getFullYear())return;
     const daySink=sl[dk];
     const labels=[];
+    const notes=[];
     let total=0;
     Object.keys(daySink).forEach(pid=>{
       const amt=daySink[pid];
@@ -1359,10 +1363,12 @@ function renderWeek(){
       const phase=getPhases().find(p=>p.id===pid);
       if(!phase)return;
       labels.push(phase.label);
+      const ref=phase.monthlySave?`$${phase.monthlySave}/mo`:phase.percentOfPay?`${phase.percentOfPay}% of pay`:'';
+      notes.push(ref+' · '+phase.label);
       total+=amt;
     });
     if(total>0){
-      addWE(dd,`→ ${labels.join(', ')} savings`,-total,false,'#9b82e8','sinking fund · transfers to savings',true);
+      addWE(dd,`→ ${labels.join(', ')} savings`,-total,false,'#9b82e8',notes.join(' · '),true);
     }
   });
   const todayLocale=new Date().toLocaleDateString();
