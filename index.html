@@ -260,7 +260,17 @@ body.readonly .ro-banner{display:block;}
     <input class="minput" type="text" id="pm-label" placeholder="Milestone name">
     <input class="minput" type="number" id="pm-cost" placeholder="Cost ($)" inputmode="decimal">
     <input class="minput" type="text" id="pm-target" placeholder="Target date YYYY-MM (optional)" inputmode="numeric" oninput="autoSuggestMonthly()">
+    <div style="font-size:11px;color:var(--t3);margin-bottom:4px;">Monthly savings mode</div>
+    <div style="display:flex;gap:16px;margin-bottom:8px;">
+      <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--t2);cursor:pointer;">
+        <input type="radio" name="savings-mode" value="fixed" checked onchange="toggleSavingsMode()"> Fixed $
+      </label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--t2);cursor:pointer;">
+        <input type="radio" name="savings-mode" value="percent" onchange="toggleSavingsMode()"> % of pay
+      </label>
+    </div>
     <input class="minput" type="number" id="pm-monthly" placeholder="Save $/mo (optional — auto from target date)" inputmode="decimal">
+    <input class="minput" type="number" id="pm-percent" placeholder="% of each paycheck (e.g. 5)" inputmode="decimal" min="1" max="100" style="display:none;">
     <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:var(--t2);">
       <input type="checkbox" id="pm-savings"> Transfer to savings
     </label>
@@ -893,7 +903,7 @@ function calcRoadmap(){
   const milestones={};
   const balLog={};
   const phaseDone=S.phaseDone||{};
-  let sinkingSave=0, sinkingPhaseId=null;
+  const sinkingSaves={};
 
   const TARGETS = getSnowballTargets();
 
@@ -901,10 +911,13 @@ function calcRoadmap(){
   const cardBals={};
   TARGETS.forEach(t=>{cardBals[t.id]=bal(S.cardBals||{},t.id);});
 
-  // Pending expense phases (not done, not savings)
-  const pendingPhases=getPhases().filter(p=>!phaseDone[p.id]);
+  // Pending expense phases — split into threshold (blocks snowball) and sinking (runs concurrently)
+  const allPending=getPhases().filter(p=>!phaseDone[p.id]);
+  const pendingThresholdPhases=allPending.filter(p=>!p.monthlySave&&!p.percentOfPay);
+  const pendingSinkingPhases=allPending.filter(p=>p.monthlySave||p.percentOfPay);
+  pendingSinkingPhases.forEach(p=>{sinkingSaves[p.id]=0;});
   let lastPhaseDate=null;
-  let snowballActive=pendingPhases.length===0;
+  let snowballActive=pendingThresholdPhases.length===0;
   let snowIdx=TARGETS.findIndex(t=>cardBals[t.id]>0);
   if(snowIdx===-1)snowIdx=null;
 
@@ -912,15 +925,15 @@ function calcRoadmap(){
   // Built from local date components (not toISOString, which shifts to UTC and can land on
   // the wrong calendar day in the evening for US timezones behind UTC)
   const todayStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  if(pendingPhases.length>0){
-    const phase=pendingPhases[0];
+  if(pendingThresholdPhases.length>0){
+    const phase=pendingThresholdPhases[0];
     const needed=phaseAmt(phase.id,phase.cost)+800;
     if(balance>=needed){
       milestones[phase.id]={date:todayStr,bal:Math.round(balance)};
       balance-=phaseAmt(phase.id,phase.cost);
       lastPhaseDate=new Date(now);
-      pendingPhases.shift();
-      if(pendingPhases.length===0){
+      pendingThresholdPhases.shift();
+      if(pendingThresholdPhases.length===0){
         snowballActive=true;
         milestones['snowball-start']={date:todayStr};
       }
@@ -950,40 +963,41 @@ function calcRoadmap(){
       }
     });
 
-    // Sinking fund: set aside savings on each payday toward phases with monthlySave
-    if(!snowballActive&&pendingPhases.length>0){
-      const phase=pendingPhases[0];
-      if(phase.monthlySave&&(dy===7||dy===22||isKarenPayday(yr,mo,dy))){
-        const jonAmt=Math.round(S.jonAvgPay||S.jonLastPay||1641);
-        const karenAmt=Math.round(S.karenAvgPay||S.karenLastPay||810);
-        const monthlyInc=jonAmt*2+Math.round(karenAmt*4.33);
-        const saveFraction=Math.min(1,phase.monthlySave/monthlyInc);
-        const payAmt=isKarenPayday(yr,mo,dy)?karenAmt:jonAmt;
-        const saveAmt=Math.round(payAmt*saveFraction);
-        const needed=phaseAmt(phase.id,phase.cost);
-        if(sinkingPhaseId!==phase.id){sinkingSave=0;sinkingPhaseId=phase.id;}
-        if(balance>=saveAmt&&sinkingSave<needed){
-          balance-=saveAmt;
-          sinkingSave+=saveAmt;
+    // Concurrent sinking fund: set aside savings on each payday toward ALL sinking phases
+    // Runs regardless of snowballActive — sinking phases save in background alongside snowball
+    if(pendingSinkingPhases.length>0&&(dy===7||dy===22||isKarenPayday(yr,mo,dy))){
+      const jonAmt=Math.round(S.jonAvgPay||S.jonLastPay||1641);
+      const karenAmt=Math.round(S.karenAvgPay||S.karenLastPay||810);
+      const monthlyInc=jonAmt*2+Math.round(karenAmt*4.33);
+      const payAmt=isKarenPayday(yr,mo,dy)?karenAmt:jonAmt;
+      for(let si=pendingSinkingPhases.length-1;si>=0;si--){
+        const sp=pendingSinkingPhases[si];
+        const needed=phaseAmt(sp.id,sp.cost);
+        let saveAmt=0;
+        if(sp.savingsMode==='percent'&&sp.percentOfPay){
+          saveAmt=Math.round(payAmt*sp.percentOfPay/100);
+        }else if(sp.monthlySave){
+          const saveFraction=Math.min(1,sp.monthlySave/monthlyInc);
+          saveAmt=Math.round(payAmt*saveFraction);
         }
-        if(sinkingSave>=needed){
-          milestones[phase.id]={date:dateStr,bal:Math.round(balance+sinkingSave)};
-          sinkingSave=0;sinkingPhaseId=null;
-          lastPhaseDate=new Date(d);
-          pendingPhases.shift();
-          if(pendingPhases.length===0){
-            snowballActive=true;
-            milestones['snowball-start']={date:dateStr};
-          }
+        if(saveAmt<=0)continue;
+        const accumulated=sinkingSaves[sp.id]||0;
+        if(balance>=saveAmt+300&&accumulated<needed){
+          balance-=saveAmt;
+          sinkingSaves[sp.id]=accumulated+saveAmt;
+        }
+        if((sinkingSaves[sp.id]||0)>=needed){
+          milestones[sp.id]={date:dateStr,bal:Math.round(balance+(sinkingSaves[sp.id]||0))};
+          sinkingSaves[sp.id]=0;
+          pendingSinkingPhases.splice(si,1);
           balLog[dateStr]=Math.round(balance);
-          d.setDate(dy+1);continue;
         }
       }
     }
 
-    // Check expense phase affordability (threshold-based, non-sinking-fund phases)
-    if(!snowballActive&&pendingPhases.length>0){
-      const phase=pendingPhases[0];
+    // Check expense phase affordability (threshold-based only — sinking phases handled above)
+    if(!snowballActive&&pendingThresholdPhases.length>0){
+      const phase=pendingThresholdPhases[0];
       if(!phase.monthlySave){
         const gap=lastPhaseDate?Math.floor((d-lastPhaseDate)/86400000):999;
         if(!milestones[phase.id]&&gap>=14){
@@ -1005,8 +1019,8 @@ function calcRoadmap(){
               milestones[phase.id]={date:dateStr,bal:Math.round(balance)};
               balance-=phaseAmt(phase.id,phase.cost);
               lastPhaseDate=new Date(d);
-              pendingPhases.shift();
-              if(pendingPhases.length===0){
+              pendingThresholdPhases.shift();
+              if(pendingThresholdPhases.length===0){
                 snowballActive=true;
                 milestones['snowball-start']={date:dateStr};
               }
@@ -1686,8 +1700,8 @@ function renderSnowball(){
           targetInfo=` · 🎯 target ${targetLabel} → on time`;
         }
       }
-      if(!done && p.monthlySave){
-        targetInfo += ` · 💰 $${p.monthlySave}/mo`;
+      if(!done && (p.monthlySave || p.percentOfPay)){
+        targetInfo += p.monthlySave ? ` · 💰 $${p.monthlySave}/mo` : ` · 💰 ${p.percentOfPay}% of pay`;
       }
       html+=`<div class="ms">
         <div class="ms-info">
@@ -2107,7 +2121,8 @@ window.dumpAll = function() {
     const done = (S.phaseDone || {})[p.id];
     const cost = (S.phaseCosts && S.phaseCosts[p.id]) || p.cost;
     const m = data.milestones[p.id];
-    out.push(`  ${i+1}. ${p.label}: $${cost}${p.monthlySave?' · 💰 $'+p.monthlySave+'/mo':''} | ${done ? '✓ DONE' : m ? m.date : 'calculating...'}`);
+    const savingsLabel = p.monthlySave ? ` · 💰 $${p.monthlySave}/mo` : p.percentOfPay ? ` · 💰 ${p.percentOfPay}% of pay` : '';
+    out.push(`  ${i+1}. ${p.label}: $${cost}${savingsLabel} | ${done ? '✓ DONE' : m ? m.date : 'calculating...'}`);
   });
   out.push('');
   
@@ -2191,11 +2206,12 @@ window.dumpAll = function() {
     
     // Sinking fund summary for this month
     const monthKey=`${year}-${String(month+1).padStart(2,'0')}`;
-    const sfPhase=getPhases().find(p=>p.monthlySave&&!(S.phaseDone||{})[p.id]&&(!data.milestones[p.id]||data.milestones[p.id].date>=monthKey));
+    const sfPhase=getPhases().find(p=>(p.monthlySave||p.percentOfPay)&&!(S.phaseDone||{})[p.id]&&(!data.milestones[p.id]||data.milestones[p.id].date>=monthKey));
     if(sfPhase){
       const doneDate=data.milestones[sfPhase.id]?.date;
       const doneLabel=doneDate&&doneDate.substring(0,7)===monthKey?` · completed ${doneDate}`:'';
-      out.push(`  💰 Sinking: $${sfPhase.monthlySave}/mo → ${sfPhase.label} ($${phaseAmt(sfPhase.id,sfPhase.cost).toLocaleString()})${doneLabel}`);
+      const sfLabel=sfPhase.monthlySave?`$${sfPhase.monthlySave}/mo`:`${sfPhase.percentOfPay}% of pay`;
+      out.push(`  💰 Sinking: ${sfLabel} → ${sfPhase.label} ($${phaseAmt(sfPhase.id,sfPhase.cost).toLocaleString()})${doneLabel}`);
     }
     
     // Show key events by week
@@ -2287,6 +2303,10 @@ window.addPhase = function() {
   document.getElementById('pm-cost').value = '';
   document.getElementById('pm-target').value = '';
   document.getElementById('pm-monthly').value = '';
+  document.getElementById('pm-percent').value = '';
+  document.getElementById('pm-percent').style.display = 'none';
+  document.getElementById('pm-monthly').style.display = '';
+  document.querySelector('input[name="savings-mode"][value="fixed"]').checked = true;
   document.getElementById('pm-savings').checked = false;
   document.getElementById('pm-delete-btn').style.display = 'none';
   modal.classList.add('open');
@@ -2303,7 +2323,19 @@ window.editPhase = function(id) {
   document.getElementById('pm-label').value = phase.label;
   document.getElementById('pm-cost').value = phaseAmt(id, phase.cost);
   document.getElementById('pm-target').value = phase.targetDate || '';
-  document.getElementById('pm-monthly').value = phase.monthlySave || '';
+  if (phase.savingsMode === 'percent' && phase.percentOfPay) {
+    document.querySelector('input[name="savings-mode"][value="percent"]').checked = true;
+    document.getElementById('pm-monthly').style.display = 'none';
+    document.getElementById('pm-percent').style.display = '';
+    document.getElementById('pm-percent').value = phase.percentOfPay;
+    document.getElementById('pm-monthly').value = '';
+  } else {
+    document.querySelector('input[name="savings-mode"][value="fixed"]').checked = true;
+    document.getElementById('pm-monthly').style.display = '';
+    document.getElementById('pm-percent').style.display = 'none';
+    document.getElementById('pm-monthly').value = phase.monthlySave || '';
+    document.getElementById('pm-percent').value = '';
+  }
   document.getElementById('pm-savings').checked = phase.isSavings || false;
   document.getElementById('pm-delete-btn').style.display = '';
   modal.classList.add('open');
@@ -2315,7 +2347,9 @@ window.savePhaseModal = function() {
   const cost = parseFloat(document.getElementById('pm-cost').value);
   const isSavings = document.getElementById('pm-savings').checked;
   const targetDate = document.getElementById('pm-target').value.trim() || null;
-  const monthlySave = parseFloat(document.getElementById('pm-monthly').value) || null;
+  const savingsMode = document.querySelector('input[name="savings-mode"]:checked')?.value || null;
+  const percentOfPay = savingsMode === 'percent' ? (parseFloat(document.getElementById('pm-percent').value) || null) : null;
+  const monthlySave = savingsMode === 'fixed' ? (parseFloat(document.getElementById('pm-monthly').value) || null) : null;
   
   if (!label || isNaN(cost) || cost <= 0) {
     toast('Fill in all fields');
@@ -2326,7 +2360,9 @@ window.savePhaseModal = function() {
     const phasesList = [...getPhases()];
     const idx = phasesList.findIndex(p => p.id === editingPhaseId);
     if (idx >= 0) {
-      phasesList[idx] = { ...phasesList[idx], label, cost, isSavings, targetDate, monthlySave };
+      phasesList[idx] = { ...phasesList[idx], label, cost, isSavings, targetDate, savingsMode, percentOfPay, monthlySave };
+      if (savingsMode === 'fixed') delete phasesList[idx].percentOfPay;
+      if (savingsMode === 'percent') delete phasesList[idx].monthlySave;
       S.phases = phasesList;
       if (S.phaseCosts) S.phaseCosts[editingPhaseId] = cost;
       editingPhaseId = null;
@@ -2346,7 +2382,9 @@ window.savePhaseModal = function() {
     cost: cost,
     isSavings: isSavings,
     targetDate: targetDate,
-    monthlySave: monthlySave
+    savingsMode: savingsMode,
+    monthlySave: monthlySave,
+    percentOfPay: percentOfPay
   };
   
   phasesList.push(newPhase);
@@ -2376,6 +2414,12 @@ window.deletePhase = function(id) {
 
 window.closePhaseModal = () => document.getElementById('phase-modal').classList.remove('open');
 
+window.toggleSavingsMode = function() {
+  const mode = document.querySelector('input[name="savings-mode"]:checked')?.value;
+  document.getElementById('pm-monthly').style.display = mode === 'fixed' ? '' : 'none';
+  document.getElementById('pm-percent').style.display = mode === 'percent' ? '' : 'none';
+};
+
 window.autoSuggestMonthly = function() {
   const cost = parseFloat(document.getElementById('pm-cost').value);
   const target = document.getElementById('pm-target').value.trim();
@@ -2385,7 +2429,15 @@ window.autoSuggestMonthly = function() {
   const nowDate = new Date();
   const months = (targetDate.getFullYear() - nowDate.getFullYear()) * 12 + (targetDate.getMonth() - nowDate.getMonth());
   if (months > 0) {
-    document.getElementById('pm-monthly').value = Math.round(cost / months);
+    const mode = document.querySelector('input[name="savings-mode"]:checked')?.value;
+    if (mode === 'percent') {
+      const jonAmt = Math.round(S.jonAvgPay || S.jonLastPay || 1641);
+      const karenAmt = Math.round(S.karenAvgPay || S.karenLastPay || 810);
+      const monthlyInc = jonAmt * 2 + Math.round(karenAmt * 4.33);
+      document.getElementById('pm-percent').value = Math.round(cost / months / monthlyInc * 100);
+    } else {
+      document.getElementById('pm-monthly').value = Math.round(cost / months);
+    }
   }
 };
 
