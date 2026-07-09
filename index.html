@@ -1349,6 +1349,7 @@ function renderWeek(){
     if(isNaN(sp.getTime()))return;
     const dd=sp.getDate();
     if(dd<today||dd>today+6)return;
+    if(sp.getMonth()!==now.getMonth()||sp.getFullYear()!==now.getFullYear())return;
     const daySink=sl[dk];
     const labels=[];
     let total=0;
