@@ -1105,22 +1105,38 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
 
   const pcNote = getSmartNote(month, year);
 
+  const snkNote = (d) => {
+    if (!sinkingLog) return '';
+    const dk = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const daySink = sinkingLog[dk];
+    if (!daySink) return '';
+    const parts = [];
+    Object.keys(daySink).forEach(pid => {
+      const amt = daySink[pid];
+      if (!amt || amt <= 0 || phaseDone[pid]) return;
+      const phase = getPhases().find(p => p.id === pid);
+      if (!phase) return;
+      parts.push(`$${amt} → ${phase.label}`);
+    });
+    return parts.length ? ' · ' + parts.join(' · ') : '';
+  };
+
   // Paychecks
   if(7>=fromDay && !jonPaidThisPeriod(year,month,7)){
     let amt=checkFuture(7)?(S.jonAvgPay||S.jonLastPay||1641):(S.jonLastPay||1641);
-    add(7,'Jon paycheck',amt,'#7aad4e',pcNote,true);
+    add(7,'Jon paycheck',amt,'#7aad4e',pcNote+snkNote(7),true);
   }
   if(22>=fromDay && !jonPaidThisPeriod(year,month,22)){
     let amt=checkFuture(22)?(S.jonAvgPay||S.jonLastPay||1641):(S.jonLastPay||1641);
-    add(22,'Jon paycheck',amt,'#7aad4e',pcNote,true);
+    add(22,'Jon paycheck',amt,'#7aad4e',pcNote+snkNote(22),true);
   }
   // Show on actual paydate if it arrived off-schedule this month
-  {const _jlpd=S.jonLastPayDate;if(_jlpd){const _jlp=new Date(_jlpd+'T12:00:00');if(_jlp.getFullYear()===year&&_jlp.getMonth()===month){const _jd=_jlp.getDate();if(_jd!==7&&_jd!==22&&_jd>=fromDay&&(jonPaidThisPeriod(year,month,7)||jonPaidThisPeriod(year,month,22))){add(_jd,'Jon paycheck',S.jonLastPay||1641,'#7aad4e',pcNote,true);}}}}
+  {const _jlpd=S.jonLastPayDate;if(_jlpd){const _jlp=new Date(_jlpd+'T12:00:00');if(_jlp.getFullYear()===year&&_jlp.getMonth()===month){const _jd=_jlp.getDate();if(_jd!==7&&_jd!==22&&_jd>=fromDay&&(jonPaidThisPeriod(year,month,7)||jonPaidThisPeriod(year,month,22))){add(_jd,'Jon paycheck',S.jonLastPay||1641,'#7aad4e',pcNote+snkNote(_jd),true);}}}}
 
   for(let d=fromDay; d<=dim; d++) {
     if(isKarenPayday(year,month,d)) {
       let amt = checkFuture(d) ? (S.karenAvgPay || S.karenLastPay || 810) : (S.karenLastPay || 810);
-      add(d, 'Karen paycheck — Copans', amt, '#7aad4e', 'Direct deposit to #4496', true);
+      add(d, 'Karen paycheck — Copans', amt, '#7aad4e', 'Direct deposit to #4496'+snkNote(d), true);
     }
   }
 
@@ -1152,20 +1168,6 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
       add(ed.getDate(),label,-pCost,phase.isSavings?'#9b82e8':'#d4922a',note,false,true);
     }
   });
-
-  // Sinking fund per-paycheck deductions
-  const sl=sinkingLog||{};
-  for(let d=fromDay;d<=dim;d++){
-    const dk=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const daySink=sl[dk];
-    if(!daySink)continue;
-    getPhases().forEach(phase=>{
-      const amt=daySink[phase.id];
-      if(amt&&amt>0&&!(phaseDone[phase.id])){
-        add(d,`→ ${phase.label}`, -amt, '#9b82e8', `$${phaseAmt(phase.id,phase.cost).toLocaleString()} · sinking fund`, false, false);
-      }
-    });
-  }
 
   // Snowball payment events
   const ssDate=roadmap['snowball-start']?.date;
@@ -1331,26 +1333,26 @@ function renderWeek(){
   for(let dd=today;dd<=today+6;dd++){
     const ed=new Date(now.getFullYear(),now.getMonth(),dd);
     getDailyBills(ed.getFullYear(),ed.getMonth(),ed.getDate()).forEach(b=>{
-      // Skip planned Sunday disc for today — actual disc shown via discLog
       if(!b.billId && b.label==='Discretionary' && dd===today) return;
-      addWE(dd,b.label,b.amt,b.isIncome,b.isIncome?'var(--grn)':'var(--t3)','',false,b.billId||null);
+      let note = '';
+      if (b.isIncome && sinkingLog) {
+        const dk = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+        const daySink = sinkingLog[dk];
+        if (daySink) {
+          const parts = [];
+          Object.keys(daySink).forEach(pid => {
+            const amt = daySink[pid];
+            if (!amt || amt <= 0 || (S.phaseDone||{})[pid]) return;
+            const phase = getPhases().find(p => p.id === pid);
+            if (!phase) return;
+            parts.push(`$${amt} → ${phase.label}`);
+          });
+          if (parts.length) note = parts.join(' · ');
+        }
+      }
+      addWE(dd,b.label,b.amt,b.isIncome,b.isIncome?'var(--grn)':'var(--t3)',note,false,b.billId||null);
     });
   }
-  // Sinking fund per-paycheck deductions — visible savings line items
-  (sinkingLog||{}) && Object.keys(sinkingLog).forEach(dk=>{
-    const sp=new Date(dk+'T12:00:00');
-    if(isNaN(sp.getTime()))return;
-    const dd=sp.getDate();
-    if(dd<today||dd>today+6)return;
-    const daySink=sinkingLog[dk];
-    Object.keys(daySink).forEach(pid=>{
-      const amt=daySink[pid];
-      if(!amt||amt<=0)return;
-      const phase=getPhases().find(p=>p.id===pid);
-      if(!phase||phaseDone[pid])return;
-      addWE(dd,`→ ${phase.label}`, -amt, false, '#9b82e8', `$${phaseAmt(phase.id,phase.cost).toLocaleString()} · sinking fund`, false);
-    });
-  });
   const todayLocale=new Date().toLocaleDateString();
   (S.discLog||[]).forEach(e=>{
     if(!e.date||!e.amt)return;
