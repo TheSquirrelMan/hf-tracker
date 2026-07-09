@@ -964,41 +964,7 @@ function calcRoadmap(){
       }
     });
 
-    // Concurrent sinking fund: set aside savings on each payday toward ALL sinking phases
-    // Runs regardless of snowballActive — sinking phases save in background alongside snowball
-    if(pendingSinkingPhases.length>0&&(dy===7||dy===22||isKarenPayday(yr,mo,dy))){
-      const jonAmt=Math.round(S.jonAvgPay||S.jonLastPay||1641);
-      const karenAmt=Math.round(S.karenAvgPay||S.karenLastPay||810);
-      const monthlyInc=jonAmt*2+Math.round(karenAmt*4.33);
-      const payAmt=isKarenPayday(yr,mo,dy)?karenAmt:jonAmt;
-      for(let si=pendingSinkingPhases.length-1;si>=0;si--){
-        const sp=pendingSinkingPhases[si];
-        const needed=phaseAmt(sp.id,sp.cost);
-        let saveAmt=0;
-        if(sp.savingsMode==='percent'&&sp.percentOfPay){
-          saveAmt=Math.round(payAmt*sp.percentOfPay/100);
-        }else if(sp.monthlySave){
-          const saveFraction=Math.min(1,sp.monthlySave/monthlyInc);
-          saveAmt=Math.round(payAmt*saveFraction);
-        }
-        if(saveAmt<=0)continue;
-        const accumulated=sinkingSaves[sp.id]||0;
-        if(balance>=saveAmt+300&&accumulated<needed){
-          balance-=saveAmt;
-          sinkingSaves[sp.id]=accumulated+saveAmt;
-          sinkingLog[dateStr]=sinkingLog[dateStr]||{};
-          sinkingLog[dateStr][sp.id]=(sinkingLog[dateStr][sp.id]||0)+saveAmt;
-        }
-        if((sinkingSaves[sp.id]||0)>=needed){
-          milestones[sp.id]={date:dateStr,bal:Math.round(balance+(sinkingSaves[sp.id]||0))};
-          sinkingSaves[sp.id]=0;
-          pendingSinkingPhases.splice(si,1);
-          balLog[dateStr]=Math.round(balance);
-        }
-      }
-    }
-
-    // Check expense phase affordability (threshold-based only — sinking phases handled above)
+    // Check expense phase affordability (threshold-based only — sinking phases handled below)
     if(!snowballActive&&pendingThresholdPhases.length>0){
       const phase=pendingThresholdPhases[0];
       if(!phase.monthlySave){
@@ -1035,7 +1001,7 @@ function calcRoadmap(){
       }
     }
 
-    // Snowball payments on paycheck days
+    // Snowball payments on paycheck days — runs before sinking to get first crack at surplus
     if(snowballActive&&snowIdx!==null&&(dy===7||dy===22||isKarenPayday(yr,mo,dy))){
       const target=TARGETS[snowIdx];
       let reserve=300;
@@ -1057,6 +1023,40 @@ function calcRoadmap(){
           milestones[target.id+'-done']={date:dateStr,label:target.label};
           snowIdx++;
           if(snowIdx>=TARGETS.length){milestones['debt-free']={date:dateStr};snowIdx=null;}
+        }
+      }
+    }
+
+    // Concurrent sinking fund: set aside savings after snowball gets first priority
+    // Runs regardless of snowballActive — sinking saves from remaining surplus
+    if(pendingSinkingPhases.length>0&&(dy===7||dy===22||isKarenPayday(yr,mo,dy))){
+      const jonAmt=Math.round(S.jonAvgPay||S.jonLastPay||1641);
+      const karenAmt=Math.round(S.karenAvgPay||S.karenLastPay||810);
+      const monthlyInc=jonAmt*2+Math.round(karenAmt*4.33);
+      const payAmt=isKarenPayday(yr,mo,dy)?karenAmt:jonAmt;
+      for(let si=pendingSinkingPhases.length-1;si>=0;si--){
+        const sp=pendingSinkingPhases[si];
+        const needed=phaseAmt(sp.id,sp.cost);
+        let saveAmt=0;
+        if(sp.savingsMode==='percent'&&sp.percentOfPay){
+          saveAmt=Math.round(payAmt*sp.percentOfPay/100);
+        }else if(sp.monthlySave){
+          const saveFraction=Math.min(1,sp.monthlySave/monthlyInc);
+          saveAmt=Math.round(payAmt*saveFraction);
+        }
+        if(saveAmt<=0)continue;
+        const accumulated=sinkingSaves[sp.id]||0;
+        if(balance>=saveAmt+300&&accumulated<needed){
+          balance-=saveAmt;
+          sinkingSaves[sp.id]=accumulated+saveAmt;
+          sinkingLog[dateStr]=sinkingLog[dateStr]||{};
+          sinkingLog[dateStr][sp.id]=(sinkingLog[dateStr][sp.id]||0)+saveAmt;
+        }
+        if((sinkingSaves[sp.id]||0)>=needed){
+          milestones[sp.id]={date:dateStr,bal:Math.round(balance+(sinkingSaves[sp.id]||0))};
+          sinkingSaves[sp.id]=0;
+          pendingSinkingPhases.splice(si,1);
+          balLog[dateStr]=Math.round(balance);
         }
       }
     }
