@@ -259,7 +259,8 @@ body.readonly .ro-banner{display:block;}
     <div class="mtitle" id="pm-title">Add milestone</div>
     <input class="minput" type="text" id="pm-label" placeholder="Milestone name">
     <input class="minput" type="number" id="pm-cost" placeholder="Cost ($)" inputmode="decimal">
-    <input class="minput" type="text" id="pm-target" placeholder="Target date YYYY-MM (optional)" inputmode="numeric">
+    <input class="minput" type="text" id="pm-target" placeholder="Target date YYYY-MM (optional)" inputmode="numeric" oninput="autoSuggestMonthly()">
+    <input class="minput" type="number" id="pm-monthly" placeholder="Save $/mo (optional — auto from target date)" inputmode="decimal">
     <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:var(--t2);">
       <input type="checkbox" id="pm-savings"> Transfer to savings
     </label>
@@ -892,6 +893,7 @@ function calcRoadmap(){
   const milestones={};
   const balLog={};
   const phaseDone=S.phaseDone||{};
+  let sinkingSave=0, sinkingPhaseId=null;
 
   const TARGETS = getSnowballTargets();
 
@@ -948,36 +950,69 @@ function calcRoadmap(){
       }
     });
 
-    // Check expense phase affordability
+    // Sinking fund: set aside savings on each payday toward phases with monthlySave
     if(!snowballActive&&pendingPhases.length>0){
       const phase=pendingPhases[0];
-      const gap=lastPhaseDate?Math.floor((d-lastPhaseDate)/86400000):999;
-      if(!milestones[phase.id]&&gap>=14){
-        const needed=phaseAmt(phase.id,phase.cost)+800;
-        if(balance>=needed){
-          const afterCost=balance-phaseAmt(phase.id,phase.cost);
-          const nextJonDay=dy<7?7:dy<22?22:7;
-          const nextJonMo=dy>=22?mo+1:mo;
-          let sim=afterCost;
-          let simOk=true;
-          let rd=new Date(yr,mo,dy+1);
-          const nextJon=new Date(yr,nextJonMo,nextJonDay);
-          while(rd<nextJon){
-            try{S.cardBals=cardBals;getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate(),cardBals).forEach(b=>{sim+=b.amt;});}finally{S.cardBals=origCB;}
-            if(sim<0){simOk=false;break;}
-            rd.setDate(rd.getDate()+1);
+      if(phase.monthlySave&&(dy===7||dy===22||isKarenPayday(yr,mo,dy))){
+        const jonAmt=Math.round(S.jonAvgPay||S.jonLastPay||1641);
+        const karenAmt=Math.round(S.karenAvgPay||S.karenLastPay||810);
+        const monthlyInc=jonAmt*2+Math.round(karenAmt*4.33);
+        const saveFraction=Math.min(1,phase.monthlySave/monthlyInc);
+        const payAmt=isKarenPayday(yr,mo,dy)?karenAmt:jonAmt;
+        const saveAmt=Math.round(payAmt*saveFraction);
+        const needed=phaseAmt(phase.id,phase.cost);
+        if(sinkingPhaseId!==phase.id){sinkingSave=0;sinkingPhaseId=phase.id;}
+        if(balance>=saveAmt&&sinkingSave<needed){
+          balance-=saveAmt;
+          sinkingSave+=saveAmt;
+        }
+        if(sinkingSave>=needed){
+          milestones[phase.id]={date:dateStr,bal:Math.round(balance+sinkingSave)};
+          sinkingSave=0;sinkingPhaseId=null;
+          lastPhaseDate=new Date(d);
+          pendingPhases.shift();
+          if(pendingPhases.length===0){
+            snowballActive=true;
+            milestones['snowball-start']={date:dateStr};
           }
-          if(simOk){
-            milestones[phase.id]={date:dateStr,bal:Math.round(balance)};
-            balance-=phaseAmt(phase.id,phase.cost);
-            lastPhaseDate=new Date(d);
-            pendingPhases.shift();
-            if(pendingPhases.length===0){
-              snowballActive=true;
-              milestones['snowball-start']={date:dateStr};
+          balLog[dateStr]=Math.round(balance);
+          d.setDate(dy+1);continue;
+        }
+      }
+    }
+
+    // Check expense phase affordability (threshold-based, non-sinking-fund phases)
+    if(!snowballActive&&pendingPhases.length>0){
+      const phase=pendingPhases[0];
+      if(!phase.monthlySave){
+        const gap=lastPhaseDate?Math.floor((d-lastPhaseDate)/86400000):999;
+        if(!milestones[phase.id]&&gap>=14){
+          const needed=phaseAmt(phase.id,phase.cost)+800;
+          if(balance>=needed){
+            const afterCost=balance-phaseAmt(phase.id,phase.cost);
+            const nextJonDay=dy<7?7:dy<22?22:7;
+            const nextJonMo=dy>=22?mo+1:mo;
+            let sim=afterCost;
+            let simOk=true;
+            let rd=new Date(yr,mo,dy+1);
+            const nextJon=new Date(yr,nextJonMo,nextJonDay);
+            while(rd<nextJon){
+              try{S.cardBals=cardBals;getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate(),cardBals).forEach(b=>{sim+=b.amt;});}finally{S.cardBals=origCB;}
+              if(sim<0){simOk=false;break;}
+              rd.setDate(rd.getDate()+1);
             }
-            balLog[dateStr]=Math.round(balance);
-            d.setDate(dy+1);continue;
+            if(simOk){
+              milestones[phase.id]={date:dateStr,bal:Math.round(balance)};
+              balance-=phaseAmt(phase.id,phase.cost);
+              lastPhaseDate=new Date(d);
+              pendingPhases.shift();
+              if(pendingPhases.length===0){
+                snowballActive=true;
+                milestones['snowball-start']={date:dateStr};
+              }
+              balLog[dateStr]=Math.round(balance);
+              d.setDate(dy+1);continue;
+            }
           }
         }
       }
@@ -1651,6 +1686,9 @@ function renderSnowball(){
           targetInfo=` · 🎯 target ${targetLabel} → on time`;
         }
       }
+      if(!done && p.monthlySave){
+        targetInfo += ` · 💰 $${p.monthlySave}/mo`;
+      }
       html+=`<div class="ms">
         <div class="ms-info">
           <div class="ms-label" style="font-weight:600;${done?'text-decoration:line-through;color:var(--t3);':''}">${p.label}</div>
@@ -2239,6 +2277,7 @@ window.addPhase = function() {
   document.getElementById('pm-label').value = '';
   document.getElementById('pm-cost').value = '';
   document.getElementById('pm-target').value = '';
+  document.getElementById('pm-monthly').value = '';
   document.getElementById('pm-savings').checked = false;
   document.getElementById('pm-delete-btn').style.display = 'none';
   modal.classList.add('open');
@@ -2255,6 +2294,7 @@ window.editPhase = function(id) {
   document.getElementById('pm-label').value = phase.label;
   document.getElementById('pm-cost').value = phaseAmt(id, phase.cost);
   document.getElementById('pm-target').value = phase.targetDate || '';
+  document.getElementById('pm-monthly').value = phase.monthlySave || '';
   document.getElementById('pm-savings').checked = phase.isSavings || false;
   document.getElementById('pm-delete-btn').style.display = '';
   modal.classList.add('open');
@@ -2266,6 +2306,7 @@ window.savePhaseModal = function() {
   const cost = parseFloat(document.getElementById('pm-cost').value);
   const isSavings = document.getElementById('pm-savings').checked;
   const targetDate = document.getElementById('pm-target').value.trim() || null;
+  const monthlySave = parseFloat(document.getElementById('pm-monthly').value) || null;
   
   if (!label || isNaN(cost) || cost <= 0) {
     toast('Fill in all fields');
@@ -2276,7 +2317,7 @@ window.savePhaseModal = function() {
     const phasesList = [...getPhases()];
     const idx = phasesList.findIndex(p => p.id === editingPhaseId);
     if (idx >= 0) {
-      phasesList[idx] = { ...phasesList[idx], label, cost, isSavings, targetDate };
+      phasesList[idx] = { ...phasesList[idx], label, cost, isSavings, targetDate, monthlySave };
       S.phases = phasesList;
       if (S.phaseCosts) S.phaseCosts[editingPhaseId] = cost;
       editingPhaseId = null;
@@ -2295,7 +2336,8 @@ window.savePhaseModal = function() {
     label: label,
     cost: cost,
     isSavings: isSavings,
-    targetDate: targetDate
+    targetDate: targetDate,
+    monthlySave: monthlySave
   };
   
   phasesList.push(newPhase);
@@ -2324,6 +2366,19 @@ window.deletePhase = function(id) {
 };
 
 window.closePhaseModal = () => document.getElementById('phase-modal').classList.remove('open');
+
+window.autoSuggestMonthly = function() {
+  const cost = parseFloat(document.getElementById('pm-cost').value);
+  const target = document.getElementById('pm-target').value.trim();
+  if (!target || isNaN(cost) || cost <= 0) return;
+  const targetDate = new Date(target + 'T12:00:00');
+  if (isNaN(targetDate.getTime())) return;
+  const nowDate = new Date();
+  const months = (targetDate.getFullYear() - nowDate.getFullYear()) * 12 + (targetDate.getMonth() - nowDate.getMonth());
+  if (months > 0) {
+    document.getElementById('pm-monthly').value = Math.round(cost / months);
+  }
+};
 
 window.deletePhaseModal = function() {
   if (!editingPhaseId) return;
