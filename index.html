@@ -259,6 +259,7 @@ body.readonly .ro-banner{display:block;}
     <div class="mtitle" id="pm-title">Add milestone</div>
     <input class="minput" type="text" id="pm-label" placeholder="Milestone name">
     <input class="minput" type="number" id="pm-cost" placeholder="Cost ($)" inputmode="decimal">
+    <input class="minput" type="text" id="pm-target" placeholder="Target date YYYY-MM (optional)" inputmode="numeric">
     <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:var(--t2);">
       <input type="checkbox" id="pm-savings"> Transfer to savings
     </label>
@@ -1119,7 +1120,9 @@ function getMonthEvents(year,month,roadmap,balLog){
       const prevBal=balLog[prevDate],todayBal=balLog[eventDate];
       if(prevBal===undefined||todayBal===undefined)continue;
       const dayNet=getDailyBills(year,month,dd,cb).reduce((a,b)=>a+b.amt,0);
-      const payAmt=Math.round(prevBal+dayNet-todayBal);
+      const rawAmt=Math.round(prevBal+dayNet-todayBal);
+      const phaseDeduction=getPhases().filter(p=>{const pm=roadmap[p.id];return pm&&pm.date===eventDate&&!(phaseDone[p.id]);}).reduce((s,p)=>s+phaseAmt(p.id,p.cost),0);
+      const payAmt=rawAmt-phaseDeduction;
       if(payAmt<=5)continue;
       const isFinal=roadmap[activeTarget.id+'-done']?.date===eventDate;
       const title=isFinal?`${activeTarget.label} — CLEARED`:`Pay $${Math.round(payAmt).toLocaleString()} → ${activeTarget.label}`;
@@ -1634,10 +1637,24 @@ function renderSnowball(){
       const done=phaseDone[p.id];
       const m=roadmap[p.id];
       const dateLabel=done?'DONE':m?new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'calculating...';
+      let targetInfo='';
+      if(!done && m && p.targetDate){
+        const targetMs=new Date(p.targetDate+'T12:00:00').getTime();
+        const actualMs=new Date(m.date+'T12:00:00').getTime();
+        const diffM=Math.round((actualMs-targetMs)/(86400000*30.44));
+        const targetLabel=new Date(p.targetDate+'T12:00:00').toLocaleDateString('en-US',{month:'short',year:'numeric'});
+        if(diffM>0){
+          targetInfo=` · ⚠ target ${targetLabel} → ${diffM}mo late`;
+        }else if(diffM<0){
+          targetInfo=` · 🎯 target ${targetLabel} → ${Math.abs(diffM)}mo early`;
+        }else{
+          targetInfo=` · 🎯 target ${targetLabel} → on time`;
+        }
+      }
       html+=`<div class="ms">
         <div class="ms-info">
           <div class="ms-label" style="font-weight:600;${done?'text-decoration:line-through;color:var(--t3);':''}">${p.label}</div>
-          <div class="ms-sub">$${phaseAmt(p.id,p.cost).toLocaleString()} · ${p.isSavings?'transfers to savings':'from #4496'}</div>
+          <div class="ms-sub">$${phaseAmt(p.id,p.cost).toLocaleString()} · ${p.isSavings?'transfers to savings':'from #4496'}${targetInfo}</div>
         </div>
         <div class="ms-right">
           <div class="reorder-btns">
@@ -1650,6 +1667,16 @@ function renderSnowball(){
         </div>
       </div>`;
     });
+    const unreachablePhases=phasesList.filter(p=>!phaseDone[p.id]&&!roadmap[p.id]);
+    if(unreachablePhases.length>0){
+      html+=`<div style="margin-top:10px;padding:10px;background:rgba(217,40,47,0.08);border:1px solid rgba(217,40,47,0.2);border-radius:var(--rs);">`;
+      html+=`<div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px;">⚠ Unreachable milestone${unreachablePhases.length>1?'s':''}</div>`;
+      html+=`<div style="font-size:11px;color:var(--t2);margin-bottom:6px;">Not projected within 4 years at current income — increase income, reduce other bills, or lower the cost</div>`;
+      unreachablePhases.forEach(p=>{
+        html+=`<div style="font-size:12px;color:var(--red);">${p.label} · $${phaseAmt(p.id,p.cost).toLocaleString()}</div>`;
+      });
+      html+=`</div>`;
+    }
   }
   html+=`</div>`;
 
@@ -2211,6 +2238,7 @@ window.addPhase = function() {
   document.getElementById('pm-title').textContent = 'Add milestone';
   document.getElementById('pm-label').value = '';
   document.getElementById('pm-cost').value = '';
+  document.getElementById('pm-target').value = '';
   document.getElementById('pm-savings').checked = false;
   document.getElementById('pm-delete-btn').style.display = 'none';
   modal.classList.add('open');
@@ -2226,6 +2254,7 @@ window.editPhase = function(id) {
   document.getElementById('pm-title').textContent = 'Edit milestone';
   document.getElementById('pm-label').value = phase.label;
   document.getElementById('pm-cost').value = phaseAmt(id, phase.cost);
+  document.getElementById('pm-target').value = phase.targetDate || '';
   document.getElementById('pm-savings').checked = phase.isSavings || false;
   document.getElementById('pm-delete-btn').style.display = '';
   modal.classList.add('open');
@@ -2236,6 +2265,7 @@ window.savePhaseModal = function() {
   const label = document.getElementById('pm-label').value.trim();
   const cost = parseFloat(document.getElementById('pm-cost').value);
   const isSavings = document.getElementById('pm-savings').checked;
+  const targetDate = document.getElementById('pm-target').value.trim() || null;
   
   if (!label || isNaN(cost) || cost <= 0) {
     toast('Fill in all fields');
@@ -2246,7 +2276,7 @@ window.savePhaseModal = function() {
     const phasesList = [...getPhases()];
     const idx = phasesList.findIndex(p => p.id === editingPhaseId);
     if (idx >= 0) {
-      phasesList[idx] = { ...phasesList[idx], label, cost, isSavings };
+      phasesList[idx] = { ...phasesList[idx], label, cost, isSavings, targetDate };
       S.phases = phasesList;
       if (S.phaseCosts) S.phaseCosts[editingPhaseId] = cost;
       editingPhaseId = null;
@@ -2264,7 +2294,8 @@ window.savePhaseModal = function() {
     id: 'phase_' + Date.now(),
     label: label,
     cost: cost,
-    isSavings: isSavings
+    isSavings: isSavings,
+    targetDate: targetDate
   };
   
   phasesList.push(newPhase);
