@@ -902,6 +902,7 @@ function calcRoadmap(){
   const origCB=S.cardBals;
   const milestones={};
   const balLog={};
+  const sinkingLog={};
   const phaseDone=S.phaseDone||{};
   const sinkingSaves={};
 
@@ -985,6 +986,8 @@ function calcRoadmap(){
         if(balance>=saveAmt+300&&accumulated<needed){
           balance-=saveAmt;
           sinkingSaves[sp.id]=accumulated+saveAmt;
+          sinkingLog[dateStr]=sinkingLog[dateStr]||{};
+          sinkingLog[dateStr][sp.id]=(sinkingLog[dateStr][sp.id]||0)+saveAmt;
         }
         if((sinkingSaves[sp.id]||0)>=needed){
           milestones[sp.id]={date:dateStr,bal:Math.round(balance+(sinkingSaves[sp.id]||0))};
@@ -1063,14 +1066,14 @@ function calcRoadmap(){
   }
 
   S.cardBals=origCB;
-  const result = {milestones,balLog,finalCardBals:cardBals};
+  const result = {milestones,balLog,sinkingLog,finalCardBals:cardBals};
   _cachedRoadmap = result;
   _roadmapCacheKey = cacheKey;
   return result;
 }
 
 // ══ MONTH EVENTS ══
-function getMonthEvents(year,month,roadmap,balLog){
+function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
   const evts=[];
   const key=`${year}-${String(month+1).padStart(2,'0')}`;
   const dim=new Date(year,month+1,0).getDate();
@@ -1149,6 +1152,20 @@ function getMonthEvents(year,month,roadmap,balLog){
       add(ed.getDate(),label,-pCost,phase.isSavings?'#9b82e8':'#d4922a',note,false,true);
     }
   });
+
+  // Sinking fund per-paycheck deductions
+  const sl=sinkingLog||{};
+  for(let d=fromDay;d<=dim;d++){
+    const dk=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const daySink=sl[dk];
+    if(!daySink)continue;
+    getPhases().forEach(phase=>{
+      const amt=daySink[phase.id];
+      if(amt&&amt>0&&!(phaseDone[phase.id])){
+        add(d,`→ ${phase.label}`, -amt, '#9b82e8', `$${phaseAmt(phase.id,phase.cost).toLocaleString()} · sinking fund`, false, false);
+      }
+    });
+  }
 
   // Snowball payment events
   const ssDate=roadmap['snowball-start']?.date;
@@ -1230,7 +1247,7 @@ function renderWeek(){
 
   const today=now.getDate();
   const todayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(today).padStart(2,'0')}`;
-  const {milestones:roadmap,balLog}=calcRoadmap();
+  const {milestones:roadmap,balLog,sinkingLog}=calcRoadmap();
   const phaseDone=S.phaseDone||{};
   const nextP=getPhases().find(p=>!phaseDone[p.id]);
   const allPhasesDone=getPhases().every(p=>phaseDone[p.id]);
@@ -1319,6 +1336,21 @@ function renderWeek(){
       addWE(dd,b.label,b.amt,b.isIncome,b.isIncome?'var(--grn)':'var(--t3)','',false,b.billId||null);
     });
   }
+  // Sinking fund per-paycheck deductions — visible savings line items
+  (sinkingLog||{}) && Object.keys(sinkingLog).forEach(dk=>{
+    const sp=new Date(dk+'T12:00:00');
+    if(isNaN(sp.getTime()))return;
+    const dd=sp.getDate();
+    if(dd<today||dd>today+6)return;
+    const daySink=sinkingLog[dk];
+    Object.keys(daySink).forEach(pid=>{
+      const amt=daySink[pid];
+      if(!amt||amt<=0)return;
+      const phase=getPhases().find(p=>p.id===pid);
+      if(!phase||phaseDone[pid])return;
+      addWE(dd,`→ ${phase.label}`, -amt, false, '#9b82e8', `$${phaseAmt(phase.id,phase.cost).toLocaleString()} · sinking fund`, false);
+    });
+  });
   const todayLocale=new Date().toLocaleDateString();
   (S.discLog||[]).forEach(e=>{
     if(!e.date||!e.amt)return;
@@ -1458,8 +1490,8 @@ function renderMonth(){
     document.getElementById('month-content').innerHTML = roadmapData;
     return;
   }
-  const {milestones:roadmap,balLog}=roadmapData;
-  const evts=getMonthEvents(vYear,vMonth,roadmap,balLog);
+  const {milestones:roadmap,balLog,sinkingLog}=roadmapData;
+  const evts=getMonthEvents(vYear,vMonth,roadmap,balLog,sinkingLog);
   const startDay=(vYear===2026&&vMonth===3)?22:1;
   const isCurMonth=vYear===now.getFullYear()&&vMonth===now.getMonth();
   const key=`${vYear}-${String(vMonth+1).padStart(2,'0')}`;
@@ -2181,7 +2213,7 @@ window.dumpAll = function() {
     const year = startYear + Math.floor((startMonth + m) / 12);
     
     // These are the EXACT same functions the Month Plan tab calls
-    const evts = getMonthEvents(year, month, data.milestones, data.balLog);
+    const evts = getMonthEvents(year, month, data.milestones, data.balLog, data.sinkingLog);
     const startDay = (year === 2026 && month === 3) ? 22 : 1;
     
     const totalIn = evts.filter(e => e.isIncome && e.day >= startDay).reduce((a, e) => a + (e.amt || 0), 0);
