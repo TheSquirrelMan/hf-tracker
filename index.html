@@ -1660,6 +1660,15 @@ function renderSnowball(){
   const fixedBillsTotal=(S.userBills||[]).filter(b=>b.cardId||b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0)+affirmMo;
   const discMo=S.discMonthlyCap||200;
   const recurBillsTotal=(S.userBills||[]).filter(b=>!b.cardId&&!b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0)+discMo;
+  const jonAmt = Math.round(S.jonAvgPay || S.jonLastPay || 1641);
+  const karenAmt = Math.round(S.karenAvgPay || S.karenLastPay || 810);
+  const monthlyInc = jonAmt * 2 + Math.round(karenAmt * 4.33);
+  const sinkingMo = getPhases().reduce((sum, p) => {
+    if ((S.phaseDone || {})[p.id]) return sum;
+    if (p.monthlySave) return sum + p.monthlySave;
+    if (p.savingsMode === 'percent' && p.percentOfPay) return sum + Math.round(monthlyInc * p.percentOfPay / 100);
+    return sum;
+  }, 0);
   const grandTotal=fixedBillsTotal+recurBillsTotal;
   let html=`<div class="card" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;padding:10px 0;margin-bottom:8px;">
     <div style="text-align:center;padding:4px 8px;border-right:0.5px solid var(--br);">
@@ -1680,10 +1689,7 @@ function renderSnowball(){
   </div>`;
 
   // Income card
-  const jonAmt = Math.round(S.jonAvgPay || S.jonLastPay || 1641);
-  const karenAmt = Math.round(S.karenAvgPay || S.karenLastPay || 810);
-  const monthlyInc = jonAmt * 2 + Math.round(karenAmt * 4.33);
-  const netMo = monthlyInc - grandTotal;
+  const netMo = monthlyInc - grandTotal - sinkingMo;
   html+=`<div class="card" style="margin-bottom:8px;">
     <div class="card-title" style="margin-bottom:10px;">Monthly income</div>
     <div style="display:flex;gap:8px;margin-bottom:10px;">
@@ -1710,6 +1716,10 @@ function renderSnowball(){
         <div style="font-size:12px;color:var(--t3);">Monthly bills</div>
         <div style="font-size:14px;font-weight:700;color:var(--red);">-$${Math.round(grandTotal).toLocaleString()}/mo</div>
       </div>
+      ${sinkingMo>0?`<div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:12px;color:var(--t3);">Sinking fund</div>
+        <div style="font-size:14px;font-weight:700;color:#9b82e8;">-$${Math.round(sinkingMo).toLocaleString()}/mo</div>
+      </div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:center;padding-top:6px;border-top:0.5px solid var(--br);">
         <div style="font-size:12px;font-weight:600;color:var(--tx);">Net surplus</div>
         <div style="font-size:14px;font-weight:700;color:${netMo>=0?'var(--blu)':'var(--red)'};">${netMo>=0?'+':''} $${Math.round(netMo).toLocaleString()}/mo</div>
@@ -2303,15 +2313,23 @@ window.dumpAll = function() {
   const monthlyIncome = Math.round((S.karenAvgPay || S.karenLastPay || 810) * 4.33) + (S.jonLastPay || 1641) * 2;
   const dumpAffirmMo = getAffirmAmt(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`);
   const dumpDiscCap = S.discMonthlyCap || 200;
+  const dumpSinkingMo = getPhases().reduce((sum, p) => {
+    if ((S.phaseDone || {})[p.id]) return sum;
+    if (p.monthlySave) return sum + p.monthlySave;
+    if (p.savingsMode === 'percent' && p.percentOfPay) return sum + Math.round(monthlyIncome * p.percentOfPay / 100);
+    return sum;
+  }, 0);
   out.push(`  Monthly income: $${Math.round(monthlyIncome).toLocaleString()}`);
   out.push(`  Fixed-term bills: $${Math.round(fixedBillsSum).toLocaleString()}/mo`);
   out.push(`  Recurring bills: $${Math.round(recurBillsSum).toLocaleString()}/mo`);
   out.push(`  Total bills (raw): $${Math.round(monthlyBills).toLocaleString()}/mo`);
   out.push(`  Discretionary cap: $${dumpDiscCap}`);
   out.push(`  Affirm cluster: $${dumpAffirmMo}`);
+  if (dumpSinkingMo > 0) out.push(`  Sinking fund: $${dumpSinkingMo}/mo`);
   out.push(`  ─────────────────────`);
-  out.push(`  Roadmap total: $${Math.round(monthlyBills + dumpDiscCap + dumpAffirmMo).toLocaleString()}/mo (bills + disc + affirm)`);
-  out.push(`  Net surplus: $${Math.round(monthlyIncome - monthlyBills - dumpDiscCap - dumpAffirmMo).toLocaleString()}`);
+  const roadmapTotal = monthlyBills + dumpDiscCap + dumpAffirmMo + dumpSinkingMo;
+  out.push(`  Roadmap total: $${Math.round(roadmapTotal).toLocaleString()}/mo (bills + disc + affirm${dumpSinkingMo>0?' + sinking':''})`);
+  out.push(`  Net surplus: $${Math.round(monthlyIncome - roadmapTotal).toLocaleString()}`);
   const weeklyBills = bills.filter(b => b.frequency === 'weekly');
   if (weeklyBills.length > 0) {
     out.push(`  ⚠ Weekly-frequency bills (amt × 4.33):`);
