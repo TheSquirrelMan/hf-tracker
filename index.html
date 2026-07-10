@@ -981,6 +981,10 @@ function calcRoadmap(){
     // Snowball payments on paycheck days — runs before sinking to get first crack at surplus
     if(snowballActive&&snowIdx!==null&&(dy===7||dy===22||isKarenPayday(yr,mo,dy))){
       const target=TARGETS[snowIdx];
+      // DEBUG: log snowball days after March 2027 when Mazda is target
+      if(dateStr>='2027-04-01'&&dateStr<='2027-05-31'&&target&&target.id==='mazda'){
+        console.log(`[SNOWBALL-DAY] ${dateStr} day=${dy} balance=${Math.round(balance)} cardBal=${Math.round(cardBals[target.id])} snowIdx=${snowIdx}`);
+      }
       let reserve=0;
       const nextJonDay=dy<7?7:dy<22?22:7;
       const nextJonMo=dy>=22?mo+1:mo;
@@ -994,6 +998,10 @@ function calcRoadmap(){
       if(available>0&&cardBals[target.id]>0){
         let payment=Math.min(cardBals[target.id],available);
         if(balance-payment<200)payment=Math.max(0,balance-200);
+        // DEBUG: track Mazda payoff
+        if(target.id==='mazda'&&!milestones['mazda-done']){
+          console.log(`[SNOWBALL] ${dateStr} balance=${Math.round(balance)} reserve=${Math.round(reserve)} available=${Math.round(available)} cardBal=${Math.round(cardBals[target.id])} payment=${Math.round(payment)} snowballActive=${snowballActive} snowIdx=${snowIdx}`);
+        }
         cardBals[target.id]-=payment;
         balance-=payment;
         if(cardBals[target.id]<=0){
