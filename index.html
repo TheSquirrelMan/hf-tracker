@@ -990,9 +990,10 @@ function calcRoadmap(){
         try{S.cardBals=cardBals;getDailyBills(rd.getFullYear(),rd.getMonth(),rd.getDate(),cardBals).forEach(b=>{if(!b.isIncome&&b.amt<0&&b.label!==target.label)reserve+=Math.abs(b.amt);});}finally{S.cardBals=origCB;}
         rd.setDate(rd.getDate()+1);
       }
-      const available=Math.max(0,balance-reserve-200);
+      const available=Math.max(0,balance-reserve);
       if(available>0&&cardBals[target.id]>0){
-        const payment=Math.min(cardBals[target.id],available);
+        let payment=Math.min(cardBals[target.id],available);
+        if(balance-payment<200)payment=Math.max(0,balance-200);
         cardBals[target.id]-=payment;
         balance-=payment;
         if(cardBals[target.id]<=0){
