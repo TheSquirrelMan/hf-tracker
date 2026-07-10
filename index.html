@@ -151,6 +151,8 @@ select.minput option{background:var(--s2);}
 .slog-amt{color:var(--red);font-weight:700;}
 .slog-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;}
 .slog-del:active{color:var(--red);}
+@keyframes neg-pulse{0%,100%{box-shadow:0 0 0 0 rgba(232,131,110,0.5);}50%{box-shadow:0 0 12px 3px rgba(232,131,110,0.8);}}
+.neg-bal{font-size:14px;font-weight:900;color:var(--red);background:var(--rbg);padding:3px 8px;border-radius:6px;border:1px solid var(--rm);animation:neg-pulse 1.5s ease-in-out infinite;display:inline-block;}
 
 .spendlog-header{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;}
 .spendlog-arrow{font-size:14px;transition:transform 0.2s;color:var(--t3);}
@@ -1444,7 +1446,7 @@ function renderWeek(){
       const ns=dayNet!==0?(dayNet>0?`+$${Math.round(dayNet).toLocaleString()}`:`-$${Math.round(Math.abs(dayNet)).toLocaleString()}`):'';
       html+=`<div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 0 5px;border-top:0.5px solid var(--br);margin-top:2px;">
         ${ns?`<span style="font-size:11px;font-weight:600;color:${nc};">${ns}</span><span style="color:var(--t4);">·</span>`:''}
-        <span style="font-size:12px;font-weight:700;color:${bc};">$${Math.round(runBal).toLocaleString()}${runBal<0?' ⚠':''}</span>
+        ${runBal<0?`<span class="neg-bal">-$${Math.round(Math.abs(runBal)).toLocaleString()} NEGATIVE</span>`:`<span style="font-size:12px;font-weight:700;color:${bc};">$${Math.round(runBal).toLocaleString()}</span>`}
       </div>`;
     });
     html+=`</div></div>`;
@@ -1595,10 +1597,10 @@ function renderMonth(){
         const dayNet=(byDay[day]||[]).reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
         const nc=dayNet>0?'var(--grn)':dayNet<0?'var(--red)':'var(--t3)';
         const ns=dayNet!==0?(dayNet>0?`+$${Math.round(dayNet).toLocaleString()}`:`-$${Math.round(Math.abs(dayNet)).toLocaleString()}`):'';
-        const bc=displayBal<300?'var(--red)':displayBal<600?'var(--amb)':'var(--blu)';
+        const bc=displayBal<0?'var(--red)':displayBal<300?'var(--red)':displayBal<600?'var(--amb)':'var(--blu)';
         html+=`<div style="display:flex;justify-content:flex-end;gap:6px;padding:4px 0 5px;border-top:0.5px solid var(--br);margin-top:2px;">
           ${ns?`<span style="font-size:11px;font-weight:600;color:${nc};">${ns}</span><span style="color:var(--t4);">·</span>`:''}
-          <span style="font-size:12px;font-weight:700;color:${bc};">$${Math.round(displayBal).toLocaleString()}${displayBal<300?' ⚠':''}</span>
+          ${displayBal<0?`<span class="neg-bal">-$${Math.round(Math.abs(displayBal)).toLocaleString()} NEGATIVE</span>`:`<span style="font-size:12px;font-weight:700;color:${bc};">$${Math.round(displayBal).toLocaleString()}${displayBal<300?' ⚠':''}</span>`}
         </div>`;
       }
       html+='</div>';
