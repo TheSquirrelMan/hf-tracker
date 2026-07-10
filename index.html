@@ -1145,10 +1145,13 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
       // Planned Sunday disc budget: skip past/today — actual disc shown via discLog
       if (!b.billId && b.label === 'Discretionary' && new Date(year, month, d) <= todayMidnight) return;
       const bill = (S.userBills || []).find(x => x.id === b.billId);
-      const note = bill ? (bill.note || '') : '';
       const isDebt = bill && bill.cardId;
-      const color = isDebt ? '#e8836e' : '#a8a69f';
-      add(d, b.label, b.amt, color, note, false, false, false, b.billId || null);
+      const doneKey = isDebt ? bill.cardId+'-done' : null;
+      const debtDone = doneKey && roadmap[doneKey]?.date === `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const color = debtDone ? '#9b82e8' : isDebt ? '#e8836e' : '#a8a69f';
+      const title = debtDone ? b.label+' — CLEARED' : b.label;
+      const evtNote = debtDone ? 'Final payment · debt closed' : bill ? (bill.note || '') : '';
+      add(d, title, b.amt, color, evtNote, false, debtDone, debtDone, b.billId || null);
     });
   }
 
