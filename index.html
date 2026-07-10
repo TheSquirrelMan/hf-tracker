@@ -1007,7 +1007,7 @@ function calcRoadmap(){
     // Snowball payments on paycheck days — runs before sinking to get first crack at surplus
     if(snowballActive&&snowIdx!==null&&(dy===7||dy===22||isKarenPayday(yr,mo,dy))){
       const target=TARGETS[snowIdx];
-      let reserve=300;
+      let reserve=0;
       const nextJonDay=dy<7?7:dy<22?22:7;
       const nextJonMo=dy>=22?mo+1:mo;
       let rd=new Date(yr,mo,dy+1);
