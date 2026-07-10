@@ -801,15 +801,15 @@ function seedAffirmBills() {
   const bills = state.userBills || [];
 
   const affirmBills = [
-    { id:'affirm_01', name:'Affirm #1', amt:9.04,  day:13, endDate:'2026-07-12' },
-    { id:'affirm_02', name:'Affirm #2', amt:12.80, day:13, endDate:'2026-08-19' },
-    { id:'affirm_03', name:'Affirm #3', amt:11.47, day:13, endDate:'2026-09-02' },
-    { id:'affirm_04', name:'Affirm #4', amt:32.88, day:13, endDate:'2026-09-10' },
-    { id:'affirm_05', name:'Affirm #5', amt:13.38, day:13, endDate:'2026-10-10' },
+    { id:'affirm_01', name:'Affirm #1', amt:9.04,  day:12, endDate:'2026-07-12' },
+    { id:'affirm_02', name:'Affirm #2', amt:12.80, day:19, endDate:'2026-08-19' },
+    { id:'affirm_03', name:'Affirm #3', amt:11.47, day:2,  endDate:'2026-09-02' },
+    { id:'affirm_04', name:'Affirm #4', amt:32.88, day:10, endDate:'2026-09-10' },
+    { id:'affirm_05', name:'Affirm #5', amt:13.38, day:10, endDate:'2026-10-10' },
     { id:'affirm_06', name:'Affirm #6', amt:23.24, day:13, endDate:'2027-02-13' },
-    { id:'affirm_07', name:'Affirm #7', amt:27.45, day:13, endDate:'2027-10-03' },
-    { id:'affirm_08', name:'Affirm #8', amt:29.91, day:13, endDate:'2027-10-14' },
-    { id:'affirm_09', name:'Affirm #9', amt:29.00, day:13, endDate:'2028-03-02' },
+    { id:'affirm_07', name:'Affirm #7', amt:27.45, day:3,  endDate:'2027-10-03' },
+    { id:'affirm_08', name:'Affirm #8', amt:29.91, day:14, endDate:'2027-10-14' },
+    { id:'affirm_09', name:'Affirm #9', amt:29.00, day:2,  endDate:'2028-03-02' },
   ];
 
   for (const ab of affirmBills) {
