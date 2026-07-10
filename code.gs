@@ -536,7 +536,7 @@ function matchDebit(merchant, amt, userBills, txDow) {
         return { status: "matched", bill: sorted[0].id, label: sorted[0].name };
       }
     }
-    return { status: "matched", bill: "affirm", label: "Affirm (unmatched plan)" };
+    return { status: "pending" };
   }
 
   // 5. No match — falls to the Debit Inbox for manual categorization
@@ -737,6 +737,16 @@ function seedDefaultBills() {
     { id:'bill_jon_paypal',     name:'Jon PayPal Credit',        amt:22,  day:22, endDate:'2029-10', conditionEnd:'2029-10' },
     { id:'bill_paypal_chinese', name:'PayPal Chinese vendor',    amt:95,  day:30, endDate:'2027-03', conditionEnd:'2027-03' },
     { id:'bill_paypal_ebay',    name:'PayPal eBay',              amt:43,  day:4,  endDate:'2027-08', conditionEnd:'2027-08' },
+    // ── Affirm plans (self-liquidating) ──
+    { id:'affirm_01',           name:'Affirm #1',                amt:9.04,  day:13, endDate:'2026-07-12' },
+    { id:'affirm_02',           name:'Affirm #2',                amt:12.80, day:13, endDate:'2026-08-19' },
+    { id:'affirm_03',           name:'Affirm #3',                amt:11.47, day:13, endDate:'2026-09-02' },
+    { id:'affirm_04',           name:'Affirm #4',                amt:32.88, day:13, endDate:'2026-09-10' },
+    { id:'affirm_05',           name:'Affirm #5',                amt:13.38, day:13, endDate:'2026-10-10' },
+    { id:'affirm_06',           name:'Affirm #6',                amt:23.24, day:13, endDate:'2027-02-13' },
+    { id:'affirm_07',           name:'Affirm #7',                amt:27.45, day:13, endDate:'2027-10-03' },
+    { id:'affirm_08',           name:'Affirm #8',                amt:29.91, day:13, endDate:'2027-10-14' },
+    { id:'affirm_09',           name:'Affirm #9',                amt:29.00, day:13, endDate:'2028-03-02' },
     // ── Recurring ──
     { id:'bill_amazon_prime',   name:'Amazon Prime',             amt:15,  day:2  },
     { id:'bill_real_debrid',    name:'Real-Debrid',              amt:11,  day:2  },
@@ -775,25 +785,7 @@ function seedDefaultBills() {
     mazda:    20693,
   };
 
-  // Kept in sync with defaultState()'s affirmSchedule in index.html — this seeds
-  // Firebase (the real running source of truth from then on); index.html's copy
-  // is only the client's pre-first-sync default. getAffirmAmt() has no hardcoded
-  // fallback of its own, so these two are the only two copies.
-  const affirmSchedule = [
-    {through:'2026-06',amt:188},
-    {through:'2026-07',amt:152},
-    {through:'2026-09',amt:108},
-    {through:'2026-10',amt: 95},
-    {through:'2027-02',amt: 82},
-    {through:'2028-01',amt: 59},
-  ];
-
-  firebasePut(`${FIREBASE_BASE}/userBills.json`,      userBills);
-  firebasePut(`${FIREBASE_BASE}/phases.json`,         phases);
-  firebasePut(`${FIREBASE_BASE}/phaseDone.json`,      {'repair-buf': true});
-  firebasePut(`${FIREBASE_BASE}/phaseCosts.json`,     {dental: 600});
   firebasePut(`${FIREBASE_BASE}/cardStartBals.json`,  cardStartBals);
-  firebasePut(`${FIREBASE_BASE}/affirmSchedule.json`, affirmSchedule);
   firebasePut(`${FIREBASE_BASE}/discMonthlyCap.json`, 200);
   firebasePut(`${FIREBASE_BASE}/discWeekly.json`,     50);
   firebasePut(`${FIREBASE_BASE}/karenAvgPay.json`,    787);

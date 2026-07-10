@@ -377,21 +377,6 @@ function getPhases() {
   return (S && S.phases && S.phases.length > 0) ? S.phases : DEFAULT_PHASES;
 }
 
-// ══ AFFIRM SCHEDULE (steps down as plans expire) ══
-// Single source of truth is S.affirmSchedule — set by defaultState() below (client
-// default before first sync) and seedDefaultBills() in code.gs (seeds Firebase).
-// No hardcoded fallback here: if the schedule is ever empty, Affirm is simply
-// treated as fully phased out (returns 0) rather than duplicating the data.
-function getAffirmAmt(key) {
-  const schedule = S && S.affirmSchedule;
-  if (schedule && schedule.length) {
-    for (const step of schedule) {
-      if (key <= step.through) return step.amt;
-    }
-  }
-  return 0;
-}
-
 // ══ STATE ══
 let S={};
 let saveTimer=null;
@@ -416,14 +401,7 @@ function defaultState(){
     notified:{},
     userBills: JSON.parse(JSON.stringify(DEFAULT_USER_BILLS)),
     cardStartBals: {},
-    affirmSchedule: [
-      {through:'2026-06',amt:188},
-      {through:'2026-07',amt:152},
-      {through:'2026-09',amt:108},
-      {through:'2026-10',amt: 95},
-      {through:'2027-02',amt: 82},
-      {through:'2028-01',amt: 59},
-    ],
+
   };
 }
 
@@ -855,12 +833,6 @@ function getDailyBills(year, month, day, cardBalOverride) {
         isIncome: false
       });
     }
-  }
-
-  // Affirm (special case — steps down over time)
-  const affirmAmt = getAffirmAmt(key);
-  if (day === 13 && affirmAmt > 0) {
-    bills.push({ label: 'Affirm cluster', amt: -affirmAmt, isIncome: false, billId: 'affirm' });
   }
 
   return bills.filter(b => b.amt !== 0);
@@ -1674,8 +1646,7 @@ function renderSnowball(){
   try { rmCollapsed = JSON.parse(localStorage.getItem('rmCollapsed') || '{}'); } catch {}
 
   const curKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const affirmMo=getAffirmAmt(curKey);
-  const fixedBillsTotal=(S.userBills||[]).filter(b=>b.cardId||b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0)+affirmMo;
+  const fixedBillsTotal=(S.userBills||[]).filter(b=>b.cardId||b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0);
   const discMo=S.discMonthlyCap||200;
   const recurBillsTotal=(S.userBills||[]).filter(b=>!b.cardId&&!b.endDate).reduce((a,b)=>a+toMonthlyAmt(b),0)+discMo;
   const jonAmt = Math.round(S.jonAvgPay || S.jonLastPay || 1641);
@@ -1692,7 +1663,7 @@ function renderSnowball(){
     <div style="text-align:center;padding:4px 8px;border-right:0.5px solid var(--br);">
       <div style="font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Fixed-term</div>
       <div style="font-size:15px;font-weight:700;color:var(--red);">-$${Math.round(fixedBillsTotal).toLocaleString()}</div>
-      <div style="font-size:10px;color:var(--t3);">/mo${affirmMo>0?' · incl. Affirm':''}</div>
+      <div style="font-size:10px;color:var(--t3);">/mo</div>
     </div>
     <div style="text-align:center;padding:4px 8px;border-right:0.5px solid var(--br);">
       <div style="font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Recurring</div>
@@ -1846,20 +1817,6 @@ function renderSnowball(){
         </div>
       </div>`;
     });
-    if(affirmMo>0 && S.affirmSchedule && S.affirmSchedule.length){
-      const lastThrough=S.affirmSchedule[S.affirmSchedule.length-1].through;
-      const [ly,lm]=lastThrough.split('-').map(Number);
-      const affirmEndLabel='ends '+MN[lm-1].substring(0,3)+' '+ly;
-      html+=`<div class="ms">
-        <div class="ms-info">
-          <div class="ms-label" style="font-weight:600;">Affirm cluster</div>
-          <div class="ms-sub">$${affirmMo}/mo · steps down · ${affirmEndLabel}</div>
-        </div>
-        <div class="ms-right">
-          <div class="ms-date" style="color:var(--blu);">${affirmEndLabel.replace('ends ','')}</div>
-        </div>
-      </div>`;
-    }
   }
   html+=`</div>`;
 
@@ -2329,7 +2286,6 @@ window.dumpAll = function() {
   const recurBillsSum = bills.filter(b => !b.cardId && !b.endDate).reduce((sum, b) => sum + toMonthlyAmt(b), 0);
   const monthlyBills = fixedBillsSum + recurBillsSum;
   const monthlyIncome = Math.round((S.karenAvgPay || S.karenLastPay || 810) * 4.33) + (S.jonLastPay || 1641) * 2;
-  const dumpAffirmMo = getAffirmAmt(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`);
   const dumpDiscCap = S.discMonthlyCap || 200;
   const dumpSinkingMo = getPhases().reduce((sum, p) => {
     if ((S.phaseDone || {})[p.id]) return sum;
@@ -2342,11 +2298,10 @@ window.dumpAll = function() {
   out.push(`  Recurring bills: $${Math.round(recurBillsSum).toLocaleString()}/mo`);
   out.push(`  Total bills (raw): $${Math.round(monthlyBills).toLocaleString()}/mo`);
   out.push(`  Discretionary cap: $${dumpDiscCap}`);
-  out.push(`  Affirm cluster: $${dumpAffirmMo}`);
   if (dumpSinkingMo > 0) out.push(`  Sinking fund: $${dumpSinkingMo}/mo`);
   out.push(`  ─────────────────────`);
-  const roadmapTotal = monthlyBills + dumpDiscCap + dumpAffirmMo + dumpSinkingMo;
-  out.push(`  Roadmap total: $${Math.round(roadmapTotal).toLocaleString()}/mo (bills + disc + affirm${dumpSinkingMo>0?' + sinking':''})`);
+  const roadmapTotal = monthlyBills + dumpDiscCap + dumpSinkingMo;
+  out.push(`  Roadmap total: $${Math.round(roadmapTotal).toLocaleString()}/mo (bills + disc${dumpSinkingMo>0?' + sinking':''})`);
   out.push(`  Net surplus: $${Math.round(monthlyIncome - roadmapTotal).toLocaleString()}`);
   const weeklyBills = bills.filter(b => b.frequency === 'weekly');
   if (weeklyBills.length > 0) {
