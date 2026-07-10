@@ -364,6 +364,20 @@ function syncUSAADebits() {
   let   changed    = false;
   let   newPending = 0;
 
+  const nowDate = new Date();
+  const curMKey = `${nowDate.getFullYear()}-${nowDate.getMonth()}`;
+  const stateMKey = state.mKey || '';
+  if (stateMKey !== curMKey) {
+    // Month rollover — archive old discLog, reset monthly counters
+    if (state.discLog && state.discLog.length > 0 && stateMKey) {
+      firebasePut(`${FIREBASE_BASE}/discLogArchive/${stateMKey}.json`, state.discLog);
+    }
+    firebasePut(`${FIREBASE_BASE}/mKey.json`, curMKey);
+    firebasePut(`${FIREBASE_BASE}/discSpent.json`, 0);
+    firebasePut(`${FIREBASE_BASE}/discLog.json`, []);
+    Logger.log(`Month rollover: ${stateMKey} → ${curMKey}`);
+  }
+
   const processedIds = state.processedMsgIds || [];
 
   for (const thread of threads) {
@@ -469,11 +483,14 @@ function syncUSAADebits() {
 // Reads userBills from Firebase for keyword matching — no hardcoded bill lists
 function matchDebit(merchant, amt, userBills, txDow) {
 
-  // 1. PayPal Fresh Market: $150–$260, arrived Sun/Mon/Tue
+  // 1. PayPal Fresh Market: within 50% of bill amount, arrived Sun/Mon/Tue
   if (merchant.includes("PAYPAL")) {
-    if (amt >= 150 && amt <= 350 && txDow >= 0 && txDow <= 2) {
-      const fmBill = userBills.find(b => b.id === 'bill_fresh_market');
-      return { status: "matched", bill: "bill_fresh_market", label: "Fresh Market", cat: "groceries", freshMarket: true, budgetAmt: fmBill ? (fmBill.amt || 0) : 0 };
+    const fmBill = userBills.find(b => b.id === 'bill_fresh_market');
+    if (fmBill) {
+      const fmAmt = fmBill.amt || 200;
+      if (amt >= fmAmt * 0.5 && amt <= fmAmt * 1.5 && txDow >= 0 && txDow <= 2) {
+        return { status: "matched", bill: "bill_fresh_market", label: "Fresh Market", cat: "groceries", freshMarket: true, budgetAmt: fmAmt };
+      }
     }
   }
 
@@ -541,6 +558,21 @@ function syncFreshMarket() {
   let   discLog    = state.discLog    || [];
   let   discSpent  = state.discSpent  || 0;
   const processedIds = state.processedFreshMarketIds || [];
+
+  const nowDate = new Date();
+  const curMKey = `${nowDate.getFullYear()}-${nowDate.getMonth()}`;
+  const stateMKey = state.mKey || '';
+  if (stateMKey !== curMKey) {
+    if (state.discLog && state.discLog.length > 0 && stateMKey) {
+      firebasePut(`${FIREBASE_BASE}/discLogArchive/${stateMKey}.json`, state.discLog);
+    }
+    firebasePut(`${FIREBASE_BASE}/mKey.json`, curMKey);
+    firebasePut(`${FIREBASE_BASE}/discSpent.json`, 0);
+    firebasePut(`${FIREBASE_BASE}/discLog.json`, []);
+    discLog = [];
+    discSpent = 0;
+    Logger.log(`syncFreshMarket month rollover: ${stateMKey} → ${curMKey}`);
+  }
 
   const fmBill    = userBills.find(b => b.id === 'bill_fresh_market');
   const budgetAmt = fmBill ? (fmBill.amt || 0) : 0;
@@ -762,8 +794,8 @@ function seedDefaultBills() {
   firebasePut(`${FIREBASE_BASE}/phaseCosts.json`,     {dental: 600});
   firebasePut(`${FIREBASE_BASE}/cardStartBals.json`,  cardStartBals);
   firebasePut(`${FIREBASE_BASE}/affirmSchedule.json`, affirmSchedule);
-  firebasePut(`${FIREBASE_BASE}/discMonthlyCap.json`, 250);
-  firebasePut(`${FIREBASE_BASE}/discWeekly.json`,     63);
+  firebasePut(`${FIREBASE_BASE}/discMonthlyCap.json`, 200);
+  firebasePut(`${FIREBASE_BASE}/discWeekly.json`,     50);
   firebasePut(`${FIREBASE_BASE}/karenAvgPay.json`,    787);
   firebasePut(`${FIREBASE_BASE}/jonAvgPay.json`,      1641);
 

@@ -842,7 +842,7 @@ function getDailyBills(year, month, day, cardBalOverride) {
     for (let i = 1; i < day; i++) {
       if (new Date(year, month, i).getDay() === 0) plannedSpent += weeklyAmt;
     }
-    const totalSpent = actualSpent + plannedSpent;
+    const totalSpent = Math.max(actualSpent, plannedSpent);
     if (totalSpent < monthlyCap) {
       const lastDay = new Date(year, month + 1, 0).getDate();
       const isLastSunday = (day + 7) > lastDay;
@@ -939,6 +939,9 @@ function calcRoadmap(){
         milestones['snowball-start']={date:todayStr};
       }
     }
+  }
+  if(snowballActive && !milestones['snowball-start']){
+    milestones['snowball-start']={date:todayStr};
   }
 
   // Store today's actual balance in balLog — it already reflects today's activity.
@@ -1163,9 +1166,10 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
     });
   }
 
-  // Expense phase events from roadmap
+  // Expense phase events from roadmap — threshold phases only (sinking shown via sinkingLog)
   getPhases().forEach(phase=>{
     if(phaseDone[phase.id])return;
+    if(phase.monthlySave||phase.percentOfPay)return;
     const m=roadmap[phase.id];
     if(!m)return;
     const ed=new Date(m.date+'T12:00:00');
@@ -1197,8 +1201,13 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
       if(prevBal===undefined||todayBal===undefined)continue;
       const dayNet=getDailyBills(year,month,dd,cb).reduce((a,b)=>a+b.amt,0);
       const rawAmt=Math.round(prevBal+dayNet-todayBal);
-      const phaseDeduction=getPhases().filter(p=>{const pm=roadmap[p.id];return pm&&pm.date===eventDate&&!(phaseDone[p.id]);}).reduce((s,p)=>s+phaseAmt(p.id,p.cost),0);
-      const payAmt=rawAmt-phaseDeduction;
+      const phaseDeduction=getPhases().filter(p=>{
+        const pm=roadmap[p.id];
+        return pm&&pm.date===eventDate&&!(phaseDone[p.id])&&!p.monthlySave&&!p.percentOfPay;
+      }).reduce((s,p)=>s+phaseAmt(p.id,p.cost),0);
+      const sl2=sinkingLog||{};
+      const sinkingOnDay=(sl2[eventDate]?Object.values(sl2[eventDate]).reduce((s,a)=>s+a,0):0);
+      const payAmt=rawAmt-phaseDeduction-sinkingOnDay;
       if(payAmt<=5)continue;
       const isFinal=roadmap[activeTarget.id+'-done']?.date===eventDate;
       const title=isFinal?`${activeTarget.label} — CLEARED`:`Pay $${Math.round(payAmt).toLocaleString()} → ${activeTarget.label}`;
@@ -1634,6 +1643,7 @@ function renderMonth(){
 function toMonthlyAmt(b) {
   if (b.frequency === 'weekly') return b.amt * 4.33;
   if (b.frequency === 'quarterly') return b.amt / 3;
+  if (b.frequency === 'biweekly') return (b.amt || 0) * (Array.isArray(b.day) ? b.day.length : 2);
   if (Array.isArray(b.day)) return (b.amt || 0) * b.day.length;
   return b.amt || 0;
 }
@@ -2268,13 +2278,13 @@ window.dumpAll = function() {
     
     // Sinking fund summary for this month
     const monthKey=`${year}-${String(month+1).padStart(2,'0')}`;
-    const sfPhase=getPhases().find(p=>(p.monthlySave||p.percentOfPay)&&!(S.phaseDone||{})[p.id]&&(!data.milestones[p.id]||data.milestones[p.id].date>=monthKey));
-    if(sfPhase){
+    const sfPhases=getPhases().filter(p=>(p.monthlySave||p.percentOfPay)&&!(S.phaseDone||{})[p.id]&&(!data.milestones[p.id]||data.milestones[p.id].date>=monthKey));
+    sfPhases.forEach(sfPhase=>{
       const doneDate=data.milestones[sfPhase.id]?.date;
       const doneLabel=doneDate&&doneDate.substring(0,7)===monthKey?` · completed ${doneDate}`:'';
       const sfLabel=sfPhase.monthlySave?`$${sfPhase.monthlySave}/mo`:`${sfPhase.percentOfPay}% of pay`;
       out.push(`  💰 Sinking: ${sfLabel} → ${sfPhase.label} ($${phaseAmt(sfPhase.id,sfPhase.cost).toLocaleString()})${doneLabel}`);
-    }
+    });
     
     // Show key events by week
     const byDay = {};

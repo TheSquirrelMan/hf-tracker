@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "acorn": "^8.17.0",
+    "acorn-loose": "^8.5.2"
+  }
+}
