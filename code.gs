@@ -794,6 +794,39 @@ function seedDefaultBills() {
   Logger.log('✓ seedDefaultBills complete — live balances and logs untouched');
 }
 
+// ── One-shot: upsert affirm bills into existing userBills without touching anything else ──
+function seedAffirmBills() {
+  initFirebasePath();
+  const state = firebaseGet(`${FIREBASE_BASE}.json`) || {};
+  const bills = state.userBills || [];
+
+  const affirmBills = [
+    { id:'affirm_01', name:'Affirm #1', amt:9.04,  day:13, endDate:'2026-07-12' },
+    { id:'affirm_02', name:'Affirm #2', amt:12.80, day:13, endDate:'2026-08-19' },
+    { id:'affirm_03', name:'Affirm #3', amt:11.47, day:13, endDate:'2026-09-02' },
+    { id:'affirm_04', name:'Affirm #4', amt:32.88, day:13, endDate:'2026-09-10' },
+    { id:'affirm_05', name:'Affirm #5', amt:13.38, day:13, endDate:'2026-10-10' },
+    { id:'affirm_06', name:'Affirm #6', amt:23.24, day:13, endDate:'2027-02-13' },
+    { id:'affirm_07', name:'Affirm #7', amt:27.45, day:13, endDate:'2027-10-03' },
+    { id:'affirm_08', name:'Affirm #8', amt:29.91, day:13, endDate:'2027-10-14' },
+    { id:'affirm_09', name:'Affirm #9', amt:29.00, day:13, endDate:'2028-03-02' },
+  ];
+
+  for (const ab of affirmBills) {
+    const idx = bills.findIndex(b => b.id === ab.id);
+    if (idx >= 0) {
+      bills[idx] = { ...bills[idx], ...ab };
+      Logger.log(`Updated ${ab.id}`);
+    } else {
+      bills.push(ab);
+      Logger.log(`Added ${ab.id}`);
+    }
+  }
+
+  firebasePut(`${FIREBASE_BASE}/userBills.json`, bills);
+  Logger.log('✓ seedAffirmBills complete — ' + affirmBills.length + ' bills upserted');
+}
+
 // ── Helpers ──
 function sendEmail(subject, body) {
   GmailApp.sendEmail(NOTIFY_EMAIL, subject, body);
