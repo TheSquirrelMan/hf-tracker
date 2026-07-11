@@ -1,0 +1,6 @@
+index.html
+overview.txt
+.gitignore
+node_modules/
+package-lock.json
+.claude/
