@@ -941,14 +941,20 @@ function calcRoadmap(){
       }
     });
 
-    // Detect when the active snowball target gets paid off by its minimum payment
-    if(snowballActive&&snowIdx!==null){
-      const tgt=TARGETS[snowIdx];
-      if(tgt&&cardBals[tgt.id]<=0&&!milestones[tgt.id+'-done']){
+    // Detect any target fully retired by its own minimum payment — not just the
+    // currently active one. A smaller debt further down the queue can zero out on
+    // its own before its turn arrives, since minimum payments run regardless of snowIdx.
+    TARGETS.forEach(tgt=>{
+      if(cardBals[tgt.id]<=0&&!milestones[tgt.id+'-done']){
         cardBals[tgt.id]=0;
         milestones[tgt.id+'-done']={date:dateStr,label:tgt.label};
-        snowIdx++;
-        if(snowIdx>=TARGETS.length){milestones['debt-free']={date:dateStr};snowIdx=null;}
+      }
+    });
+    if(snowIdx!==null){
+      while(snowIdx<TARGETS.length&&cardBals[TARGETS[snowIdx].id]<=0)snowIdx++;
+      if(snowIdx>=TARGETS.length){
+        if(!milestones['debt-free'])milestones['debt-free']={date:dateStr};
+        snowIdx=null;
       }
     }
 
@@ -1175,16 +1181,30 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
   if(ssDate){
     const TARGETS = getSnowballTargets();
     for(let dd=fromDay;dd<=dim;dd++){
-      const edow=new Date(year,month,dd).getDay();
-      if(!(dd===7||dd===22||isKarenPayday(year,month,dd)))continue;
       const eventDate=`${year}-${String(month+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
       if(eventDate<ssDate)continue;
+      // A debt can be fully retired by its own scheduled minimum payment on a day that
+      // isn't a payday — surface that CLEARED milestone even when today isn't a payday.
+      const clearedToday=TARGETS.find(t=>roadmap[t.id+'-done']?.date===eventDate);
+      const isPayday=dd===7||dd===22||isKarenPayday(year,month,dd);
+      if(!isPayday){
+        if(clearedToday){
+          evts.push({day:dd,title:`${clearedToday.label} — CLEARED`,amt:0,color:'var(--pur)',note:'Final payment · debt closed',isIncome:false,feat:true,isFinal:true});
+        }
+        continue;
+      }
       const activeTarget=TARGETS.find(t=>{
         if(ssDate>eventDate)return false;
         if(bal(cb,t.id)<=0)return false; // already paid off before simulation start — no transition milestone to find
         const done=roadmap[t.id+'-done'];
         return!done||done.date>=eventDate;
       });
+      // A different (non-active) target can coincidentally clear via its own minimum
+      // payment on the same day as a payday — surface it too, without duplicating
+      // the active target's own CLEARED event handled below.
+      if(clearedToday&&(!activeTarget||clearedToday.id!==activeTarget.id)){
+        evts.push({day:dd,title:`${clearedToday.label} — CLEARED`,amt:0,color:'var(--pur)',note:'Final payment · debt closed',isIncome:false,feat:true,isFinal:true});
+      }
       if(!activeTarget)continue;
       const prevDate=new Date(year,month,dd-1).toISOString().split('T')[0];
       const prevBal=balLog[prevDate],todayBal=balLog[eventDate];
