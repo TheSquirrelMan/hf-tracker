@@ -1181,6 +1181,7 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
       if(eventDate<ssDate)continue;
       const activeTarget=TARGETS.find(t=>{
         if(ssDate>eventDate)return false;
+        if(bal(cb,t.id)<=0)return false; // already paid off before simulation start — no transition milestone to find
         const done=roadmap[t.id+'-done'];
         return!done||done.date>=eventDate;
       });
