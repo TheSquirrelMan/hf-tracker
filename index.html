@@ -893,6 +893,10 @@ function calcRoadmap(){
   pendingSinkingPhases.forEach(p=>{sinkingSaves[p.id]=0;});
   let lastPhaseDate=null;
   let snowballActive=pendingThresholdPhases.length===0;
+  // Real completion state, captured before any affordability-based auto-advance below.
+  // Phases can only truly finish via the user's ✓ (phaseDone) — projected affordability
+  // is shown as a date estimate but must never by itself unlock the snowball.
+  const canSnowballStart=snowballActive;
   let snowIdx=TARGETS.findIndex(t=>cardBals[t.id]>0);
   if(snowIdx===-1)snowIdx=null;
 
@@ -908,7 +912,7 @@ function calcRoadmap(){
       balance-=phaseAmt(phase.id,phase.cost);
       lastPhaseDate=new Date(now);
       pendingThresholdPhases.shift();
-      if(pendingThresholdPhases.length===0){
+      if(pendingThresholdPhases.length===0&&canSnowballStart){
         snowballActive=true;
         milestones['snowball-start']={date:todayStr};
       }
@@ -977,7 +981,7 @@ function calcRoadmap(){
               balance-=phaseAmt(phase.id,phase.cost);
               lastPhaseDate=new Date(d);
               pendingThresholdPhases.shift();
-              if(pendingThresholdPhases.length===0){
+              if(pendingThresholdPhases.length===0&&canSnowballStart){
                 snowballActive=true;
                 milestones['snowball-start']={date:dateStr};
               }
