@@ -1075,11 +1075,18 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
   const fromDay = 1;
   
   const phaseDone=S.phaseDone||{};
-  const cb={...(S.cardBals||{})};
-  getSnowballTargets().forEach(t=>{
-    const done=roadmap[t.id+'-done'];
-    if(done&&done.date.substring(0,7)<=key)cb[t.id]=0;
-  });
+  // A target's "-done" milestone can land on any day within a month — comparing by
+  // month alone (as this used to) treats a debt as already cleared for the ENTIRE
+  // month it pays off in, even on days before its real payoff date. Compare exact
+  // dates instead, computed fresh for whichever day is being evaluated.
+  const cbAsOf=(dateStr)=>{
+    const c={...(S.cardBals||{})};
+    getSnowballTargets().forEach(t=>{
+      const done=roadmap[t.id+'-done'];
+      if(done&&done.date<=dateStr)c[t.id]=0;
+    });
+    return c;
+  };
   const add=(day,title,amt,color,note='',isIncome=false,feat=false,isFinal=false,billId=null)=>{
     if(day>=1&&day<=dim)evts.push({day,title,amt,color,note,isIncome,feat,isFinal,billId});
   };
@@ -1146,7 +1153,8 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
   // All bills from getDailyBills (Firebase-driven)
   const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   for(let d=fromDay; d<=dim; d++) {
-    getDailyBills(year, month, d, cb).forEach(b => {
+    const dCb=cbAsOf(`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+    getDailyBills(year, month, d, dCb).forEach(b => {
       if (b.isIncome) return; // Already handled above
       // Planned Sunday disc budget: skip past/today — actual disc shown via discLog
       if (!b.billId && b.label === 'Discretionary' && new Date(year, month, d) <= todayMidnight) return;
@@ -1198,7 +1206,10 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
       }
       const activeTarget=TARGETS.find(t=>{
         if(ssDate>eventDate)return false;
-        if(bal(cb,t.id)<=0)return false; // already paid off before simulation start — no transition milestone to find
+        // Real (unzeroed) balance check: was this already paid off before the
+        // simulation even started — not "is it done sometime this month" (that's
+        // what the exact-date done.date check right below is for).
+        if(bal(S.cardBals||{},t.id)<=0)return false;
         const done=roadmap[t.id+'-done'];
         return!done||done.date>=eventDate;
       });
@@ -1212,7 +1223,7 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
       const prevDate=new Date(year,month,dd-1).toISOString().split('T')[0];
       const prevBal=balLog[prevDate],todayBal=balLog[eventDate];
       if(prevBal===undefined||todayBal===undefined)continue;
-      const dayNet=getDailyBills(year,month,dd,cb).reduce((a,b)=>a+b.amt,0);
+      const dayNet=getDailyBills(year,month,dd,cbAsOf(eventDate)).reduce((a,b)=>a+b.amt,0);
       const rawAmt=Math.round(prevBal+dayNet-todayBal);
       const phaseDeduction=getPhases().filter(p=>{
         const pm=roadmap[p.id];
