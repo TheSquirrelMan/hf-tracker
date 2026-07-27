@@ -1185,11 +1185,14 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
       if(eventDate<ssDate)continue;
       // A debt can be fully retired by its own scheduled minimum payment on a day that
       // isn't a payday — surface that CLEARED milestone even when today isn't a payday.
+      // On a non-payday the only thing that can zero a card's balance is its own
+      // regular bill, so that bill's amount is the real final payment.
       const clearedToday=TARGETS.find(t=>roadmap[t.id+'-done']?.date===eventDate);
+      const clearedBillAmt=clearedToday?((S.userBills||[]).find(b=>b.cardId===clearedToday.id)?.amt||0):0;
       const isPayday=dd===7||dd===22||isKarenPayday(year,month,dd);
       if(!isPayday){
         if(clearedToday){
-          evts.push({day:dd,title:`${clearedToday.label} — CLEARED`,amt:0,color:'var(--pur)',note:'Final payment · debt closed',isIncome:false,feat:true,isFinal:true});
+          evts.push({day:dd,title:`${clearedToday.label} — CLEARED`,amt:-clearedBillAmt,color:'var(--pur)',note:'Final minimum payment closes this out',isIncome:false,feat:true,isFinal:true});
         }
         continue;
       }
@@ -1203,7 +1206,7 @@ function getMonthEvents(year,month,roadmap,balLog,sinkingLog){
       // payment on the same day as a payday — surface it too, without duplicating
       // the active target's own CLEARED event handled below.
       if(clearedToday&&(!activeTarget||clearedToday.id!==activeTarget.id)){
-        evts.push({day:dd,title:`${clearedToday.label} — CLEARED`,amt:0,color:'var(--pur)',note:'Final payment · debt closed',isIncome:false,feat:true,isFinal:true});
+        evts.push({day:dd,title:`${clearedToday.label} — CLEARED`,amt:-clearedBillAmt,color:'var(--pur)',note:'Final minimum payment closes this out',isIncome:false,feat:true,isFinal:true});
       }
       if(!activeTarget)continue;
       const prevDate=new Date(year,month,dd-1).toISOString().split('T')[0];
