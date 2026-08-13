@@ -696,13 +696,13 @@ function seedDefaultBills() {
 
   const userBills = [
     // ── Fixed-term debts (cardId = snowball target) ──
-    { id:'bill_amazon_store',   name:'Amazon Store Card',       amt:29,  day:1,  cardId:'amazon',   endDate:'2026-08', keyword:'AMZ_STORECRD_PMT PAYMENT' },
+    { id:'bill_amazon_store',   name:'Amazon Store Card',       amt:29,  day:1,  cardId:'amazon',   endDate:'2026-08', keyword:'AMZ_STORECRD_PMT PAYMENT|AMZ_STORECRD' },
     { id:'bill_cap3186',        name:'Cap One #3186 (Karen)',    amt:25,  day:11, cardId:'cap3186',  endDate:'2026-10', keyword:'CAPITAL ONE' },
     { id:'bill_cap4565',        name:'Cap One #4565 (Jon)',      amt:25,  day:21, cardId:'cap4565',  endDate:'2026-12', keyword:'CAPITAL ONE' },
     { id:'bill_cap5592',        name:'Cap One #5592 (Karen)',    amt:25,  day:21, cardId:'cap5592',  endDate:'2026-12', keyword:'CAPITAL ONE' },
     { id:'bill_cap7988',        name:'Cap One #7988 (Jon)',      amt:30,  day:21, cardId:'cap7988',  endDate:'2027-01', keyword:'CAPITAL ONE' },
     { id:'bill_merrick',        name:'Merrick Bank',             amt:35,  day:11, cardId:'merrick',  endDate:'2026-11', keyword:'MERRICK' },
-    { id:'bill_chase',          name:'Chase/Amazon credit',      amt:26,  day:26, cardId:'chase',    endDate:'2027-04', keyword:'CHASE CREDIT CRD EPAY' },
+    { id:'bill_chase',          name:'Chase/Amazon credit',      amt:26,  day:26, cardId:'chase',    endDate:'2027-04', keyword:'CHASE CREDIT CRD EPAY|CHASE CREDIT CRD' },
     { id:'bill_usaa_amex',      name:'USAA Amex (Karen)',        amt:63,  day:15, cardId:'usaaAmex', endDate:'2027-02', keyword:'USAA' },
     { id:'bill_kpaypal',        name:"Karen's PayPal Credit",    amt:100, day:13, cardId:'kpaypal',  endDate:'2027-05', keyword:'PAYPAL' },
     { id:'bill_tn',             name:'TN Unemployment',          amt:153, day:22, cardId:'tn',       endDate:'2027-12', keyword:'TN' },
@@ -762,6 +762,8 @@ function seedDefaultBills() {
     mazda:    20693,
   };
 
+  firebasePut(`${FIREBASE_BASE}/userBills.json`,      userBills);
+  firebasePut(`${FIREBASE_BASE}/phases.json`,         phases);
   firebasePut(`${FIREBASE_BASE}/cardStartBals.json`,  cardStartBals);
   firebasePut(`${FIREBASE_BASE}/discMonthlyCap.json`, 200);
   firebasePut(`${FIREBASE_BASE}/discWeekly.json`,     50);
