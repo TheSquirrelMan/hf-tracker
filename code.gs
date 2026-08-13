@@ -688,29 +688,6 @@ function cleanMazdaPhantoms() {
   Logger.log('✓ cleanMazdaPhantoms complete');
 }
 
-// ── One-shot: fix Amazon card keyword + restore balance ──
-function fixAmazonData() {
-  initFirebasePath();
-  const state = firebaseGet(`${FIREBASE_BASE}.json`) || {};
-
-  // 1. Update the bill keyword from 'AMAZON' → 'AMZ_STORECRD'
-  const bills = state.userBills || [];
-  const bIdx = bills.findIndex(b => b.id === 'bill_amazon_store');
-  if (bIdx >= 0) {
-    bills[bIdx].keyword = 'AMZ_STORECRD';
-    firebasePut(`${FIREBASE_BASE}/userBills.json`, bills);
-    Logger.log('✓ Amazon Store Card keyword updated to AMZ_STORECRD');
-  }
-
-  // 2. Restore card balance to starting balance ($235)
-  let cardBals = state.cardBals || {};
-  cardBals.amazon = 235;
-  firebasePut(`${FIREBASE_BASE}/cardBals.json`, cardBals);
-  Logger.log('✓ cardBals[amazon] restored to $235');
-
-  Logger.log('✓ fixAmazonData complete — run once');
-}
-
 // ── Seed / restore baseline data to Firebase ──
 // Run this once from the Apps Script editor if Firebase is ever wiped.
 // Does NOT overwrite live balances (bal4496/cardBals), spend logs, or processed IDs.
