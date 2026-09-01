@@ -81,7 +81,8 @@ function syncUSAABalance() {
 
       // Parse account number from email body
       // Pattern: "Account number: ...0725" or "...4496"
-      const acctMatch = body.match(/Account number:\s*\n?\s*…?(\d{4})/);
+      // USAA masks the account as ASCII "...4496", not the Unicode ellipsis "…4496"
+      const acctMatch = body.match(/Account number:\s*[.…]*\s*(\d{4})/);
       if (!acctMatch) { Logger.log("Could not parse account number."); continue; }
       const acctNum = acctMatch[1];
       Logger.log(`Found account: ${acctNum}`);
