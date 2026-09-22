@@ -716,6 +716,11 @@ window.editBal=a=>{
   openModal('bal'+a,`Update ${a==='0725'?'savings':('#'+a)} balance`);
 };
 
+// ══ HELPER: local-date → YYYY-MM-DD key (never toISOString — that shifts by timezone) ══
+function isoDay(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 // ══ HELPER: Get card balance (from S.cardBals or CARD_START_BALS fallback) ══
 function bal(cb, id) {
   // First check S.cardBals, then S.cardStartBals from Firebase
@@ -929,7 +934,7 @@ function calcRoadmap(){
 
   for(let i=0;i<1500;i++){
     const yr=d.getFullYear(),mo=d.getMonth(),dy=d.getDate();
-    const dateStr=d.toISOString().split('T')[0];
+    const dateStr=isoDay(d);
 
     let dayBills;
     try{S.cardBals=cardBals;dayBills=getDailyBills(yr,mo,dy,cardBals);}finally{S.cardBals=origCB;}
@@ -1284,10 +1289,18 @@ function postedTag(billId,label){
 
 // ══ RENDER WEEK ══
 function renderWeek(){
-  document.getElementById('b4496').textContent='$'+Math.round(S.bal4496).toLocaleString();
-  document.getElementById('b6764').textContent='$'+Math.round(S.bal6764).toLocaleString();
-  document.getElementById('b0725').textContent='$'+Math.round(S.bal0725).toLocaleString();
+  // Balances are written outside the guarded body so a roadmap failure cannot blank
+  // them, and a missing/NaN balance shows "--" rather than "$NaN".
+  const setBal=(id,v)=>{
+    document.getElementById(id).textContent=Number.isFinite(v)?'$'+Math.round(v).toLocaleString():'--';
+  };
+  setBal('b4496',S.bal4496); setBal('b6764',S.bal6764); setBal('b0725',S.bal0725);
+  // This Week is the default tab; before this guard a throw left it silently blank.
+  const out=safeRender(()=>{renderWeekBody();return null;},'Error loading this week');
+  if(out!==null)document.getElementById('week-content').innerHTML=out;
+}
 
+function renderWeekBody(){
   const today=now.getDate();
   const todayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(today).padStart(2,'0')}`;
   const {milestones:roadmap,balLog,sinkingLog}=calcRoadmap();
@@ -1366,16 +1379,23 @@ function renderWeek(){
   }
 
   // Next 7 days
+  // Keyed by ISO date, NOT day-of-month. Day-of-month overflows past the end of the
+  // month (32, 33, 34…), which produced keys like "2026-09-32" that never matched
+  // balLog — so the running balance silently fell back to accumulation and diverged
+  // from Month Plan for the tail of every month.
   const weekEvtsByDay={};
-  const addWE=(dayOffset,label,amt,isIncome,color,note='',feat=false,billId=null)=>{
-    if(!weekEvtsByDay[dayOffset])weekEvtsByDay[dayOffset]=[];
-    weekEvtsByDay[dayOffset].push({label,amt,isIncome,color,note,feat,billId});
+  const addWE=(dayKey,label,amt,isIncome,color,note='',feat=false,billId=null)=>{
+    if(!weekEvtsByDay[dayKey])weekEvtsByDay[dayKey]=[];
+    weekEvtsByDay[dayKey].push({label,amt,isIncome,color,note,feat,billId});
   };
+  const weekKeys=[];
   for(let dd=today;dd<=today+6;dd++){
     const ed=new Date(now.getFullYear(),now.getMonth(),dd);
+    const ek=isoDay(ed);
+    weekKeys.push(ek);
     getDailyBills(ed.getFullYear(),ed.getMonth(),ed.getDate()).forEach(b=>{
-      if(!b.billId && b.label==='Discretionary' && dd===today) return;
-      addWE(dd,b.label,b.amt,b.isIncome,b.isIncome?'var(--grn)':'var(--t3)','',false,b.billId||null);
+      if(!b.billId && b.label==='Discretionary' && ek===todayKey) return;
+      addWE(ek,b.label,b.amt,b.isIncome,b.isIncome?'var(--grn)':'var(--t3)','',false,b.billId||null);
     });
   }
   // Sinking fund deductions — counted line items on each payday
@@ -1383,9 +1403,9 @@ function renderWeek(){
   Object.keys(sl).forEach(dk=>{
     const sp=new Date(dk+'T12:00:00');
     if(isNaN(sp.getTime()))return;
-    const dd=sp.getDate();
-    if(dd<today||dd>today+6)return;
-    if(sp.getMonth()!==now.getMonth()||sp.getFullYear()!==now.getFullYear())return;
+    // Window test by ISO key — the old day-of-month + same-month test dropped every
+    // sinking-fund event that fell in the next month's slice of the 7-day window.
+    if(!weekKeys.includes(dk))return;
     const daySink=sl[dk];
     const labels=[];
     const notes=[];
@@ -1401,7 +1421,7 @@ function renderWeek(){
       total+=amt;
     });
     if(total>0){
-      addWE(dd,`→ ${labels.join(', ')} savings`,-total,false,'#9b82e8',notes.join(' · '),true);
+      addWE(dk,`→ ${labels.join(', ')} savings`,-total,false,'#9b82e8',notes.join(' · '),true);
     }
   });
   const todayLocale=new Date().toLocaleDateString();
@@ -1411,7 +1431,7 @@ function renderWeek(){
     const catLabel=e.cat&&e.cat!=='discretionary'?e.cat.charAt(0).toUpperCase()+e.cat.slice(1):'Discretionary';
     const catColor=e.cat==='gas'?'#5c5c58':e.cat==='groceries'?'#4a8fa8':'#6b9fd4';
     const autoTag=e.auto?' ⚡ auto':'';
-    addWE(today,e.label||catLabel,-Math.abs(e.amt),false,catColor,'Logged · '+catLabel+autoTag);
+    addWE(todayKey,e.label||catLabel,-Math.abs(e.amt),false,catColor,'Logged · '+catLabel+autoTag);
   });
   const todayDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   const in7=new Date(todayDate);in7.setDate(in7.getDate()+7);
@@ -1420,8 +1440,7 @@ function renderWeek(){
     const m=roadmap[p.id];if(!m)return;
     const md=new Date(m.date+'T12:00:00');
     if(md>=todayDate&&md<in7){
-      const mdMid=new Date(m.date+'T00:00:00'); const diff=Math.round((mdMid-todayDate)/86400000);
-      addWE(today+diff,p.label.toUpperCase(),-phaseAmt(p.id,p.cost),false,'var(--amb)',`$${phaseAmt(p.id,p.cost).toLocaleString()} · calculated safe date`,true);
+      addWE(m.date,p.label.toUpperCase(),-phaseAmt(p.id,p.cost),false,'var(--amb)',`$${phaseAmt(p.id,p.cost).toLocaleString()} · calculated safe date`,true);
     }
   });
   if(allPhasesDone){
@@ -1431,26 +1450,24 @@ function renderWeek(){
       const m=roadmap[nxt.id+'-done'];if(m){
         const md=new Date(m.date+'T12:00:00');
         if(md>=todayDate&&md<in7){
-          const mdMid=new Date(m.date+'T00:00:00'); const diff=Math.round((mdMid-todayDate)/86400000);
-          addWE(today+diff,`${nxt.label} — PAID OFF`,0,false,'var(--pur)','Snowball clears this debt',true);
+          addWE(m.date,`${nxt.label} — PAID OFF`,0,false,'var(--pur)','Snowball clears this debt',true);
         }
       }
     }
   }
-  const wdays=Object.keys(weekEvtsByDay).map(Number).sort((a,b)=>a-b);
+  const wdays=Object.keys(weekEvtsByDay).sort();   // ISO keys sort lexically
   if(wdays.length){
     html+=`<div class="card"><div class="card-title">Next 7 days</div><div class="evlist">`;
     let runBal=balLog[todayKey]!==undefined?balLog[todayKey]:S.bal4496;
-    wdays.forEach(day=>{
-      const isToday=day===today;
-      const ed=new Date(now.getFullYear(),now.getMonth(),day);
+    wdays.forEach(dayKey=>{
+      const isToday=dayKey===todayKey;
+      const ed=new Date(dayKey+'T12:00:00');
       const dow=DN[ed.getDay()];
-      const dayKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      html+=`<div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:${day===wdays[0]?'0':'8px'} 0 3px;text-transform:uppercase;letter-spacing:.06em;">${isToday?'TODAY · ':''}${dow} ${ed.getDate()}</div>`;
-      let dayNet=weekEvtsByDay[day].reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
+      html+=`<div style="font-size:10px;color:${isToday?'var(--amb)':'var(--t3)'};font-weight:700;padding:${dayKey===wdays[0]?'0':'8px'} 0 3px;text-transform:uppercase;letter-spacing:.06em;">${isToday?'TODAY · ':''}${dow} ${ed.getDate()}</div>`;
+      let dayNet=weekEvtsByDay[dayKey].reduce((a,e)=>a+(typeof e.amt==='number'?e.amt:0),0);
       // Use roadmap balLog when available (matches Month Plan), accumulate otherwise
       if(balLog[dayKey]!==undefined){runBal=balLog[dayKey];}else{runBal+=dayNet;}
-      weekEvtsByDay[day].forEach(e=>{
+      weekEvtsByDay[dayKey].forEach(e=>{
         const ac=e.isIncome?'var(--grn)':e.amt<0?'var(--red)':e.color||'var(--t2)';
         const as=e.amt!==0?(e.amt>0?`+$${Math.round(e.amt).toLocaleString()}`:`-$${Math.round(Math.abs(e.amt)).toLocaleString()}`):'';
         html+=`<div class="ev${e.feat?' feat':''}" style="${e.feat?`border-left:2px solid ${e.color};padding-left:8px;margin-left:-8px;`:''}">
