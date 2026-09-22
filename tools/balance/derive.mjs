@@ -35,6 +35,13 @@ export function derive(events, account, asOf = new Date()) {
   const applied = mine.slice(anchorIdx + 1).filter(e => e.kind !== 'balance');
   const delta = applied.reduce((a, e) => a + e.sign * e.amount, 0);
 
+  // SELF-CHECK. Any enumeration can miss messages — Gmail thread search demonstrably
+  // does — so never present a derived balance as trustworthy without testing the
+  // fetch against the last CLOSED anchor interval, where the answer is already known.
+  // A non-zero residual there means events were missed and this balance is wrong by
+  // at least that much. Detection beats trusting the transport.
+  const check = lastIntervalResidual(mine, anchorIdx);
+
   return {
     account,
     balance: Math.round((anchor.amount + delta) * 100) / 100,
@@ -42,8 +49,37 @@ export function derive(events, account, asOf = new Date()) {
     delta: Math.round(delta * 100) / 100,
     applied,
     staleness_hours: Math.round(((asOf - anchor.at) / 36e5) * 10) / 10,
+    // trusted only when the previous interval reconciled exactly
+    trusted: check.residual === null ? null : Math.abs(check.residual) < 0.01,
+    check,
     // honest about what it cannot see
-    caveat: 'debit alerts are threshold-gated; sub-threshold debits are not reflected',
+    caveat: 'debit alerts fire on POSTING; pending holds are not reflected',
+  };
+}
+
+/**
+ * Residual across the most recent CLOSED interval (the two anchors before `anchorIdx`).
+ * null when there is no earlier anchor to close an interval against.
+ */
+function lastIntervalResidual(sorted, anchorIdx) {
+  let prevIdx = -1;
+  for (let i = anchorIdx - 1; i >= 0; i--) {
+    if (sorted[i].kind === 'balance') { prevIdx = i; break; }
+  }
+  if (prevIdx < 0) return { residual: null, reason: 'only one anchor — nothing to verify against' };
+  const prev = sorted[prevIdx], cur = sorted[anchorIdx];
+  const between = sorted.slice(prevIdx + 1, anchorIdx).filter(e => e.kind !== 'balance');
+  const predicted = prev.amount + between.reduce((a, e) => a + e.sign * e.amount, 0);
+  const residual = Math.round((cur.amount - predicted) * 100) / 100;
+  return {
+    residual,
+    predicted: Math.round(predicted * 100) / 100,
+    actual: cur.amount,
+    events: between.length,
+    from: prev.at, to: cur.at,
+    reason: residual === 0 ? 'reconciled exactly'
+      : residual < 0 ? `missed ~$${Math.abs(residual)} of debits in the previous interval`
+      : `missed ~$${residual} of credits in the previous interval`,
   };
 }
 

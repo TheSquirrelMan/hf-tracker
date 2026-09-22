@@ -209,3 +209,42 @@ test('toEvent: the newest debit is NOT dropped by derive', () => {
   assert.equal(r.applied.length, 1);          // would be 0 under the local-parse bug
   assert.equal(r.balance, 1209.56);           // 1234.56 - 25
 });
+
+// ── gap detection: the fix for "a search silently returned fewer messages" ─────
+test('derive: flags an incomplete fetch instead of reporting a wrong balance', () => {
+  // Two anchors 1000 -> 800. Only a -$50 debit was fetched, so $150 went missing.
+  const a1 = { ...parseBalance(BALANCE), amount: 1000 };
+  const a2 = { ...parseBalance(BALANCE), amount: 800 };
+  const d50 = { ...parseDebit(DEBIT_BLANKLINE), amount: 50 };
+  const events = [
+    ev(a1, '2026-09-20T13:56:00'),
+    ev(d50, '2026-09-20T18:00:00'),
+    ev(a2, '2026-09-21T13:56:00'),
+    ev(d50, '2026-09-21T18:00:00'),
+  ];
+  const r = derive(events, '1111', at('2026-09-21T20:00:00'));
+  assert.equal(r.balance, 750);
+  assert.equal(r.trusted, false);                 // <- the whole point
+  assert.equal(r.check.residual, -150);
+  assert.match(r.check.reason, /missed ~\$150 of debits/);
+});
+
+test('derive: trusted when the previous interval reconciles exactly', () => {
+  const a1 = { ...parseBalance(BALANCE), amount: 1000 };
+  const a2 = { ...parseBalance(BALANCE), amount: 950 };
+  const d50 = { ...parseDebit(DEBIT_BLANKLINE), amount: 50 };
+  const events = [
+    ev(a1, '2026-09-20T13:56:00'),
+    ev(d50, '2026-09-20T18:00:00'),
+    ev(a2, '2026-09-21T13:56:00'),
+  ];
+  const r = derive(events, '1111', at('2026-09-21T14:00:00'));
+  assert.equal(r.trusted, true);
+  assert.equal(r.check.residual, 0);
+});
+
+test('derive: a single anchor cannot be verified, so trusted is null not true', () => {
+  const r = derive([ev(parseBalance(BALANCE), '2026-09-21T13:56:00')], '1111', at('2026-09-21T14:00:00'));
+  assert.equal(r.trusted, null);
+  assert.match(r.check.reason, /only one anchor/);
+});

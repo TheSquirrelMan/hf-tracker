@@ -91,6 +91,17 @@ export function parseAlert({ subject = '', body = '' } = {}) {
 }
 
 /**
+ * TRANSPORT WARNING — do not enumerate with a thread search.
+ *
+ * Gmail's thread search returns only the messages of a thread that matched the query,
+ * not the thread's contents. Measured 2026-09-22: thread 1a0c37c8... held 13 debit
+ * alerts; `search_threads` surfaced 5, and repeated searches surfaced different
+ * subsets. A $4,372.74 payment was invisible that way, and the derived balance was
+ * $5,032 too high with no error anywhere.
+ *
+ * So the Gmail transport must page `users.messages.list` (message level) or expand
+ * every thread with `users.threads.get`. Never treat a search result as the full set.
+ *
  * Build an event from a Gmail message.
  *
  * TIMEZONE TRAP, learned the hard way: Gmail's `date` is ISO with a trailing Z (UTC)
