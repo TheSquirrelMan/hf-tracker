@@ -6,10 +6,19 @@
 // error can never accumulate beyond one anchor interval — the next anchor resets it
 // to zero. That is the whole reason this works without an API.
 //
-// KNOWN GAP, do not hide it: USAA debit alerts are threshold-gated ("a debit over a
-// certain amount"), so sub-threshold debits are invisible and the derived balance
-// reads HIGH until the next anchor. `reconcile()` measures exactly that, so the cost
-// of the threshold is reported rather than assumed.
+// KNOWN GAP, do not hide it. It was assumed to be USAA's alert threshold ("a debit over
+// a certain amount"), making small debits invisible. MEASURED 2026-09-22 over 149 real
+// debit alerts in 35 days: the smallest is **$2.12**, so effectively nothing is below
+// the threshold and that explanation is WRONG. What the residuals actually are:
+//   - timing — an alert's `internalDate` lags the bank's posting, so an event lands on
+//     the wrong side of an anchor. These show up as adjacent intervals whose residuals
+//     cancel exactly (-$113.66 then +$113.66), 6 of 33.
+//   - event types that never alert at all: fees, interest, and internal transfers,
+//     which emit only their CREDIT leg.
+// Net over 33 intervals: 30% exact, 48% allowing cancelling pairs, individual intervals
+// off by up to +/-$700, but unexplained mean only $6.03 — so no drift; each anchor
+// resets the error. `reconcile()` is what produced those numbers; re-run it rather than
+// trusting this comment.
 
 /**
  * @param {Array} events  parsed alerts, each {kind, account, amount, sign, at:Date}
