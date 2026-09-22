@@ -498,6 +498,13 @@ function matchDebit(merchant, amt, userBills, txDow) {
   // 2. Match against userBills keywords from Firebase
   const billsWithKeywords = userBills.filter(b => b.keyword || b.debitKeyword);
 
+  // Collect EVERY bill whose keyword matches — not just the first. Several bills can
+  // share one keyword (all four Capital One cards use "CAPITAL ONE"; irs1 and irs2 both
+  // use "IRS"). Returning on the first match credited every such payment to whichever
+  // bill happened to sit earliest in userBills, and made the amount-based
+  // disambiguation below unreachable — live data showed all 8 Capital One payments
+  // landing on cap3186 while cap4565/5592/7988 received none.
+  const kwMatches = [];
   for (const bill of billsWithKeywords) {
     const keywords = (bill.keyword || bill.debitKeyword).split('|');
     for (const kw of keywords) {
@@ -506,21 +513,32 @@ function matchDebit(merchant, amt, userBills, txDow) {
       if (merchant.includes(kwTrim)) {
         // For Affirm — match any AFFIRM* prefix
         if (kwTrim === 'AFFIRM' && !merchant.startsWith('AFFIRM')) continue;
-        return { status: "matched", bill: bill.id, label: bill.name };
+        kwMatches.push(bill);
+        break;
       }
     }
   }
 
-  // 3. Capital One — multiple bills share the merchant name, disambiguate by amount
-  if (merchant.includes("CAPITAL ONE")) {
-    const capOneBills = userBills.filter(b => (b.keyword || b.debitKeyword || "").includes("CAPITAL ONE"));
-    if (capOneBills.length) {
-      const sorted = capOneBills
-        .map(b => ({ ...b, diff: Math.abs(amt - b.amt) }))
-        .sort((a, b) => a.diff - b.diff);
-      if (sorted[0].diff <= 10) {
-        return { status: "matched", bill: sorted[0].id, label: sorted[0].name };
-      }
+  if (kwMatches.length === 1) {
+    return { status: "matched", bill: kwMatches[0].id, label: kwMatches[0].name };
+  }
+
+  // 3. Ambiguous keyword — disambiguate by closest amount, and refuse to guess past
+  //    $10. An ambiguous debit belongs in the pending inbox, not on whichever card
+  //    sorted first. (This replaces the old Capital-One-only block, which was dead code.)
+  if (kwMatches.length > 1) {
+    const sorted = kwMatches
+      .map(b => ({ bill: b, diff: Math.abs(amt - (b.amt || 0)) }))
+      .sort((a, b) => a.diff - b.diff);
+    // A tie is not a match. cap3186 and cap5592 both have amt $25, so a $25 Capital One
+    // payment is genuinely undecidable from merchant+amount — picking the closest would
+    // just be "the first bill among equals", which is the same silent guess this block
+    // exists to remove. Send it to the inbox instead.
+    if (sorted.length > 1 && sorted[1].diff === sorted[0].diff) {
+      return { status: "pending" };
+    }
+    if (sorted[0].diff <= 10) {
+      return { status: "matched", bill: sorted[0].bill.id, label: sorted[0].bill.name };
     }
     return { status: "pending" };
   }
