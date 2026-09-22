@@ -23,12 +23,27 @@ if (!cmd || has('help')) {
   process.exit(0);
 }
 const DB = 'https://hf-tracker-81e76-default-rtdb.firebaseio.com';
-async function loadLive() {
+let _secret = null;
+async function secret() {
+  if (_secret) return _secret;
   const cfg = await (await fetch(`${DB}/app_config.json`)).json();
   if (!cfg || !cfg.dataSecret) throw new Error('could not read app_config');
-  const st = await (await fetch(`${DB}/hft/${cfg.dataSecret}/state.json`)).json();
+  return (_secret = cfg.dataSecret);   // never printed or written to disk
+}
+async function loadLive() {
+  const st = await (await fetch(`${DB}/hft/${await secret()}/state.json`)).json();
   if (!st) throw new Error('could not read state');
-  return st;                       // secret is never printed or written to disk
+  return st;
+}
+// Surgical single-field write. Deliberately NOT a whole-state PUT: the web app's
+// pending-save merge list omits userBills/phases/cardBals, so a broad write races
+// with anything he is editing in the PWA.
+async function putField(path, value) {
+  const r = await fetch(`${DB}/hft/${await secret()}/state/${path}.json`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(value),
+  });
+  return r.status;
 }
 
 const statePath = flag('state');
@@ -135,4 +150,62 @@ if (cmd === 'whatif') {
   }
   process.exit(0);
 }
+// ── set: change the live model. DRY RUN unless --apply. ──────────────────────────
+if (cmd === 'set') {
+  if (!has('live')) { console.error('set requires --live'); process.exit(2); }
+  const set = JSON.parse(flag('set') || '{}');
+  if (!Object.keys(set).length) { console.error('nothing to set'); process.exit(2); }
+
+  // resolve every change to an exact Firebase path + before/after value
+  const writes = [];
+  for (const [k, v] of Object.entries(set)) {
+    if ((k === 'userBills' || k === 'phases') && Array.isArray(v)) {
+      for (const patch of v) {
+        const i = (base[k] || []).findIndex(x => x && x.id === patch.id);
+        if (i < 0) { console.error(`${k}: no entry with id "${patch.id}" — refusing to create one`); process.exit(2); }
+        for (const [f, val] of Object.entries(patch)) {
+          if (f === 'id') continue;
+          writes.push({ path: `${k}/${i}/${f}`, label: `${k}[${patch.id}].${f}`, from: base[k][i][f], to: val });
+        }
+      }
+    } else if (v && typeof v === 'object' && !Array.isArray(v)) {
+      for (const [f, val] of Object.entries(v))
+        writes.push({ path: `${k}/${f}`, label: `${k}.${f}`, from: (base[k] || {})[f], to: val });
+    } else {
+      writes.push({ path: k, label: k, from: base[k], to: v });
+    }
+  }
+
+  const alt = model(applySet(base, set));
+  console.log(has('apply') ? 'APPLYING\n' : 'DRY RUN — nothing written. Re-run with --apply.\n');
+  console.log('  changes:');
+  for (const w of writes) console.log(`    ${w.label.padEnd(30)} ${JSON.stringify(w.from)}  ->  ${JSON.stringify(w.to)}`);
+  console.log('\n  projection impact:');
+  console.log(`    surplus/mo   $${m.surplus}${m.surplus !== alt.surplus ? `  ->  $${alt.surplus}` : '  (unchanged)'}`);
+  console.log(`    debt total   $${m.debtTotal}${m.debtTotal !== alt.debtTotal ? `  ->  $${alt.debtTotal}` : '  (unchanged)'}`);
+  console.log(`    debt-free    ${m.debtFreeDate}${m.debtFreeDate !== alt.debtFreeDate ? `  ->  ${alt.debtFreeDate}` : '  (unchanged)'}`);
+  const moved = m.debts.map((x, i) => [x, alt.debts[i]]).filter(([a, b]) => b && a.payoff !== b.payoff);
+  for (const [a, b] of moved) console.log(`    ${(a.name || a.id).slice(0, 26).padEnd(28)} ${a.payoff} -> ${b.payoff}`);
+
+  if (!has('apply')) process.exit(0);
+
+  console.log('');
+  let bad = 0;
+  for (const w of writes) {
+    const code = await putField(w.path, w.to);
+    console.log(`    PUT ${w.label.padEnd(30)} HTTP ${code}`);
+    if (code !== 200) bad++;
+  }
+  const after = await loadLive();          // read back, never trust the status alone
+  const check = writes.map(w => {
+    const got = w.path.split('/').reduce((o, k) => (o == null ? o : o[k]), after);
+    return { label: w.label, want: w.to, got, ok: JSON.stringify(got) === JSON.stringify(w.to) };
+  });
+  console.log('\n  read-back:');
+  for (const c of check) console.log(`    ${c.label.padEnd(30)} ${c.ok ? 'ok' : `MISMATCH want ${JSON.stringify(c.want)} got ${JSON.stringify(c.got)}`}`);
+  const failed = bad || check.some(c => !c.ok);
+  console.log(failed ? '\n  SOME WRITES DID NOT LAND' : '\n  all writes verified; the PWA will show them on its next sync');
+  process.exit(failed ? 1 : 0);
+}
+
 console.error(`unknown command: ${cmd}`); process.exit(2);
