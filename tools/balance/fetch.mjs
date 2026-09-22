@@ -38,7 +38,13 @@ async function gate() {
   if (at > now) await sleep(at - now);
 }
 function slowDown() { gap = Math.min(MAX_GAP, Math.max(gap * 2, 250)); nextSlot = Date.now() + gap * 4; }
-function speedUp() { gap = Math.max(MIN_GAP, gap - 2); }
+// Recover PROPORTIONALLY, not by a fixed step. A flat `gap - 2` is hopeless once the
+// gap has doubled its way to seconds: it needs ~2000 successes to walk back down from
+// 4000ms, so the run never speeds up again and a 263-message fetch crawls for 25
+// minutes at the worst rate it ever hit. Measured 2026-09-22. Shaving a small
+// percentage per success recovers in tens of requests while still yielding immediately
+// on the next 403.
+function speedUp() { gap = Math.max(MIN_GAP, gap * 0.97); }
 
 async function api(path, params = {}, attempt = 0) {
   await gate();
