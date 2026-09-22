@@ -5,3 +5,8 @@ appsscript.json
 .claspignore
 audit.txt
 HANDOFF.md
+# Local-only: contains real balances, card last-4s and merchant strings.
+# This repo is PUBLIC — never commit these.
+REVIEW-*.md
+state*.json
+*.state.json
