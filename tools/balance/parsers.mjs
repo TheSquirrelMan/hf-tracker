@@ -14,7 +14,16 @@
 const money = /\$([0-9][0-9,]*\.\d{2})/;
 const num = s => Number(String(s).replace(/[$,]/g, ''));
 
-/** "...4496" / "ending in 4496" / "ending in: 3290" -> "4496" */
+// USAA writes the masked account BOTH ways and it is not cosmetic: ASCII "...4496"
+// in some sends and the Unicode ellipsis U+2026 "…4496" in others, sometimes hours
+// apart in the same mailbox. A pattern of `\.*` matches zero dots and then demands a
+// digit, so it fails on the U+2026 form and the whole email parses as null.
+// Measured 2026-09-22: 12 of 26 deposit alerts in 35 days were lost exactly this way,
+// which is why the checking account's reconcile showed large POSITIVE residuals — the
+// missing events were all money coming IN. Accept both, everywhere.
+const MASK = String.raw`[\s.…]*`;
+
+/** "...4496" / "…4496" / "ending in 4496" / "ending in: 3290" -> "4496" */
 const last4 = s => (String(s).match(/(\d{4})\s*$/) || [])[1] || null;
 
 /**
@@ -24,8 +33,8 @@ const last4 = s => (String(s).match(/(\d{4})\s*$/) || [])[1] || null;
 export function parseBalance(body) {
   if (!body) return null;
   // Two independent statements of the same fact — parse both and require agreement.
-  const lead = body.match(/You have\s+\$([0-9][0-9,]*\.\d{2})\s+available in your account\s+\.*(\d{4})/i);
-  const acct = body.match(/Account number:\s*\.*\s*(\d{4})/i);
+  const lead = body.match(new RegExp(String.raw`You have\s+\$([0-9][0-9,]*\.\d{2})\s+available in your account` + MASK + String.raw`(\d{4})`, 'i'));
+  const acct = body.match(new RegExp(String.raw`Account number:` + MASK + String.raw`(\d{4})`, 'i'));
   const bal = body.match(/Available balance:\s*\$([0-9][0-9,]*\.\d{2})/i);
   if (!lead && !(acct && bal)) return null;
 
@@ -63,7 +72,7 @@ export function parseDebit(body) {
 /** Deposit to Your Bank Account — money IN. Includes transfers, refunds, payroll. */
 export function parseDeposit(body) {
   if (!body) return null;
-  const lead = body.match(/You received a deposit of\s+\$([0-9][0-9,]*\.\d{2})\s+to your account\s+\.*(\d{4})/i);
+  const lead = body.match(new RegExp(String.raw`You received a deposit of\s+\$([0-9][0-9,]*\.\d{2})\s+to your account` + MASK + String.raw`(\d{4})`, 'i'));
   if (!lead) return null;
   const amt = body.match(/Amount:\s*\$([0-9][0-9,]*\.\d{2})/i);
   if (amt && num(amt[1]) !== num(lead[1])) {

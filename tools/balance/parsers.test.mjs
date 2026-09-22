@@ -248,3 +248,22 @@ test('derive: a single anchor cannot be verified, so trusted is null not true', 
   assert.equal(r.trusted, null);
   assert.match(r.check.reason, /only one anchor/);
 });
+
+// REGRESSION, 2026-09-22: USAA sends the masked account with a Unicode ellipsis
+// (U+2026) as often as with three ASCII dots. The parser only accepted dots, so 12 of
+// 26 real deposit alerts in a 35-day window returned null and their money never reached
+// the balance. Every masked-account pattern must accept both forms.
+test('deposit: Unicode ellipsis account mask parses the same as ASCII dots', () => {
+  const ascii = 'USAA SECURITY ZONE You received a deposit of $500.00 to your account ...1111.\nFrom:\tACME\nDate:\t09/22/26\nAmount:\t$500.00';
+  const uni   = ascii.replace(/\.\.\./g, '\u2026');
+  const a = parseDeposit(ascii), u = parseDeposit(uni);
+  assert.equal(u?.amount, 500);
+  assert.equal(u?.account, '1111');
+  assert.deepEqual({ ...u, source: null }, { ...a, source: null });
+});
+
+test('balance: Unicode ellipsis account mask parses', () => {
+  const e = parseBalance('USAA SECURITY ZONE You have $1,234.56 available in your account \u20261111.');
+  assert.equal(e?.amount, 1234.56);
+  assert.equal(e?.account, '1111');
+});

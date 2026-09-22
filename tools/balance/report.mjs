@@ -19,6 +19,7 @@ import { listMessages, threadMessageIds, getMessages, USAA_QUERY } from './fetch
 import { toEvent } from './parsers.mjs';
 import { derive, reconcile } from './derive.mjs';
 import { tokenAge } from './gmail-auth.mjs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > -1 ? process.argv[i + 1] : d; };
 const days = Number(arg('days', 35));
@@ -86,15 +87,42 @@ if (missed) {
 console.log('  enumeration proven complete for this window.\n');
 
 // ── 2. parse ────────────────────────────────────────────────────────────────────
-process.stdout.write('fetching bodies: ');
-const msgs = await getMessages(ids, { onProgress: (d, n) => { if (d % 25 === 0 || d === n) process.stdout.write(`${d}/${n} `); } });
-console.log('');
+// Cache the fetched bodies. Refetching costs minutes under the quota pacer, and a
+// diagnostic that is expensive to run is a diagnostic that does not get run. The cache
+// lives in /tmp, NOT the repo — it holds real balances and this repo is public.
+const CACHE = `/tmp/claude-1000/hft-gmail-cache-${days}d.json`;
+let msgs;
+if (existsSync(CACHE) && !process.argv.includes('--refetch')) {
+  msgs = JSON.parse(readFileSync(CACHE, 'utf8'));
+  console.log(`bodies: ${msgs.length} from cache (${CACHE}); --refetch to bypass`);
+  const have = new Set(msgs.map(m => m.id));
+  const missing = ids.filter(x => !have.has(x.id));
+  if (missing.length) {
+    console.log(`  fetching ${missing.length} new since the cache was written`);
+    msgs = msgs.concat(await getMessages(missing));
+    writeFileSync(CACHE, JSON.stringify(msgs));
+  }
+} else {
+  process.stdout.write('fetching bodies: ');
+  msgs = await getMessages(ids, { onProgress: (d, n) => { if (d % 25 === 0 || d === n) process.stdout.write(`${d}/${n} `); } });
+  console.log('');
+  writeFileSync(CACHE, JSON.stringify(msgs));
+}
 const ALERT = /available balance|debit alert|deposit to your bank/i;
 const events = [];
 let unparsed = 0, falsePositives = 0;
+const failures = [];
 for (const m of msgs) {
   const e = toEvent(m);
-  if (!e || e.error || e.amount == null) { if (ALERT.test(m.subject)) unparsed++; continue; }
+  if (!e || e.error || e.amount == null) {
+    if (ALERT.test(m.subject)) {
+      unparsed++;
+      failures.push({ at: new Date(Number(m.internalDate)).toISOString().slice(0, 16),
+                      subject: m.subject, why: e?.error || (e ? 'no amount' : 'no parse'),
+                      len: (m.body || '').length });
+    }
+    continue;
+  }
   if (!ALERT.test(m.subject)) { falsePositives++; continue; }  // marketing mail the fallback parser guessed at
   events.push(e);
 }
@@ -102,6 +130,7 @@ console.log(`parsed: ${events.length} events from ${msgs.length} messages`);
 console.log(`  ${unparsed} alert-subject messages FAILED to parse`
   + (unparsed ? '  <-- these are missing deltas; the balance is wrong by their total' : ''));
 console.log(`  ${falsePositives} non-alert messages the fallback parser guessed at (discarded)`);
+for (const f of failures) console.log(`    UNPARSED ${f.at}  body=${String(f.len).padStart(5)}ch  ${f.why.padEnd(22)} ${f.subject.slice(0, 46)}`);
 
 const accounts = [...new Set(events.map(e => e.account).filter(Boolean))];
 console.log(`  accounts seen: ${accounts.join(', ') || '(none)'}\n`);
