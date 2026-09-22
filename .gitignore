@@ -10,3 +10,6 @@ HANDOFF.md
 REVIEW-*.md
 state*.json
 *.state.json
+
+# Working rules; names security weaknesses and the repo is public.
+CLAUDE.md
