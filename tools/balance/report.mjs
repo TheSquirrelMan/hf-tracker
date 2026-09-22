@@ -5,9 +5,11 @@
 // Prints three things, in this order, because the later ones are worthless if the
 // earlier ones fail:
 //   1. INSTRUMENT CHECK — prove the enumeration is complete before believing anything
-//      it returns. For every thread touched, `users.messages.list` must return as many
-//      messages as `users.threads.get` says the thread holds. A thread search fails
-//      this by construction; that is the whole point of running it.
+//      it returns. Every thread is expanded with `users.threads.get`, which does not
+//      depend on the query, and any message `users.messages.list` left out is fetched
+//      and inspected: if it is a USAA alert inside the window, paging lost it and the
+//      run ABORTS. Counts alone would prove nothing, since a thread legitimately holds
+//      messages older than the window.
 //   2. RECONCILE — replay every CLOSED anchor interval, where the answer is already
 //      known, and report the residual distribution. That number, not the derived
 //      balance, is what decides whether this is good enough to plan against.
@@ -37,23 +39,46 @@ console.log(`messages.list: ${ids.length} messages over ${pages} page(s), exhaus
 if (!complete) { console.log('ABORT: hit the cap before nextPageToken ran out — the set is partial.'); process.exit(2); }
 
 // ── INSTRUMENT CHECK ────────────────────────────────────────────────────────────
-// A silent transport is not a working transport. Prove it registers what is there.
+// A silent transport is not a working transport, and "it returned some messages" is
+// not proof it returned all of them — the thread-search bug looked exactly like
+// success. So test against a KNOWN POSITIVE: expand every thread with `threads.get`,
+// which is independent of the query, and check that message-level paging lost none of
+// the messages that genuinely belong in the window.
+//
+// Comparing raw counts would be wrong: a thread legitimately holds messages OLDER than
+// the window, which `q` excludes. So each extra id is fetched and only counted as a
+// miss if it is a USAA alert dated inside the window — i.e. something `list` should
+// have returned and did not.
 const byThread = new Map();
-for (const { id, threadId } of ids) (byThread.get(threadId) ?? byThread.set(threadId, []).get(threadId)).push(id);
-let worstThread = null, mismatches = 0;
+for (const { id, threadId } of ids) {
+  if (!byThread.has(threadId)) byThread.set(threadId, []);
+  byThread.get(threadId).push(id);
+}
+const cutoff = Date.now() - days * 86400e3;
+const ALERT_SUBJ = /available balance|debit alert|deposit to your bank/i;
+let missed = 0, extrasChecked = 0, biggest = { total: 0 };
 for (const [tid, got] of byThread) {
   const all = await threadMessageIds(tid);
-  // Only messages matching `q` come back from list, so a thread may legitimately hold
-  // MORE. What must never happen is list returning fewer than the matching ones — so
-  // compare against the intersection, and flag any thread where list lost a message.
-  const lost = all.filter(x => !got.includes(x));
-  if (!worstThread || all.length > worstThread.total) worstThread = { tid, total: all.length, got: got.length };
-  if (got.length > all.length) mismatches++;
-  void lost;
+  if (all.length > biggest.total) biggest = { tid, total: all.length, got: got.length };
+  const extras = all.filter(x => !got.includes(x));
+  if (!extras.length) continue;
+  for (const m of await getMessages(extras)) {
+    extrasChecked++;
+    if (Number(m.internalDate) >= cutoff && ALERT_SUBJ.test(m.subject) && /usaa/i.test(m.from)) {
+      missed++;
+      console.log(`  MISSED by messages.list: ${new Date(Number(m.internalDate)).toISOString().slice(0, 16)}  ${m.subject}`);
+    }
+  }
 }
-console.log(`instrument: ${byThread.size} threads; largest holds ${worstThread?.total} messages, `
-  + `list returned ${worstThread?.got} of them; ${mismatches} impossible counts`);
-console.log('  (a thread SEARCH would return a shifting subset here — message-level paging does not)\n');
+console.log(`instrument: ${ids.length} ids over ${byThread.size} threads; largest thread holds `
+  + `${biggest.total} messages (list returned ${biggest.got} — the rest are older than the window)`);
+console.log(`  cross-checked ${extrasChecked} out-of-set messages via threads.get: ${missed} in-window alerts missed`);
+if (missed) {
+  console.log('  ABORT: the enumeration is incomplete, so every number below is wrong by');
+  console.log('  at least those events. Fix the transport before reading further.');
+  process.exit(3);
+}
+console.log('  enumeration proven complete for this window.\n');
 
 // ── 2. parse ────────────────────────────────────────────────────────────────────
 const msgs = await getMessages(ids);
