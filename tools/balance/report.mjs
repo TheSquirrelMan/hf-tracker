@@ -54,7 +54,12 @@ for (const { id, threadId } of ids) {
   if (!byThread.has(threadId)) byThread.set(threadId, []);
   byThread.get(threadId).push(id);
 }
-const cutoff = Date.now() - days * 86400e3;
+// A DAY OF SLACK, deliberately. Gmail's `newer_than:Nd` is day-granular and fuzzy at
+// the edge, but this cutoff is exact to the millisecond — so a message from ~34.9 days
+// ago that Gmail excluded from `list` and `threads.get` still returns would be scored
+// as MISSED and abort the run with nothing actually wrong. The check must only fire on
+// a message the query plainly should have caught.
+const cutoff = Date.now() - (days - 1) * 86400e3;
 const ALERT_SUBJ = /available balance|debit alert|deposit to your bank/i;
 let missed = 0, extrasChecked = 0, biggest = { total: 0 };
 for (const [tid, got] of byThread) {
