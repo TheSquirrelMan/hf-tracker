@@ -86,7 +86,9 @@ if (missed) {
 console.log('  enumeration proven complete for this window.\n');
 
 // ── 2. parse ────────────────────────────────────────────────────────────────────
-const msgs = await getMessages(ids);
+process.stdout.write('fetching bodies: ');
+const msgs = await getMessages(ids, { onProgress: (d, n) => { if (d % 25 === 0 || d === n) process.stdout.write(`${d}/${n} `); } });
+console.log('');
 const ALERT = /available balance|debit alert|deposit to your bank/i;
 const events = [];
 let unparsed = 0, falsePositives = 0;

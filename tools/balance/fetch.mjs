@@ -13,22 +13,70 @@ import { accessToken } from './gmail-auth.mjs';
 
 const API = 'https://gmail.googleapis.com/gmail/v1/users/me';
 
-async function api(path, params = {}) {
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ── PACING ──────────────────────────────────────────────────────────────────────
+// Gmail meters "quota units per user per minute" and `messages.get` is not cheap, so a
+// few hundred in a burst returns HTTP 403 whose message says *quota*, not permissions —
+// it reads exactly like an auth failure and is not one. Measured 2026-09-22: 263
+// messages over 90 threads tripped it, and per-request exponential backoff did NOT fix
+// it, because every worker's retry fires at once and re-bursts. Backoff has to be
+// GLOBAL, not per request.
+//
+// So: one shared gate. Every call waits its turn behind a minimum inter-request gap,
+// and a rate-limit response widens that gap for everybody (and pauses new starts)
+// rather than just rescheduling the one request that lost. The gap narrows slowly once
+// requests succeed, so a long run settles near the fastest rate the quota allows.
+let gap = 120;                 // ms between requests, adaptive
+let nextSlot = 0;              // earliest time the next request may start
+const MIN_GAP = 60, MAX_GAP = 4000;
+
+async function gate() {
+  const now = Date.now();
+  const at = Math.max(now, nextSlot);
+  nextSlot = at + gap;
+  if (at > now) await sleep(at - now);
+}
+function slowDown() { gap = Math.min(MAX_GAP, Math.max(gap * 2, 250)); nextSlot = Date.now() + gap * 4; }
+function speedUp() { gap = Math.max(MIN_GAP, gap - 2); }
+
+async function api(path, params = {}, attempt = 0) {
+  await gate();
   const token = await accessToken();
   const url = `${API}${path}?` + new URLSearchParams(params);
-  const r = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
+  let r;
+  try {
+    r = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
+  } catch (e) {
+    // Network blip — same treatment, but never echo the URL.
+    if (attempt < 8) { slowDown(); return api(path, params, attempt + 1); }
+    throw new Error(`Gmail ${path} network error: ${e.message}`);
+  }
   if (!r.ok) {
     const j = await r.json().catch(() => ({}));
     const msg = j?.error?.message || r.statusText;
+    const rateLimited = r.status === 429
+      || (r.status === 403 && /rate|quota|userRateLimit|limit exceeded/i.test(msg))
+      || r.status >= 500;
+    if (rateLimited && attempt < 8) {
+      const retryAfter = Number(r.headers.get('retry-after')) * 1000;
+      slowDown();
+      if (retryAfter) await sleep(retryAfter);
+      return api(path, params, attempt + 1);
+    }
     // Never echo the URL — it carries the query, and an error message is a second
     // channel. Path only.
     if (r.status === 403 && /not been used|disabled|accessNotConfigured/i.test(msg)) {
       throw new Error(`Gmail API not enabled for this OAuth client's project (HTTP 403). Path ${path}`);
     }
+    if (rateLimited) throw new Error(`Gmail ${path} still rate-limited after ${attempt} retries (gap ${gap}ms): ${msg}`);
     throw new Error(`Gmail ${path} HTTP ${r.status}: ${msg}`);
   }
+  speedUp();
   return r.json();
 }
+
+export const pace = () => ({ gap });
 
 /**
  * Page every message id matching `q`. Never returns a partial set silently: it follows
@@ -100,7 +148,7 @@ export async function getMessage(id) {
 }
 
 /** Fetch many, with a small concurrency cap so Gmail does not rate-limit us. */
-export async function getMessages(ids, { concurrency = 8, onProgress } = {}) {
+export async function getMessages(ids, { concurrency = 4, onProgress } = {}) {
   const out = new Array(ids.length);
   let next = 0, done = 0;
   await Promise.all(Array.from({ length: Math.min(concurrency, ids.length) }, async () => {
