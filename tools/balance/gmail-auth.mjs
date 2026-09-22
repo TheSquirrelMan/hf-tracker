@@ -1,10 +1,19 @@
 // Gmail OAuth for the balance deriver — loopback consent once, refresh forever after.
 //
 // WHY THIS CLIENT: the Google Cloud project behind `dotfiles/secrets/gmail-mcp.env`
-// already has the Gmail API enabled and `gmail.readonly` on its consent screen, and the
-// same client_id is registered as an INSTALLED (Desktop) client — which is what lets us
-// use an arbitrary loopback port here without registering a redirect URI. Verified
-// 2026-09-22 by hashing the two stored client_ids against each other: identical.
+// already has the Gmail API enabled and `gmail.readonly` on its consent screen, and it
+// is the SAME client_id the calendar MCP uses (verified 2026-09-22 by hashing the two
+// stored copies against each other rather than printing them).
+//
+// WHY A FIXED PORT: it is a **Web** client, not a Desktop one, so Google accepts only
+// exactly-registered redirect URIs — an arbitrary loopback port returns
+// `redirect_uri_mismatch`, which the consent page shows as "Access blocked: This app's
+// request is invalid". Measured 2026-09-22 by fetching the auth URL and reading the
+// error rather than guessing from the client JSON's `installed` key, which does NOT
+// indicate the console's client type. `http://localhost:3005/callback` IS registered —
+// it is what the gmail-mcp proxy uses — so we borrow it, which means that service has
+// to be stopped for the duration of the consent. Must be the literal string
+// `localhost`; Google does not treat `127.0.0.1` as the same URI.
 //
 // KNOWN LIMIT, measured not assumed: the consent screen's publishing status is
 // **Testing**, and Google expires a Testing app's refresh token after 7 days. The
@@ -65,6 +74,10 @@ export async function consent() {
   let resolve, reject;
   const done = new Promise((a, b) => { resolve = a; reject = b; });
 
+  // The registered URI, overridable if one is ever added to the console.
+  const redirectUri = process.env.HFT_GMAIL_REDIRECT || 'http://localhost:3005/callback';
+  const port = Number(new URL(redirectUri).port || 80);
+
   const server = createServer(async (req, res) => {
     const u = new URL(req.url, 'http://127.0.0.1');
     if (u.pathname !== '/callback') { res.writeHead(404).end(); return; }
@@ -78,7 +91,7 @@ export async function consent() {
 
       const tok = await postForm(TOKEN, {
         code, client_id: id, client_secret: secret,
-        redirect_uri: `http://127.0.0.1:${server.address().port}/callback`,
+        redirect_uri: redirectUri,
         grant_type: 'authorization_code', code_verifier: verifier,
       });
       save(tok);
@@ -92,11 +105,16 @@ export async function consent() {
     }
   });
 
-  await new Promise(r => server.listen(0, '127.0.0.1', r));
-  const port = server.address().port;
+  await new Promise((ok, bad) => {
+    server.once('error', e => bad(new Error(
+      e.code === 'EADDRINUSE'
+        ? `port ${port} is busy — stop the service holding it first:  systemctl --user stop gmail-mcp`
+        : e.message)));
+    server.listen(port, '127.0.0.1', ok);
+  });
   const url = `${AUTH}?` + new URLSearchParams({
     client_id: id,
-    redirect_uri: `http://127.0.0.1:${port}/callback`,
+    redirect_uri: redirectUri,
     response_type: 'code',
     scope: SCOPE,
     code_challenge: challenge,
