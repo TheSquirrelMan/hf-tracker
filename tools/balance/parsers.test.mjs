@@ -179,3 +179,33 @@ test('reconcile: measures the threshold gap instead of assuming it', () => {
   assert.equal(r.intervals[0].residual, -5);      // negative = we missed debits
   assert.equal(r.meanResidual, -5);
 });
+
+// ── timestamps ────────────────────────────────────────────────────────────────
+import { toEvent } from './parsers.mjs';
+
+test('toEvent: internalDate (epoch ms) is unambiguous', () => {
+  const e = toEvent({ internalDate: '1790076921000', subject: 'Debit Alert for Your USAA Bank Account', body: DEBIT_TAB });
+  assert.equal(e.at.toISOString(), '2026-09-22T11:35:21.000Z');
+});
+
+test('toEvent: a Z-less date string is treated as UTC, not local', () => {
+  // The bug this guards: parsing "...T11:35:21" as LOCAL shifts it +4h in New York,
+  // pushing recent events past asOf so derive() drops them and the balance reads high.
+  const e = toEvent({ date: '2026-09-22T11:35:21', subject: 'Debit Alert for Your USAA Bank Account', body: DEBIT_TAB });
+  assert.equal(e.at.toISOString(), '2026-09-22T11:35:21.000Z');
+});
+
+test('toEvent: an explicit Z is respected', () => {
+  const e = toEvent({ date: '2026-09-22T11:35:21Z', subject: 'Debit Alert for Your USAA Bank Account', body: DEBIT_TAB });
+  assert.equal(e.at.toISOString(), '2026-09-22T11:35:21.000Z');
+});
+
+test('toEvent: the newest debit is NOT dropped by derive', () => {
+  const events = [
+    toEvent({ internalDate: String(Date.UTC(2026, 8, 21, 13, 56)), subject: 'Available Balance for Your Account', body: BALANCE }),
+    toEvent({ internalDate: String(Date.UTC(2026, 8, 22, 11, 35)), subject: 'Debit Alert for Your USAA Bank Account', body: DEBIT_TAB }),
+  ];
+  const r = derive(events, '1111', new Date(Date.UTC(2026, 8, 22, 12, 0)));
+  assert.equal(r.applied.length, 1);          // would be 0 under the local-parse bug
+  assert.equal(r.balance, 1209.56);           // 1234.56 - 25
+});

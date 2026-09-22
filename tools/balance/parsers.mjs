@@ -90,4 +90,25 @@ export function parseAlert({ subject = '', body = '' } = {}) {
   return parseBalance(body) || parseDeposit(body) || parseDebit(body);
 }
 
+/**
+ * Build an event from a Gmail message.
+ *
+ * TIMEZONE TRAP, learned the hard way: Gmail's `date` is ISO with a trailing Z (UTC)
+ * and `internalDate` is epoch-ms. Parsing "2026-09-22T11:35:21" WITHOUT the Z makes
+ * JS read it as LOCAL time, shifting it +4h in America/New_York — which pushes the
+ * newest events past `asOf` so derive() silently drops them and the balance reads high.
+ * Always go through internalDate (unambiguous), or keep the Z.
+ *
+ * @param {{internalDate?:string|number, date?:string, subject?:string, body?:string}} msg
+ */
+export function toEvent(msg = {}) {
+  const e = parseAlert(msg);
+  if (!e) return null;
+  let at = null;
+  if (msg.internalDate != null) at = new Date(Number(msg.internalDate));
+  else if (msg.date) at = new Date(/[Zz]|[+-]\d{2}:?\d{2}$/.test(msg.date) ? msg.date : msg.date + 'Z');
+  if (!at || isNaN(at)) return { ...e, at: null, error: e.error || 'unparseable timestamp' };
+  return { ...e, at };
+}
+
 export const _internal = { money, num, last4 };
