@@ -401,7 +401,7 @@ function resetMonthly(s){
 // tabs/devices detect the rollover around the same time, only one reset is
 // applied atomically instead of a plain last-write-wins set() clobbering it.
 async function reconcileMonth(){
-  if(!STATE) return;
+  if(!STATE || _readOnly) return;   // view-only accounts cannot write; the rollover is the writers' job
   try{
     const result=await runTransaction(STATE, current=>{
       if(!current) return undefined; // nothing there yet — normal load path handles first-time init
