@@ -741,8 +741,49 @@ function sendEmail(subject, body) {
   GmailApp.sendEmail(NOTIFY_EMAIL, subject, body);
 }
 
+// Database auth. The rules are being closed, so every read/write carries an access token
+// minted from the project's service-account key (Script Property FIREBASE_SA, the JSON
+// file pasted whole). A service-account token is admin and bypasses the rules, and it does
+// not depend on which Google account owns this script. Until the property exists this
+// returns '' and requests go unauthenticated — which works only while the rules are open.
+function firebaseToken() {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('fbToken');
+  if (hit) return hit;
+  const raw = PropertiesService.getScriptProperties().getProperty('FIREBASE_SA');
+  if (!raw) return '';
+  const key = JSON.parse(raw);
+  const now = Math.floor(Date.now() / 1000);
+  const b64 = s => Utilities.base64EncodeWebSafe(s).replace(/=+$/, '');
+  const head = b64(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const claim = b64(JSON.stringify({
+    iss: key.client_email, aud: key.token_uri, iat: now, exp: now + 3600,
+    scope: 'https://www.googleapis.com/auth/firebase.database https://www.googleapis.com/auth/userinfo.email',
+  }));
+  const sig = b64(Utilities.computeRsaSha256Signature(`${head}.${claim}`, key.private_key));
+  const res = UrlFetchApp.fetch(key.token_uri, {
+    method: 'post', muteHttpExceptions: true,
+    payload: { grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: `${head}.${claim}.${sig}` },
+  });
+  const data = JSON.parse(res.getContentText());
+  // Never log the token or the key; the status and Google's error code are enough.
+  if (!data.access_token) throw new Error(`firebase token: HTTP ${res.getResponseCode()} ${data.error || ''}`);
+  cache.put('fbToken', data.access_token, 3000);   // tokens live 3600 s
+  // Heartbeat so the desktop side can see this script authenticates, before the rules close.
+  UrlFetchApp.fetch(`${DB_ROOT}/_meta/gasAuth.json?access_token=${data.access_token}`, {
+    method: 'PUT', contentType: 'application/json', muteHttpExceptions: true,
+    payload: JSON.stringify({ at: new Date().toISOString() }),
+  });
+  return data.access_token;
+}
+
+function authed(url) {
+  const t = firebaseToken();
+  return t ? `${url}?access_token=${t}` : url;
+}
+
 function firebasePut(url, value) {
-  const res = UrlFetchApp.fetch(url, {
+  const res = UrlFetchApp.fetch(authed(url), {
     method: "PUT",
     contentType: "application/json",
     payload: JSON.stringify(value),
@@ -750,9 +791,8 @@ function firebasePut(url, value) {
   });
   return res.getResponseCode();
 }
-
 function firebaseGet(url) {
-  const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+  const res = UrlFetchApp.fetch(authed(url), { muteHttpExceptions: true });
   if (res.getResponseCode() === 200) return JSON.parse(res.getContentText());
   return null;
 }
