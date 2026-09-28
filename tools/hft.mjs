@@ -11,6 +11,8 @@
 // can nudge one bill's amount without restating the array.
 import { readFileSync } from 'fs';
 import { createEngine } from '../engine.mjs';
+import { dbFetch } from './fbauth.mjs';
+
 
 const argv = process.argv.slice(2);
 const cmd = argv[0];
@@ -22,16 +24,15 @@ if (!cmd || has('help')) {
   console.log('commands: plan | debts | bills | whatif   flags: --live | --state <f>   --now <YYYY-MM-DD>   --set <json>   --json');
   process.exit(0);
 }
-const DB = 'https://hf-tracker-81e76-default-rtdb.firebaseio.com';
 let _secret = null;
 async function secret() {
   if (_secret) return _secret;
-  const cfg = await (await fetch(`${DB}/app_config.json`)).json();
+  const cfg = await (await dbFetch('app_config')).json();
   if (!cfg || !cfg.dataSecret) throw new Error('could not read app_config');
   return (_secret = cfg.dataSecret);   // never printed or written to disk
 }
 async function loadLive() {
-  const st = await (await fetch(`${DB}/hft/${await secret()}/state.json`)).json();
+  const st = await (await dbFetch(`hft/${await secret()}/state`)).json();
   if (!st) throw new Error('could not read state');
   return st;
 }
@@ -39,7 +40,7 @@ async function loadLive() {
 // pending-save merge list omits userBills/phases/cardBals, so a broad write races
 // with anything he is editing in the PWA.
 async function putField(path, value) {
-  const r = await fetch(`${DB}/hft/${await secret()}/state/${path}.json`, {
+  const r = await dbFetch(`hft/${await secret()}/state/${path}`, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(value),
   });
@@ -199,7 +200,7 @@ if (cmd === 'set') {
   const after = await loadLive();          // read back, never trust the status alone
   const check = writes.map(w => {
     const got = w.path.split('/').reduce((o, k) => (o == null ? o : o[k]), after);
-    return { label: w.label, want: w.to, got, ok: JSON.stringify(got) === JSON.stringify(w.to) };
+    return { label: w.label, want: w.to, got, ok: JSON.stringify(got ?? null) === JSON.stringify(w.to ?? null) };   // PUT null deletes the key
   });
   console.log('\n  read-back:');
   for (const c of check) console.log(`    ${c.label.padEnd(30)} ${c.ok ? 'ok' : `MISMATCH want ${JSON.stringify(c.want)} got ${JSON.stringify(c.got)}`}`);
