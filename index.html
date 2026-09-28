@@ -171,7 +171,7 @@ body.readonly .ro-banner{display:block;}
 </head>
 <body>
 
-<div class="ro-banner">👁️ Read-only mode — <span class="ro-switch" onclick="switchToAdmin()">Switch to admin</span></div>
+<div class="ro-banner">👁️ View-only — <span class="ro-switch" onclick="switchToAdmin()">Sign out</span></div>
 
 <div class="overlay" id="pin-screen">
   <div class="pin-logo">💰</div>
@@ -331,6 +331,8 @@ let STATE = null;
 // client-side PIN. ALLOWED only decides what the sign-in screen says; the rules decide
 // what the database returns. Add an email here AND in the rules to grant access.
 const ALLOWED=['2densuke@gmail.com','simplyhealthcareforme@gmail.com','mrsgp57@gmail.com'];
+// View-only accounts: the rules grant them read but not write; the UI hides edit controls.
+const READ_ONLY=['mrsgp57@gmail.com'];
 const auth=getAuth(FB);
 let _readOnly = false;
 const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -556,6 +558,8 @@ function checkAuth() {
       signOut(auth);
       return;
     }
+    _readOnly = READ_ONLY.includes(user.email);
+    document.body.classList.toggle('readonly', _readOnly);
     if (!STATE) startApp();
   });
 }
