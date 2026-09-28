@@ -12,6 +12,15 @@ const KAREN_PAY_LABEL = "usaa-karen-pay-synced";
 const JON_PAY_LABEL   = "usaa-jon-pay-synced";
 const DEBIT_LABEL     = "usaa-debit-synced";
 
+// Balances Plaid owns (tools/plaid/sync.mjs writes them, source recorded under
+// hft/<secret>/balSource). Email must not overwrite these, and a matched payment must not
+// decrement a card Plaid reports directly — Plaid's balance already includes it.
+// EMPTY until tools/plaid/sync.mjs runs on a timer — while sync is manual, the email
+// path is what keeps these fresh between runs. At the timer, set them to
+// ['bal4496','bal0725','bal6764'] and ['cap4565','cap7988']. Rollback = empty again.
+const PLAID_OWNED_BALANCES = [];
+const PLAID_OWNED_CARDS    = [];
+
 function initFirebasePath() {
   const dataSecret = PropertiesService.getScriptProperties().getProperty('DATA_SECRET');
   if (!dataSecret) throw new Error('DATA_SECRET not set in Script Properties');
@@ -96,6 +105,7 @@ function syncUSAABalance() {
       // Write to the correct Firebase key based on account number
       const fbKey = acctNum === '4496' ? 'bal4496' : acctNum === '0725' ? 'bal0725' : acctNum === '6764' ? 'bal6764' : null;
       if (!fbKey) { Logger.log(`Unknown account ${acctNum}, skipping.`); continue; }
+      if (PLAID_OWNED_BALANCES.includes(fbKey)) { Logger.log(`${fbKey} owned by Plaid, skipping.`); continue; }
 
       const res = firebasePut(`${FIREBASE_BASE}/${fbKey}.json`, balance);
       if (res === 200) {
@@ -362,6 +372,7 @@ function syncUSAADebits() {
   const userBills  = state.userBills   || [];
   let   cardBals   = state.cardBals    || {};
   const cardStartBals = state.cardStartBals || {};
+  const touchedCards = {};   // written per key: a whole-object PUT would clobber Plaid's writes
   let   changed    = false;
   let   newPending = 0;
 
@@ -439,19 +450,17 @@ function syncUSAADebits() {
       if (result.label) entry.label = result.label;
       debitLog.unshift(entry);
 
-      if (result.freshMarket) {
-        // discLog overage handled by syncFreshMarket (email parsing) — just record the debit
-        Logger.log(`Fresh Market PayPal $${amt} matched bill_fresh_market — discLog via syncFreshMarket`);
-      }
-
       // Auto-update card balance when a payment is matched to a credit card
       if (result.status === 'matched' && result.bill) {
         const bill = userBills.find(b => b.id === result.bill);
-        if (bill && bill.cardId) {
+        if (bill && bill.cardId && PLAID_OWNED_CARDS.includes(bill.cardId)) {
+          Logger.log(`cardBals[${bill.cardId}] owned by Plaid — not decremented`);
+        } else if (bill && bill.cardId) {
           const start = cardStartBals[bill.cardId] || 0;
           const prev = cardBals[bill.cardId] !== undefined ? cardBals[bill.cardId] : start;
           const next = Math.max(0, prev - amt);
           cardBals[bill.cardId] = next;
+          touchedCards[bill.cardId] = next;
           Logger.log(`cardBals[${bill.cardId}]: $${prev} → $${next}`);
         }
       }
@@ -467,7 +476,7 @@ function syncUSAADebits() {
     const cutoff = new Date().getTime() - 90 * 24 * 60 * 60 * 1000;
     debitLog = debitLog.filter(d => !d.ts || d.ts > cutoff);
     firebasePut(`${FIREBASE_BASE}/debitLog.json`,        debitLog);
-    firebasePut(`${FIREBASE_BASE}/cardBals.json`,        cardBals);
+    for (const [id, v] of Object.entries(touchedCards)) firebasePut(`${FIREBASE_BASE}/cardBals/${id}.json`, v);
     firebasePut(`${FIREBASE_BASE}/processedMsgIds.json`, processedIds.slice(-500));
     Logger.log(`Done. debitLog: ${debitLog.length} entries, ${newPending} pending`);
 
@@ -483,17 +492,6 @@ function syncUSAADebits() {
 // ── Smart match logic ──
 // Reads userBills from Firebase for keyword matching — no hardcoded bill lists
 function matchDebit(merchant, amt, userBills, txDow) {
-
-  // 1. PayPal Fresh Market: within 50% of bill amount, arrived Sun/Mon/Tue
-  if (merchant.includes("PAYPAL")) {
-    const fmBill = userBills.find(b => b.id === 'bill_fresh_market');
-    if (fmBill) {
-      const fmAmt = fmBill.amt || 200;
-      if (amt >= fmAmt * 0.5 && amt <= fmAmt * 1.5 && txDow >= 0 && txDow <= 2) {
-        return { status: "matched", bill: "bill_fresh_market", label: "Fresh Market", cat: "groceries", freshMarket: true, budgetAmt: fmAmt };
-      }
-    }
-  }
 
   // 2. Match against userBills keywords from Firebase
   const billsWithKeywords = userBills.filter(b => b.keyword || b.debitKeyword);
@@ -569,95 +567,9 @@ function formatUsaaDate(usaaDate) {
   return `${parseInt(parts[0])}/${parseInt(parts[1])}/${2000 + parseInt(parts[2])}`;
 }
 
-// ── Sync Fresh Market receipt emails → log overage above bill budget to discLog ──
-function syncFreshMarket() {
-  initFirebasePath();
-  const state      = firebaseGet(`${FIREBASE_BASE}.json`) || {};
-  const userBills  = state.userBills  || [];
-  let   discLog    = state.discLog    || [];
-  let   discSpent  = state.discSpent  || 0;
-  const processedIds = state.processedFreshMarketIds || [];
-
-  const nowDate = new Date();
-  const curMKey = `${nowDate.getFullYear()}-${nowDate.getMonth()}`;
-  const stateMKey = state.mKey || '';
-  if (stateMKey !== curMKey) {
-    if (state.discLog && state.discLog.length > 0 && stateMKey) {
-      firebasePut(`${FIREBASE_BASE}/discLogArchive/${stateMKey}.json`, state.discLog);
-    }
-    firebasePut(`${FIREBASE_BASE}/mKey.json`, curMKey);
-    firebasePut(`${FIREBASE_BASE}/discSpent.json`, 0);
-    firebasePut(`${FIREBASE_BASE}/discLog.json`, []);
-    discLog = [];
-    discSpent = 0;
-    Logger.log(`syncFreshMarket month rollover: ${stateMKey} → ${curMKey}`);
-  }
-
-  const fmBill    = userBills.find(b => b.id === 'bill_fresh_market');
-  const budgetAmt = fmBill ? (fmBill.amt || 0) : 0;
-
-  const since   = new Date(new Date().getTime() - 14 * 24 * 60 * 60 * 1000);
-  const dateStr = Utilities.formatDate(since, "America/New_York", "yyyy/MM/dd");
-  const threads = GmailApp.search(
-    `from:orders@thefreshmarket.com subject:"The Fresh Market order receipt" after:${dateStr}`,
-    0, 10
-  );
-
-  let changed = false;
-
-  for (const thread of threads) {
-    for (const msg of thread.getMessages()) {
-      const msgId = msg.getId();
-      if (processedIds.includes(msgId)) continue;
-
-      const body = msg.getPlainBody() || msg.getBody().replace(/<[^>]+>/g, ' ');
-
-      const totalMatch = body.match(/\bTotal:\s*\$(\d+\.\d{2})/);
-      if (!totalMatch) {
-        Logger.log(`Fresh Market: could not parse total from msg ${msgId}`);
-        processedIds.push(msgId);
-        continue;
-      }
-
-      const total   = parseFloat(totalMatch[1]);
-      const overage = Math.max(0, Math.round((total - budgetAmt) * 100) / 100);
-      const txDate  = Utilities.formatDate(msg.getDate(), "America/New_York", "M/d/yyyy");
-
-      Logger.log(`Fresh Market receipt: total=$${total} budget=$${budgetAmt} overage=$${overage} date=${txDate}`);
-
-      if (overage > 0) {
-        const txParts  = txDate.split('/');
-        const txMillis = new Date(parseInt(txParts[2]), parseInt(txParts[0])-1, parseInt(txParts[1])).getTime();
-        const matchIdx = discLog.findIndex(e => {
-          const ep = (e.date||'').split('/');
-          if (ep.length < 3) return false;
-          const eMillis = new Date(parseInt(ep[2]), parseInt(ep[0])-1, parseInt(ep[1])).getTime();
-          if (Math.abs(txMillis - eMillis) / 86400000 > 2) return false;
-          return (e.label||'').includes('Fresh Market');
-        });
-        if (matchIdx >= 0) {
-          const old = discLog[matchIdx];
-          discSpent = Math.max(0, discSpent - (old.amt||0));
-          discLog[matchIdx] = {...old, amt: overage, date: txDate, cat: 'discretionary', auto: true, confirmed: true};
-          discSpent += overage;
-        } else {
-          discLog.unshift({ amt: overage, date: txDate, label: 'Fresh Market (extra)', cat: 'discretionary', auto: true });
-          discSpent += overage;
-        }
-        changed = true;
-      }
-
-      processedIds.push(msgId);
-    }
-  }
-
-  if (changed) {
-    firebasePut(`${FIREBASE_BASE}/discLog.json`,  discLog);
-    firebasePut(`${FIREBASE_BASE}/discSpent.json`, discSpent);
-  }
-  firebasePut(`${FIREBASE_BASE}/processedFreshMarketIds.json`, processedIds.slice(-100));
-  Logger.log(`syncFreshMarket done. changed=${changed}`);
-}
+// Fresh Market removed 2026-09-28 — they no longer shop there weekly. Stub kept only so
+// the time-driven trigger doesn't fail until it is deleted in the Apps Script UI.
+function syncFreshMarket() {}
 
 // ── One-shot: patch jonLastPayDate after manual sync run ──
 function patchJonPayDate() {
@@ -752,7 +664,6 @@ function seedDefaultBills() {
     { id:'bill_att',            name:'AT&T fiber',               amt:166, day:16, keyword:'ATT*BILL PAYMENT' },
     { id:'bill_spotify',        name:'Spotify',                  amt:22,  day:22 },
     { id:'bill_state_farm',     name:'State Farm',               amt:190, day:23 },
-    { id:'bill_fresh_market',   name:'Fresh Market',             amt:200, day:0  },
     { id:'bill_gas',            name:'Gas (monthly est.)',        amt:120, day:1  },
   ];
 
