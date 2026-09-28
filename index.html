@@ -176,25 +176,8 @@ body.readonly .ro-banner{display:block;}
 <div class="overlay" id="pin-screen">
   <div class="pin-logo">💰</div>
   <div class="pin-title">HF Tracker</div>
-  <div class="pin-sub">Enter PIN to continue</div>
-  <div class="pin-dots">
-    <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
-    <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
-  </div>
-  <div class="pin-grid">
-    <div class="pin-key" onclick="pinKey('1')">1</div>
-    <div class="pin-key" onclick="pinKey('2')">2</div>
-    <div class="pin-key" onclick="pinKey('3')">3</div>
-    <div class="pin-key" onclick="pinKey('4')">4</div>
-    <div class="pin-key" onclick="pinKey('5')">5</div>
-    <div class="pin-key" onclick="pinKey('6')">6</div>
-    <div class="pin-key" onclick="pinKey('7')">7</div>
-    <div class="pin-key" onclick="pinKey('8')">8</div>
-    <div class="pin-key" onclick="pinKey('9')">9</div>
-    <div class="pin-key empty"></div>
-    <div class="pin-key" onclick="pinKey('0')">0</div>
-    <div class="pin-key del" onclick="pinDel()">⌫</div>
-  </div>
+  <div class="pin-sub">Sign in to continue</div>
+  <button class="btn" id="signin-btn" onclick="signIn()" style="font-size:16px;padding:12px 22px;min-height:44px;margin-top:18px;">Sign in with Google</button>
   <div class="pin-error" id="pin-error"></div>
 </div>
 
@@ -336,6 +319,7 @@ body.readonly .ro-banner{display:block;}
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import{getDatabase,ref,onValue,set,get,runTransaction}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 // ══ FIREBASE ══
 const FB=initializeApp({apiKey:"AIzaSyDsd7Pr0AEQ3j6n-bKXv7n06vYf9Hvew7Y",authDomain:"hf-tracker-81e76.firebaseapp.com",databaseURL:"https://hf-tracker-81e76-default-rtdb.firebaseio.com",projectId:"hf-tracker-81e76",storageBucket:"hf-tracker-81e76.firebasestorage.app",messagingSenderId:"810272700127",appId:"1:810272700127:web:f72c67e2a9d839a8049b6a"});
@@ -343,14 +327,12 @@ const db=getDatabase(FB);
 let SECRET = '';
 let STATE = null;
 
-const PKEY='hft_auth';
-const RPKEY='hft_readonly';
-
-let configCache = null;
+// Access is Google sign-in, enforced by the database rules (an email allowlist) — not a
+// client-side PIN. ALLOWED only decides what the sign-in screen says; the rules decide
+// what the database returns. Add an email here AND in the rules to grant access.
+const ALLOWED=['2densuke@gmail.com','simplyhealthcareforme@gmail.com','mrsgp57@gmail.com'];
+const auth=getAuth(FB);
 let _readOnly = false;
-const configPromise = get(ref(db, 'app_config')).then(snap => {
-  configCache = snap.val();
-}).catch(() => {});
 const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // Mutable: refreshed periodically by refreshNow() below so a tab left open
@@ -544,98 +526,39 @@ async function loadFB(){
   });
 }
 
-// ══ PIN ══
-let pinBuf = '';
-async function checkAuth() {
-  if (sessionStorage.getItem(PKEY) === 'ok') {
-    try {
-      const config = configCache || (await get(ref(db, 'app_config'))).val();
-      _readOnly = sessionStorage.getItem(RPKEY) === '1';
-      if(_readOnly) document.body.classList.add('readonly');
-      SECRET = config.dataSecret;
-      STATE = ref(db, `hft/${SECRET}/state`);
-      document.getElementById('pin-screen').classList.add('hidden');
-      loadFB();
-    } catch (e) {
-      console.error("Auth Refresh Error:", e);
-      sessionStorage.removeItem(PKEY);
-      location.reload();
-    }
-  }
-}
-
-window.pinKey = k => {
-  if (pinBuf.length >= 4) return;
-  pinBuf += k;
-  updatePinDots();
-  if (pinBuf.length === 4) {
-    setTimeout(async () => {
-      await checkPin();
-    }, 110);
-  }
-};
-
-window.pinDel = () => {
-  pinBuf = pinBuf.slice(0, -1);
-  document.getElementById('pin-error').textContent = '';
-  updatePinDots(false);
-};
-
-window.switchToAdmin = () => {
-  sessionStorage.removeItem(PKEY);
-  sessionStorage.removeItem(RPKEY);
-  location.reload();
-};
-
-function updatePinDots(err = false) {
-  for (let i = 0; i < 4; i++) {
-    const d = document.getElementById('pd' + i);
-    d.classList.toggle('filled', i < pinBuf.length && !err);
-    d.classList.toggle('error', err);
-  }
-}
-
-async function checkPin() {
+// ══ SIGN-IN ══
+async function startApp() {
   try {
-    const config = configCache || (await get(ref(db, 'app_config'))).val();
-    const msgUint8 = new TextEncoder().encode(pinBuf);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashedInput = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-    if (hashedInput === config.pinHash) {
-      _readOnly = false;
-      sessionStorage.setItem(RPKEY, '');
-      SECRET = config.dataSecret;
-      STATE = ref(db, `hft/${SECRET}/state`);
-      sessionStorage.setItem(PKEY, 'ok');
-      document.getElementById('pin-screen').classList.add('hidden');
-      document.body.classList.remove('readonly');
-      loadFB();
-    } else if (config.pinReadOnlyHash && hashedInput === config.pinReadOnlyHash) {
-      _readOnly = true;
-      sessionStorage.setItem(RPKEY, '1');
-      SECRET = config.dataSecret;
-      STATE = ref(db, `hft/${SECRET}/state`);
-      sessionStorage.setItem(PKEY, 'ok');
-      document.getElementById('pin-screen').classList.add('hidden');
-      document.body.classList.add('readonly');
-      loadFB();
-    } else {
-      updatePinDots(true);
-      document.getElementById('pin-error').textContent = 'Incorrect PIN';
-      setTimeout(() => { pinBuf = ''; updatePinDots(false); }, 900);
-    }
+    const config = (await get(ref(db, 'app_config'))).val();
+    SECRET = config.dataSecret;
+    STATE = ref(db, `hft/${SECRET}/state`);
+    document.getElementById('pin-screen').classList.add('hidden');
+    loadFB();
   } catch (e) {
-    toast("Config Error");
+    console.error('config read failed', e);
+    document.getElementById('pin-error').textContent = 'No access to the data for this account';
   }
 }
 
-document.addEventListener('keydown', e => {
-  if (document.getElementById('pin-screen').classList.contains('hidden')) return;
-  if (e.key >= '0' && e.key <= '9') window.pinKey(e.key);
-  if (e.key === 'Backspace') window.pinDel();
-});
+window.signIn = async () => {
+  document.getElementById('pin-error').textContent = '';
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { document.getElementById('pin-error').textContent = 'Sign-in failed: ' + (e.code || e.message); }
+};
+
+window.switchToAdmin = () => signOut(auth).then(() => location.reload());
+
+function checkAuth() {
+  onAuthStateChanged(auth, user => {
+    if (!user) { document.getElementById('pin-screen').classList.remove('hidden'); return; }
+    if (!ALLOWED.includes(user.email)) {
+      document.getElementById('pin-error').textContent = `${user.email} is not allowed`;
+      signOut(auth);
+      return;
+    }
+    if (!STATE) startApp();
+  });
+}
 
 // ══ ROUTING ══
 window.sw=function(id,el){
