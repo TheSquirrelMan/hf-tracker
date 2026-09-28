@@ -90,7 +90,20 @@ function model(state) {
   }));
   const jon = state.jonAvgPay || 0, karen = state.karenAvgPay || 0;
   const monthlyIncome = Math.round(jon * 2 + karen * 4.33);
-  const billsMonthly = Math.round((state.userBills || []).reduce((a, b) => a + e.toMonthlyAmt(b), 0));
+  // Bills active in a given month — the same gates getDailyBills applies (startDate,
+  // conditionEnd, endDate on non-card bills, paid-off cards). Summing every bill ever
+  // entered counted finished Affirm plans and not-yet-started loans alike.
+  const cb = state.cardBals || {};
+  const billsIn = (key) => Math.round((state.userBills || []).filter(b => b &&
+    !(b.startDate && key < b.startDate) &&
+    !(b.conditionEnd && key > b.conditionEnd) &&
+    !(!b.cardId && b.endDate && key > String(b.endDate).slice(0, 7)) &&
+    !(b.cardId && e.bal(cb, b.cardId) <= 0)
+  ).reduce((a, b) => a + e.toMonthlyAmt(b), 0));
+  const base = now ? new Date(now + 'T12:00:00') : new Date();
+  const monthKey = (k) => { const d = new Date(base.getFullYear(), base.getMonth() + k, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+  const nextKey = monthKey(1), laterKey = monthKey(3);
+  const billsMonthly = billsIn(nextKey), billsLater = billsIn(laterKey);
   const payoffDates = debts.map(d => d.payoff).filter(Boolean).sort();
   return {
     // local components, never toISOString — that reports tomorrow after ~20:00 ET
@@ -98,6 +111,8 @@ function model(state) {
     checking: state.bal4496, savings: state.bal0725,
     monthlyIncome, billsMonthly,
     surplus: monthlyIncome - billsMonthly - (state.discMonthlyCap || 0),
+    nextKey, laterKey, billsLater,
+    surplusLater: monthlyIncome - billsLater - (state.discMonthlyCap || 0),
     debtTotal: Math.round(debts.reduce((a, d) => a + Math.max(0, d.balance), 0) * 100) / 100,
     debtFreeDate: payoffDates.length ? payoffDates[payoffDates.length - 1] : null,
     debts, phases,
@@ -117,7 +132,8 @@ if (cmd === 'plan' || cmd === 'debts' || cmd === 'bills') {
   }
   console.log(`as of ${m.asOf}`);
   console.log(`  checking $${m.checking}   savings $${m.savings}`);
-  console.log(`  income  $${m.monthlyIncome}/mo    bills $${m.billsMonthly}/mo    surplus $${m.surplus}/mo`);
+  console.log(`  income  $${m.monthlyIncome}/mo    bills ${m.nextKey} $${m.billsMonthly}/mo    surplus $${m.surplus}/mo`);
+  console.log(`                        bills ${m.laterKey} $${m.billsLater}/mo    surplus $${m.surplusLater}/mo   (current minimums, before cards pay off)`);
   console.log(`  debt    $${m.debtTotal}  ->  debt-free ${m.debtFreeDate || 'n/a'}`);
   if (cmd === 'plan') {
     console.log('\nDEBTS' + ' '.repeat(26) + 'balance'.padStart(11) + '   payoff');
